@@ -9,7 +9,7 @@ $app['controller.todo'] = function () use ($app) {
 };
 
 
-$app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
+$app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
     return $twig;
@@ -31,7 +31,7 @@ $app->match('/login', function (Request $request) use ($app) {
         $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
         $user = $app['db']->fetchAssoc($sql);
 
-        if ($user){
+        if ($user) {
             $app['session']->set('user', $user);
             return $app->redirect('/todo');
         }
@@ -52,13 +52,13 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         return $app->redirect('/login');
     }
 
-    if ($id){
+    if ($id) {
         return $app['controller.todo']->get($id);
     } else {
         return $app['controller.todo']->getByUserId($user['id']);
     }
 })
-->value('id', null);
+    ->value('id', null);
 
 
 $app->post('/todo/add', function (Request $request) use ($app) {
@@ -76,5 +76,16 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 });
 
 $app->post('/todo/{id}/complete', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
     return $app['controller.todo']->toggleComplete($id);
-});
+})->value('id', null);
+
+$app->get('/todo/{id}/json', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+    // if we have a valid id then retreve the data and display it as json
+    return $app['controller.todo']->getJson($id);
+})->value('id', null);

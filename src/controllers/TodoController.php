@@ -22,6 +22,11 @@ class TodoController
         ]);
     }
 
+    public function getJson(int $id)
+    {
+        return $this->app->json($this->model->get($id));
+    }
+
     public function getByUserId(int $user_id) {
         return $this->app['twig']->render('todos.html', [
             'todos' => $this->model->getAllbyUser($user_id),

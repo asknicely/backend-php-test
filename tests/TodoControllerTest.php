@@ -27,7 +27,7 @@ class TodoControllerTest extends TestCase
             ->getMock();
 
         $this->mockApp = $this->getMockBuilder(Application::class)
-            ->setMethods(['redirect'])
+            ->setMethods(['redirect', 'json'])
             ->getMock();
 
         // register validator into app for test
@@ -118,5 +118,20 @@ class TodoControllerTest extends TestCase
             ->with('/todo');
 
         $this->controller->toggleComplete(999);
+    }
+
+    public function testGetJson()
+    {
+        $this->mockModel->expects($this->once())
+            ->method('get')
+            ->with(1)
+            ->willReturn(['id' => 1, 'description' => 'test']);
+
+        $this->mockApp->expects($this->once())
+            ->method('json')
+            ->with(['id' => 1, 'description' => 'test'])
+            ->willReturn('pass');
+
+        $this->assertEquals('pass', $this->controller->getJson(1));
     }
 }
