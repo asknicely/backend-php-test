@@ -2,10 +2,13 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use App\Controllers\TodoController;
-
+use App\Controllers\UserController;
 
 $app['controller.todo'] = function () use ($app) {
     return new TodoController($app);
+};
+$app['controller.user'] = function () use ($app) {
+    return new UserController($app);
 };
 
 
@@ -25,17 +28,10 @@ $app->get('/', function () use ($app) {
 $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
     $password = $request->get('password');
-
-    if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
-
-        if ($user) {
-            $app['session']->set('user', $user);
-            return $app->redirect('/todo');
-        }
+    if (!empty(trim($username))) {
+        return $app['controller.user']->login($username, $password);
     }
-    return $app['twig']->render('login.html', array());
+    return $app['twig']->render('login.html');
 });
 
 

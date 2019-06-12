@@ -15,5 +15,7 @@ $app = require __DIR__.'/../src/app.php';
 require __DIR__.'/../config/dev.php';
 require __DIR__.'/../src/controllers.php';
 require __DIR__.'/../src/controllers/TodoController.php';
+require __DIR__.'/../src/controllers/UserController.php';
 require __DIR__.'/../src/models/TodoModel.php';
+require __DIR__.'/../src/models/UserModel.php';
 $app->run();

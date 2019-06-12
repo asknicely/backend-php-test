@@ -1,8 +1,6 @@
 <?php
 namespace App\Models;
 
-use Doctrine\DBAL\Connection;
-
 class TodoModel
 {
     protected $db;
