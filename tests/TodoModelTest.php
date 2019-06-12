@@ -13,7 +13,7 @@ class TodoModelTest extends TestCase
     {
         $mockQB = $this->getMockBuilder(QueryBuilder::class)
             ->disableOriginalConstructor()
-            ->setMethods(['select', 'from', 'where', 'setParameter', 'execute', 'fetch'])
+            ->setMethods(['select', 'from', 'where', 'andWhere', 'setParameter', 'execute', 'fetch'])
             ->getMock();
 
         $mockQB->expects($this->at(0))
@@ -25,12 +25,13 @@ class TodoModelTest extends TestCase
             ->method('from')
             ->with(TodoModel::TABLE)
             ->willReturn($mockQB);
-        $mockQB->expects($this->exactly(2))
+        $mockQB->expects($this->at(2))
             ->method('where')
-            ->with($this->logicalOr(
-                $this->equalTo('user_id = :user_id'),
-                $this->equalTo('id = :id')
-            ))
+            ->with('user_id = :user_id')
+            ->willReturn($mockQB);
+        $mockQB->expects($this->at(3))
+            ->method('andWhere')
+            ->with('id = :id')
             ->willReturn($mockQB);
 
         $mockQB->expects($this->exactly(2))
@@ -146,7 +147,7 @@ class TodoModelTest extends TestCase
             ->method('delete')
             ->with(
                 TodoModel::TABLE,
-                ['user_id'=> 10, 'id' => 5]
+                ['user_id' => 10, 'id' => 5]
             )
             ->willReturn(4);
 
@@ -218,7 +219,7 @@ class TodoModelTest extends TestCase
         $id = 88;
         $mockQB = $this->getMockBuilder(QueryBuilder::class)
             ->disableOriginalConstructor()
-            ->setMethods(['update', 'set', 'where', 'setParameter', 'execute'])
+            ->setMethods(['update', 'set', 'where', 'andWhere', 'setParameter', 'execute'])
             ->getMock();
 
         $mockQB->expects($this->at(0))
@@ -231,12 +232,14 @@ class TodoModelTest extends TestCase
             ->with('completed', '!completed')
             ->willReturn($mockQB);
 
-        $mockQB->expects($this->exactly(2))
+        $mockQB->expects($this->at(2))
             ->method('where')
-            ->with($this->logicalOr(
-                $this->equalTo('user_id = :user_id'),
-                $this->equalTo('id = :id')
-            ))
+            ->with('id = :id')
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(3))
+            ->method('andWhere')
+            ->with('user_id = :user_id')
             ->willReturn($mockQB);
 
         $mockQB->expects($this->exactly(2))

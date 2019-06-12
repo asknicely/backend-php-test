@@ -23,7 +23,7 @@ class TodoModel
             ->select('*')
             ->from(self::TABLE)
             ->where('user_id = :user_id')
-            ->where('id = :id')
+            ->andWhere('id = :id')
             ->setParameter(':user_id', $usrId)
             ->setParameter(':id', $id)
             ->execute()
@@ -66,7 +66,7 @@ class TodoModel
             ->update(self::TABLE)
             ->set('completed', '!completed')
             ->where('id = :id')
-            ->where('user_id = :user_id')
+            ->andWhere('user_id = :user_id')
             ->setParameter(':id', $id)
             ->setParameter(':user_id', $userId)
             ->execute();
