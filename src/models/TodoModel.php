@@ -36,4 +36,14 @@ class TodoModel
             'id' => $id
         ));
     }
+
+    public function toggleComplete($id){
+        // UPDATE todos set completed = !completed WHERE id = ? ($id)
+        $this->db->createQueryBuilder()
+        ->update(self::TABLE)
+        ->set('completed', '!completed')
+        ->where('id = :id')
+        ->setParameter(':id', $id)
+        ->execute();
+    }
 }

@@ -74,3 +74,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
     return $app['controller.todo']->delete($id);
 });
+
+$app->post('/todo/{id}/complete', function ($id) use ($app) {
+    return $app['controller.todo']->toggleComplete($id);
+});

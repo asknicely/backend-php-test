@@ -41,6 +41,11 @@ class TodoController
         return $this->app->redirect('/todo');
     }
 
+    public function toggleComplete(int $id) {
+        $this->model->toggleComplete($id);
+        return $this->app->redirect('/todo');
+    }
+
     // inject mock model for test
     public function setModel($model)
     {

@@ -4,6 +4,7 @@ require_once('src/models/TodoModel.php');
 use PHPUnit\Framework\TestCase;
 use App\Test\MockDB;
 use App\Models\TodoModel;
+use Doctrine\DBAL\Query\QueryBuilder;
 
 class TodoModelTest extends TestCase
 {
@@ -43,7 +44,7 @@ class TodoModelTest extends TestCase
     public function testAdd()
     {
         $mockDB = $this->getMockBuilder(MockDB::class)
-            ->setMethods(['insert','lastInsertId'])
+            ->setMethods(['insert', 'lastInsertId'])
             ->getMock();
         $expectedTodo = [
             'user_id' => 3,
@@ -81,5 +82,52 @@ class TodoModelTest extends TestCase
 
         $todoInst = new TodoModel($mockDB);
         $todoInst->delete(5);
+    }
+
+    public function testToggleComplete()
+    {
+
+        $id = 88;
+        $mockQB = $this->getMockBuilder(QueryBuilder::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['update', 'set', 'where', 'setParameter', 'execute'])
+            ->getMock();
+
+        $mockQB->expects($this->at(0))
+            ->method('update')
+            ->with(TodoModel::TABLE)
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(1))
+            ->method('set')
+            ->with('completed', '!completed')
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(2))
+            ->method('where')
+            ->with('id = :id')
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(3))
+            ->method('setParameter')
+            ->with(':id', $id)
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(4))
+            ->method('execute')
+            ->willReturn(true);
+
+
+        $mockDB = $this->getMockBuilder(MockDB::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['createQueryBuilder'])
+            ->getMock();
+
+        $mockDB->expects($this->once())
+            ->method('createQueryBuilder')
+            ->willReturn($mockQB);
+
+        $todoInst = new TodoModel($mockDB);
+        $todoInst->toggleComplete($id);
     }
 }

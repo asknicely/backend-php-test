@@ -19,7 +19,7 @@ class TodoControllerTest extends TestCase
     {
         $this->mockModel = $this->getMockBuilder(TodoModel::class)
             ->disableOriginalConstructor()
-            ->setMethods(['get', 'getAllByUser', 'add', 'delete'])
+            ->setMethods(['get', 'getAllByUser', 'add', 'delete', 'toggleComplete'])
             ->getMock('');
 
         $this->mockTwig = $this->getMockBuilder(MockTwig::class)
@@ -105,5 +105,18 @@ class TodoControllerTest extends TestCase
             ->with('/todo');
 
         $this->controller->delete(999);
+    }
+
+    public function testToggleComplete()
+    {
+        $this->mockModel->expects($this->once())
+            ->method('toggleComplete')
+            ->with(999);
+
+        $this->mockApp->expects($this->once())
+            ->method('redirect')
+            ->with('/todo');
+
+        $this->controller->toggleComplete(999);
     }
 }
