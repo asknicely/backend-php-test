@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Models\TodoModel;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class TodoController
 {
@@ -28,7 +29,10 @@ class TodoController
     }
 
     public function add(int $user_id, string $description) {
-        $this->model->add($user_id, $description);
+        $errors = $this->app['validator']->validate($description, new Assert\NotBlank());
+        if(count($errors) == 0) {
+            $this->model->add($user_id, $description);
+        }
         return $this->app->redirect('/todo');
     }
 

@@ -6,6 +6,7 @@ use App\Models\TodoModel;
 use App\Controllers\TodoController;
 use App\Test\MockTwig;
 use Silex\Application;
+use Silex\Provider\ValidatorServiceProvider;
 
 class TodoControllerTest extends TestCase
 {
@@ -28,6 +29,11 @@ class TodoControllerTest extends TestCase
         $this->mockApp = $this->getMockBuilder(Application::class)
             ->setMethods(['redirect'])
             ->getMock();
+
+        // register validator into app for test
+        $validator = new ValidatorServiceProvider();
+        $validator->register($this->mockApp);
+
         $this->mockApp['db'] = '';
         $this->mockApp['twig'] = $this->mockTwig;
 
@@ -75,6 +81,19 @@ class TodoControllerTest extends TestCase
         $this->controller->add(1, 'description');
     }
 
+    public function testAddFailWithEmptyDescription()
+    {
+        $this->mockModel->expects($this->never())
+            ->method('add')
+            ->with(1, 'description');
+
+        $this->mockApp->expects($this->once())
+            ->method('redirect')
+            ->with('/todo');
+
+        $this->controller->add(1, '');
+    }
+
     public function testDelete()
     {
         $this->mockModel->expects($this->once())
@@ -84,7 +103,7 @@ class TodoControllerTest extends TestCase
         $this->mockApp->expects($this->once())
             ->method('redirect')
             ->with('/todo');
-            
+
         $this->controller->delete(999);
     }
 }
