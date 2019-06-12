@@ -27,6 +27,13 @@
                 </td>
             </tr>
         {% endfor %}
+        <div class="text-center">
+                <ul class="pagination pagination-sm">
+                    {% for num in 1..pageTotal %}
+                        <li {{ (num == pageNum) ? "class=\"active\"" : ""}}><a href="?pageNum={{ num }}&pageSize={{ pageSize }}">{{ num }}</a></li>
+                    {% endfor %}
+                </ul>
+        </div>
         <tr>
             <form method="post" action="{{ app.request.baseurl }}/todo/add">
                 <td colspan="3">

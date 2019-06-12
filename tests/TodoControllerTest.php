@@ -4,9 +4,9 @@ require_once('src/controllers/TodoController.php');
 use PHPUnit\Framework\TestCase;
 use App\Models\TodoModel;
 use App\Controllers\TodoController;
-use App\Test\MockTwig;
 use Silex\Application;
 use Silex\Provider\ValidatorServiceProvider;
+use Silex\Provider\TwigServiceProvider;
 
 class TodoControllerTest extends TestCase
 {
@@ -19,10 +19,11 @@ class TodoControllerTest extends TestCase
     {
         $this->mockModel = $this->getMockBuilder(TodoModel::class)
             ->disableOriginalConstructor()
-            ->setMethods(['get', 'getAllByUser', 'add', 'delete', 'toggleComplete'])
+            ->setMethods(['getByUserIdWithPagination', 'get', 'getAllByUser', 'add', 'delete', 'toggleComplete'])
             ->getMock('');
 
-        $this->mockTwig = $this->getMockBuilder(MockTwig::class)
+        $this->mockTwig = $this->getMockBuilder(TwigServiceProvider::class)
+            ->disableOriginalConstructor()
             ->setMethods(['render'])
             ->getMock();
 
@@ -118,6 +119,44 @@ class TodoControllerTest extends TestCase
             ->with('/todo');
 
         $this->controller->toggleComplete(999);
+    }
+
+    public function testGetByUserIdWithPagination()
+    {
+        $data = [
+            'todo' => [],
+            'pageNum' => 10,  
+            'pageTotal' => 100,
+            'pageSize' => 20
+        ];
+        $this->mockModel->expects($this->once())
+            ->method('getByUserIdWithPagination')
+            ->with(1, 1, 10)
+            ->willReturn($data);
+        $this->mockTwig->expects($this->once())
+            ->method('render')
+            ->with('todos.html', $data)
+            ->willReturn('pass');
+        $this->controller->getByUserIdWithPagination(1, 2, 10);  
+    }
+
+    public function testGetByUserIdWithPaginationDefaultParams()
+    { 
+        $data = [
+            'todo' => [],
+            'pageNum' => 10,  
+            'pageTotal' => 100,
+            'pageSize' => 20
+        ];
+        $this->mockModel->expects($this->once())
+            ->method('getByUserIdWithPagination')
+            ->with(1, 0, 5)   // default should be pageNum = 0 pageSize = 5
+            ->willReturn($data);
+        $this->mockTwig->expects($this->once())
+            ->method('render')
+            ->with('todos.html', $data)
+            ->willReturn('pass');
+        $this->controller->getByUserIdWithPagination(1); 
     }
 
     public function testGetJson()

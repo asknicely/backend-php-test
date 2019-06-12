@@ -1,10 +1,17 @@
 <?php
 namespace App\Models;
 
+use Doctrine\DBAL\Connection;
+
 class TodoModel
 {
     protected $db;
+
+    public $mockGetTodoTotal; // mock point for function getTodoTotal
+
     const TABLE = 'todos';
+
+
     public function __construct($db)
     {
         $this->db = $db;
@@ -37,13 +44,42 @@ class TodoModel
         ));
     }
 
-    public function toggleComplete($id){
+    public function toggleComplete($id)
+    {
         // UPDATE todos set completed = !completed WHERE id = ? ($id)
         $this->db->createQueryBuilder()
-        ->update(self::TABLE)
-        ->set('completed', '!completed')
-        ->where('id = :id')
-        ->setParameter(':id', $id)
-        ->execute();
+            ->update(self::TABLE)
+            ->set('completed', '!completed')
+            ->where('id = :id')
+            ->setParameter(':id', $id)
+            ->execute();
+    }
+
+    // TODO need to handle count with COUNT(*)
+    private function getTodoTotal($userId) {
+        if($this->mockGetTodoTotal != null) {
+            return $this->mockGetTodoTotal;
+        }
+        return count($this->getAllbyUser($userId));
+    }
+
+    public function getByUserIdWithPagination(int $userId, int $pageNum, int $pageSize)
+    {
+        $pageTotal = ceil($this->getTodoTotal($userId) / $pageSize); 
+        $offset = $pageSize * $pageNum;
+        $data = $this->db->createQueryBuilder()
+            ->select('*')
+            ->from(self::TABLE)
+            ->where('user_id = :user_id')
+            ->setParameter(':user_id', $userId)
+            ->setFirstResult($offset)
+            ->setMaxResults($pageSize)
+            ->execute();
+        return [ 
+            'todos' => $data,
+            'pageNum' => $pageNum + 1, // in front end the start page is 1 
+            'pageTotal' => $pageTotal,
+            'pageSize' => $pageSize
+        ];
     }
 }

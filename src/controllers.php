@@ -47,7 +47,7 @@ $app->get('/logout', function () use ($app) {
 });
 
 
-$app->get('/todo/{id}', function ($id) use ($app) {
+$app->get('/todo/{id}', function (Request $request,  $id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
@@ -55,7 +55,9 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     if ($id) {
         return $app['controller.todo']->get($id);
     } else {
-        return $app['controller.todo']->getByUserId($user['id']);
+        $pageNum =  $request->get('pageNum') ?: 1;
+        $pageSize = $request->get('pageSize') ?: 5;
+        return $app['controller.todo']->getByUserIdWithPagination($user['id'], $pageNum, $pageSize);
     }
 })
     ->value('id', null);

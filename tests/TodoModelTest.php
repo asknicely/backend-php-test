@@ -5,12 +5,15 @@ use PHPUnit\Framework\TestCase;
 use App\Test\MockDB;
 use App\Models\TodoModel;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Driver\DrizzlePDOMySql\Connection;
 
 class TodoModelTest extends TestCase
 {
     public function testGet()
     {
-        $mockDB = $this->getMockBuilder(MockDB::class)
+
+        $mockDB = $this->getMockBuilder(Connection::class)
+            ->disableOriginalConstructor()
             ->setMethods(['fetchAssoc'])
             ->getMock();
 
@@ -25,7 +28,8 @@ class TodoModelTest extends TestCase
 
     public function testGetAllbyUser()
     {
-        $mockDB = $this->getMockBuilder(MockDB::class)
+        $mockDB = $this->getMockBuilder(Connection::class)
+            ->disableOriginalConstructor()
             ->setMethods(['fetchAll'])
             ->getMock();
 
@@ -43,7 +47,8 @@ class TodoModelTest extends TestCase
 
     public function testAdd()
     {
-        $mockDB = $this->getMockBuilder(MockDB::class)
+        $mockDB = $this->getMockBuilder(Connection::class)
+            ->disableOriginalConstructor()
             ->setMethods(['insert', 'lastInsertId'])
             ->getMock();
         $expectedTodo = [
@@ -68,7 +73,8 @@ class TodoModelTest extends TestCase
 
     public function testDelete()
     {
-        $mockDB = $this->getMockBuilder(MockDB::class)
+        $mockDB = $this->getMockBuilder(Connection::class)
+            ->disableOriginalConstructor()
             ->setMethods(['delete'])
             ->getMock();
 
@@ -82,6 +88,64 @@ class TodoModelTest extends TestCase
 
         $todoInst = new TodoModel($mockDB);
         $todoInst->delete(5);
+    }
+
+    public function testGetByUserIdWithPagination()
+    {
+        $user_id = 10;
+        $offset = 4;
+        $pageSize = 2;
+        $mockQB = $this->getMockBuilder(QueryBuilder::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['select', 'from', 'where', 'setParameter', 'setFirstResult', 'setMaxResults', 'execute'])
+            ->getMock();
+
+        $mockQB->expects($this->at(0))
+            ->method('select')
+            ->with('*')
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(1))
+            ->method('from')
+            ->with(TodoModel::TABLE)
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(2))
+            ->method('where')
+            ->with('user_id = :user_id')
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(3))
+            ->method('setParameter')
+            ->with(':user_id', $user_id)
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(4))
+            ->method('setFirstResult')
+            ->with($offset)
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(5))
+            ->method('setMaxResults')
+            ->with($pageSize)
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(6))
+            ->method('execute')
+            ->willReturn(true);
+
+
+        $mockDB = $this->getMockBuilder(Connection::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['createQueryBuilder'])
+            ->getMock();
+        $mockDB->expects($this->once())
+            ->method('createQueryBuilder')
+            ->willReturn($mockQB);
+
+        $todoInst = new TodoModel($mockDB);
+        $todoInst->mockGetTodoTotal = 10;
+        $todoInst->getByUserIdWithPagination($user_id, 2, 2);
     }
 
     public function testToggleComplete()
@@ -118,7 +182,7 @@ class TodoModelTest extends TestCase
             ->willReturn(true);
 
 
-        $mockDB = $this->getMockBuilder(MockDB::class)
+        $mockDB = $this->getMockBuilder(Connection::class)
             ->disableOriginalConstructor()
             ->setMethods(['createQueryBuilder'])
             ->getMock();
