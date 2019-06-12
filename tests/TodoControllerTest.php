@@ -7,6 +7,8 @@ use App\Controllers\TodoController;
 use Silex\Application;
 use Silex\Provider\ValidatorServiceProvider;
 use Silex\Provider\TwigServiceProvider;
+use Silex\Provider\SessionServiceProvider;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBag;
 
 class TodoControllerTest extends TestCase
 {
@@ -14,6 +16,7 @@ class TodoControllerTest extends TestCase
     private $mockTwig;
     private $mockModel;
     private $mockApp;
+    private $mockSession;
 
     public function setUp()
     {
@@ -31,12 +34,17 @@ class TodoControllerTest extends TestCase
             ->setMethods(['redirect', 'json'])
             ->getMock();
 
+        $this->mockSession = $this->getMockBuilder(SessionServiceProvider::class)
+            ->setMethods(['getFlashBag'])
+            ->getMock();
+
         // register validator into app for test
         $validator = new ValidatorServiceProvider();
         $validator->register($this->mockApp);
 
         $this->mockApp['db'] = '';
         $this->mockApp['twig'] = $this->mockTwig;
+        $this->mockApp['session'] = $this->mockSession;
 
         $this->controller = new TodoController($this->mockApp);
         $this->controller->setModel($this->mockModel);
@@ -79,6 +87,17 @@ class TodoControllerTest extends TestCase
             ->method('redirect')
             ->with('/todo');
 
+        $mockFlashBag = $this->getMockBuilder(FlashBag::class)
+            ->setMethods(['add'])
+            ->getMock();
+        $this->mockSession->expects($this->once())
+            ->method('getFlashBag')
+            ->willReturn($mockFlashBag);
+
+        $mockFlashBag->expects($this->once())
+            ->method('add')
+            ->with('notice', 'add success');
+
         $this->controller->add(1, 'description');
     }
 
@@ -105,6 +124,17 @@ class TodoControllerTest extends TestCase
             ->method('redirect')
             ->with('/todo');
 
+        $mockFlashBag = $this->getMockBuilder(FlashBag::class)
+            ->setMethods(['add'])
+            ->getMock();
+        $this->mockSession->expects($this->once())
+            ->method('getFlashBag')
+            ->willReturn($mockFlashBag);
+
+        $mockFlashBag->expects($this->once())
+            ->method('add')
+            ->with('notice', 'delete success');
+
         $this->controller->delete(999);
     }
 
@@ -125,7 +155,7 @@ class TodoControllerTest extends TestCase
     {
         $data = [
             'todo' => [],
-            'pageNum' => 10,  
+            'pageNum' => 10,
             'pageTotal' => 100,
             'pageSize' => 20
         ];
@@ -137,14 +167,14 @@ class TodoControllerTest extends TestCase
             ->method('render')
             ->with('todos.html', $data)
             ->willReturn('pass');
-        $this->controller->getByUserIdWithPagination(1, 2, 10);  
+        $this->controller->getByUserIdWithPagination(1, 2, 10);
     }
 
     public function testGetByUserIdWithPaginationDefaultParams()
-    { 
+    {
         $data = [
             'todo' => [],
-            'pageNum' => 10,  
+            'pageNum' => 10,
             'pageTotal' => 100,
             'pageSize' => 20
         ];
@@ -156,7 +186,7 @@ class TodoControllerTest extends TestCase
             ->method('render')
             ->with('todos.html', $data)
             ->willReturn('pass');
-        $this->controller->getByUserIdWithPagination(1); 
+        $this->controller->getByUserIdWithPagination(1);
     }
 
     public function testGetJson()

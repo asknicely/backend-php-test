@@ -6,7 +6,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class TodoController
 {
-
     private $app;
     private $model;
     function __construct($app)
@@ -39,6 +38,7 @@ class TodoController
         $errors = $this->app['validator']->validate($description, new Assert\NotBlank());
         if (count($errors) == 0) {
             $this->model->add($user_id, $description);
+            $this->app['session']->getFlashBag()->add('notice', 'add success');
         }
         return $this->app->redirect('/todo');
     }
@@ -46,6 +46,7 @@ class TodoController
     public function delete(int $id)
     {
         $this->model->delete($id);
+        $this->app['session']->getFlashBag()->add('notice', 'delete success');
         return $this->app->redirect('/todo');
     }
 
