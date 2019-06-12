@@ -53,8 +53,7 @@ $app->get('/todo/{id}', function (Request $request,  $id) use ($app) {
         $pageSize = $request->get('pageSize') ?: 5;
         return $app['controller.todo']->getByUserIdWithPagination($pageNum, $pageSize);
     }
-})
-    ->value('id', null);
+})->value('id', null)->assert('id', '\d*');
 
 
 $app->post('/todo/add', function (Request $request) use ($app) {
@@ -64,13 +63,13 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
     return $app['controller.todo']->delete($id);
-});
+})->assert('id', '\d+');
 
-$app->post('/todo/{id}/complete', function ($id) use ($app) {
+$app->post('/todo/complete/{id}', function ($id) use ($app) {
     return $app['controller.todo']->toggleComplete($id);
-})->value('id', null);
+})->assert('id', '\d+');
 
 $app->get('/todo/{id}/json', function ($id) use ($app) {
     // if we have a valid id then retreve the data and display it as json
     return $app['controller.todo']->getJson($id);
-})->value('id', null);
+})->assert('id', '\d+');
