@@ -11,35 +11,99 @@ class TodoModelTest extends TestCase
 {
     public function testGet()
     {
+        $mockQB = $this->getMockBuilder(QueryBuilder::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['select', 'from', 'where', 'setParameter', 'execute', 'fetch'])
+            ->getMock();
+
+        $mockQB->expects($this->at(0))
+            ->method('select')
+            ->with('*')
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(1))
+            ->method('from')
+            ->with(TodoModel::TABLE)
+            ->willReturn($mockQB);
+        $mockQB->expects($this->exactly(2))
+            ->method('where')
+            ->with($this->logicalOr(
+                $this->equalTo('user_id = :user_id'),
+                $this->equalTo('id = :id')
+            ))
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->exactly(2))
+            ->method('setParameter')
+            ->with($this->logicalOr(
+                $this->equalTo(':user_id', 10),
+                $this->equalTo(':id', 1)
+            ))
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(6))
+            ->method('execute')
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(7))
+            ->method('fetch')
+            ->willReturn($mockQB);
 
         $mockDB = $this->getMockBuilder(Connection::class)
             ->disableOriginalConstructor()
-            ->setMethods(['fetchAssoc'])
+            ->setMethods(['createQueryBuilder'])
             ->getMock();
 
-
         $mockDB->expects($this->once())
-            ->method('fetchAssoc')
-            ->with('SELECT * FROM todos WHERE id = ?', [1]);
+            ->method('createQueryBuilder')
+            ->willReturn($mockQB);
 
         $todoInst = new TodoModel($mockDB);
-        $todoInst->get(1);
+        $todoInst->get(10, 1);
     }
 
     public function testGetAllbyUser()
     {
-        $mockDB = $this->getMockBuilder(Connection::class)
+        $mockQB = $this->getMockBuilder(QueryBuilder::class)
             ->disableOriginalConstructor()
-            ->setMethods(['fetchAll'])
+            ->setMethods(['select', 'from', 'where', 'setParameter', 'execute', 'fetch'])
             ->getMock();
 
+        $mockQB->expects($this->at(0))
+            ->method('select')
+            ->with('*')
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(1))
+            ->method('from')
+            ->with(TodoModel::TABLE)
+            ->willReturn($mockQB);
+        $mockQB->expects($this->at(2))
+            ->method('where')
+            ->with($this->equalTo('user_id = :user_id'))
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(3))
+            ->method('setParameter')
+            ->with($this->equalTo(':user_id', 10))
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(4))
+            ->method('execute')
+            ->willReturn($mockQB);
+
+        $mockQB->expects($this->at(5))
+            ->method('fetch')
+            ->willReturn($mockQB);
+
+        $mockDB = $this->getMockBuilder(Connection::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['createQueryBuilder'])
+            ->getMock();
 
         $mockDB->expects($this->once())
-            ->method('fetchAll')
-            ->with(
-                'SELECT * FROM todos WHERE user_id = ?',
-                [2]
-            );
+            ->method('createQueryBuilder')
+            ->willReturn($mockQB);
 
         $todoInst = new TodoModel($mockDB);
         $todoInst->getAllbyUser(2);

@@ -38,7 +38,7 @@ class TodoController
         }
 
         return $this->app['twig']->render('todo.html', [
-            'todo' => $this->model->get($id),
+            'todo' => $this->model->get($usr['id'], $id),
         ]);
     }
 
@@ -49,7 +49,7 @@ class TodoController
             return $this->redirect();
         }
 
-        return $this->app->json($this->model->get($id));
+        return $this->app->json($this->model->get($usr['id'], $id));
     }
 
     public function getByUserId()

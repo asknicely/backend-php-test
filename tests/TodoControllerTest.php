@@ -57,7 +57,7 @@ class TodoControllerTest extends TestCase
     {
         $this->mockModel->expects($this->once())
             ->method('get')
-            ->with(1)
+            ->with(10, 1)
             ->willReturn('mockTodo');
 
         $this->mockTwig->expects($this->once())
@@ -70,15 +70,15 @@ class TodoControllerTest extends TestCase
     public function testGetByUserId()
     {
         $this->mockModel->expects($this->once())
-            ->method('get')
-            ->with(1)
+            ->method('getAllByUser')
+            ->with(10)
             ->willReturn('mockTodo');
 
         $this->mockTwig->expects($this->once())
             ->method('render')
-            ->with('todo.html', ['todo' => 'mockTodo'])
+            ->with('todos.html', ['todos' => 'mockTodo'])
             ->willReturn('pass');
-        $this->assertEquals('pass', $this->controller->get(1));
+        $this->assertEquals('pass', $this->controller->getByUserId());
     }
 
     public function testAdd()
@@ -197,7 +197,7 @@ class TodoControllerTest extends TestCase
     {
         $this->mockModel->expects($this->once())
             ->method('get')
-            ->with(1)
+            ->with(10, 1)
             ->willReturn(['id' => 1, 'description' => 'test']);
 
         $this->mockApp->expects($this->once())

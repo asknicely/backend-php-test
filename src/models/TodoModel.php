@@ -16,15 +16,29 @@ class TodoModel
     {
         $this->db = $db;
     }
-    public function get($id)
+    public function get($usrId, $id)
     {
         // retrieve a single todo record
-        return $this->db->fetchAssoc('SELECT * FROM todos WHERE id = ?', array($id));
+        return $this->db->createQueryBuilder()
+            ->select('*')
+            ->from(self::TABLE)
+            ->where('user_id = :user_id')
+            ->where('id = :id')
+            ->setParameter(':user_id', $usrId)
+            ->setParameter(':id', $id)
+            ->execute()
+            ->fetch();
     }
-    public function getAllbyUser($userId)
+    public function getAllbyUser($usrId)
     {
         // return all todo records for this user
-        return $this->db->fetchAll('SELECT * FROM todos WHERE user_id = ?', array($userId));
+        return $this->db->createQueryBuilder()
+            ->select('*')
+            ->from(self::TABLE)
+            ->where('user_id = :user_id')
+            ->setParameter(':user_id', $usrId)
+            ->execute()
+            ->fetch();
     }
 
     public function add($userId, $description)
@@ -56,8 +70,9 @@ class TodoModel
     }
 
     // TODO need to handle count with COUNT(*)
-    private function getTodoTotal($userId) {
-        if($this->mockGetTodoTotal != null) {
+    private function getTodoTotal($userId)
+    {
+        if ($this->mockGetTodoTotal != null) {
             return $this->mockGetTodoTotal;
         }
         return count($this->getAllbyUser($userId));
@@ -65,7 +80,7 @@ class TodoModel
 
     public function getByUserIdWithPagination(int $userId, int $pageNum, int $pageSize)
     {
-        $pageTotal = ceil($this->getTodoTotal($userId) / $pageSize); 
+        $pageTotal = ceil($this->getTodoTotal($userId) / $pageSize);
         $offset = $pageSize * $pageNum;
         $data = $this->db->createQueryBuilder()
             ->select('*')
@@ -75,7 +90,7 @@ class TodoModel
             ->setFirstResult($offset)
             ->setMaxResults($pageSize)
             ->execute();
-        return [ 
+        return [
             'todos' => $data,
             'pageNum' => $pageNum + 1, // in front end the start page is 1 
             'pageTotal' => $pageTotal,
