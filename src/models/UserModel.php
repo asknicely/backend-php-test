@@ -21,7 +21,7 @@ class UserModel
         ->where('username = :username')
         ->andWhere('password = :password')
         ->setParameter(':username', $usrName)
-        ->setParameter(':password', $pwd)
+        ->setParameter(':password', md5($pwd))
         ->execute()
         ->fetch();
         return count($data) > 0 ? $data :  false;

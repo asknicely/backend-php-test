@@ -37,7 +37,7 @@ class UserModelTest extends TestCase
             ->method('setParameter')
             ->withConsecutive(
                 [$this->equalTo(':username'), $this->equalTo('test')],
-                [$this->equalTo(':password'), $this->equalTo('pwd')],
+                [$this->equalTo(':password'), $this->equalTo(md5('pwd'))],
             )
             ->willReturn($mockQB);
 
