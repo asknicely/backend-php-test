@@ -70,16 +70,21 @@ class TodoModel
             ->execute();
     }
 
-    // TODO need to handle count with COUNT(*)
-    private function getTodoTotal($userId)
+    private function getTodoTotal($usrId)
     {
         if ($this->mockGetTodoTotal != null) {
             return $this->mockGetTodoTotal;
         }
-        return count($this->getAllbyUser($userId));
+        return $this->db->createQueryBuilder()
+            ->select('count(*)')
+            ->from(self::TABLE)
+            ->where('user_id = :user_id')
+            ->setParameter(':user_id', $usrId)
+            ->execute()
+            ->fetchColumn(0);
     }
 
-    public function getByUserIdWithPagination(int $userId, int $pageNum, int $pageSize)
+    public function getByUserIdWithPagination($userId, int $pageNum, int $pageSize)
     {
         $pageTotal = ceil($this->getTodoTotal($userId) / $pageSize);
         $offset = $pageSize * $pageNum;
