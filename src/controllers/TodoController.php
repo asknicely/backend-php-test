@@ -97,7 +97,7 @@ class TodoController
             return $this->redirect();
         }
 
-        $this->model->toggleComplete($id);
+        $this->model->toggleComplete($usr['id'], $id);
         return $this->app->redirect('/todo');
     }
 

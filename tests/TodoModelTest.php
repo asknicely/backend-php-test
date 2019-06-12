@@ -231,17 +231,23 @@ class TodoModelTest extends TestCase
             ->with('completed', '!completed')
             ->willReturn($mockQB);
 
-        $mockQB->expects($this->at(2))
+        $mockQB->expects($this->exactly(2))
             ->method('where')
-            ->with('id = :id')
+            ->with($this->logicalOr(
+                $this->equalTo('user_id = :user_id'),
+                $this->equalTo('id = :id')
+            ))
             ->willReturn($mockQB);
 
-        $mockQB->expects($this->at(3))
+        $mockQB->expects($this->exactly(2))
             ->method('setParameter')
-            ->with(':id', $id)
+            ->with($this->logicalOr(
+                $this->equalTo(':user_id', 10),
+                $this->equalTo(':id', $id)
+            ))
             ->willReturn($mockQB);
 
-        $mockQB->expects($this->at(4))
+        $mockQB->expects($this->at(6))
             ->method('execute')
             ->willReturn(true);
 
@@ -256,6 +262,6 @@ class TodoModelTest extends TestCase
             ->willReturn($mockQB);
 
         $todoInst = new TodoModel($mockDB);
-        $todoInst->toggleComplete($id);
+        $todoInst->toggleComplete(10, $id);
     }
 }
