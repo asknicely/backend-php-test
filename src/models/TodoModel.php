@@ -16,7 +16,8 @@ class TodoModel
     }
     public function get($usrId, $id)
     {
-        // retrieve a single todo record
+
+        // SELECT * FROM todos WHERE user_id = (?) and id = (?) ($userId, $id)
         return $this->db->createQueryBuilder()
             ->select('*')
             ->from(self::TABLE)
@@ -29,7 +30,7 @@ class TodoModel
     }
     public function getAllbyUser($usrId)
     {
-        // return all todo records for this user
+        // SELECT * FROM todos WHERE user_id = (?)($userId)
         return $this->db->createQueryBuilder()
             ->select('*')
             ->from(self::TABLE)
@@ -59,7 +60,7 @@ class TodoModel
 
     public function toggleComplete($userId, $id)
     {
-        // UPDATE todos set completed = !completed WHERE id = ? ($id)
+        // UPDATE todos SET completed = !completed WHERE id = ? ($id)
         $this->db->createQueryBuilder()
             ->update(self::TABLE)
             ->set('completed', '!completed')
@@ -75,6 +76,7 @@ class TodoModel
         if ($this->mockGetTodoTotal != null) {
             return $this->mockGetTodoTotal;
         }
+        // SELECT count(*) FROM todos WHERE user_id = (?)($userId)
         return $this->db->createQueryBuilder()
             ->select('count(*)')
             ->from(self::TABLE)
@@ -88,6 +90,7 @@ class TodoModel
     {
         $pageTotal = ceil($this->getTodoTotal($userId) / $pageSize);
         $offset = $pageSize * $pageNum;
+        // SELECT * FROM todos WHERE user_id = (?) OFFSET (?) limit (?) ($userId, $offset, $pageSize)
         $data = $this->db->createQueryBuilder()
             ->select('*')
             ->from(self::TABLE)

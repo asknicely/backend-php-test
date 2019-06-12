@@ -28,10 +28,8 @@ $app->get('/', function () use ($app) {
 $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
     $password = $request->get('password');
-    if (!empty(trim($username))) {
-        return $app['controller.user']->login($username, $password);
-    }
-    return $app['twig']->render('login.html');
+
+    return $app['controller.user']->login($username, $password);
 });
 
 
@@ -65,7 +63,6 @@ $app->post('/todo/complete/{id}', function ($id) use ($app) {
     return $app['controller.todo']->toggleComplete($id);
 })->assert('id', '\d+');
 
-$app->get('/todo/{id}/json', function ($id) use ($app) {
-    // if we have a valid id then retreve the data and display it as json
+$app->get('/todo/json/{id}', function ($id) use ($app) {
     return $app['controller.todo']->getJson($id);
 })->assert('id', '\d+');

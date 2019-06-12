@@ -22,7 +22,7 @@
                         <button type="submit" class="btn btn-sm btn-link">{{ todo.completed ? 'undo' : 'complete' }}</button>
                     </form>
                 </td>
-                <td><a href="{{ app.request.baseurl }}/todo/{{ todo.id }}/json">json</a></td>
+                <td><a href="{{ app.request.baseurl }}/todo/json/{{ todo.id }}">json</a></td>
                 <td>
                     <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
                         <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
