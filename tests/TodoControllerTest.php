@@ -18,6 +18,8 @@ class TodoControllerTest extends TestCase
     private $mockApp;
     private $mockSession;
 
+    private $mockUser = ['id' => 10];
+
     public function setUp()
     {
         $this->mockModel = $this->getMockBuilder(TodoModel::class)
@@ -35,8 +37,10 @@ class TodoControllerTest extends TestCase
             ->getMock();
 
         $this->mockSession = $this->getMockBuilder(SessionServiceProvider::class)
-            ->setMethods(['getFlashBag'])
+            ->setMethods(['getFlashBag', 'get'])
             ->getMock();
+
+        $this->mockSession->method('get')->willReturn($this->mockUser);
 
         // register validator into app for test
         $validator = new ValidatorServiceProvider();
@@ -81,7 +85,7 @@ class TodoControllerTest extends TestCase
     {
         $this->mockModel->expects($this->once())
             ->method('add')
-            ->with(1, 'description');
+            ->with(10, 'description');
 
         $this->mockApp->expects($this->once())
             ->method('redirect')
@@ -98,20 +102,20 @@ class TodoControllerTest extends TestCase
             ->method('add')
             ->with('notice', 'add success');
 
-        $this->controller->add(1, 'description');
+        $this->controller->add('description');
     }
 
     public function testAddFailWithEmptyDescription()
     {
         $this->mockModel->expects($this->never())
             ->method('add')
-            ->with(1, 'description');
+            ->with(10, 'description');
 
         $this->mockApp->expects($this->once())
             ->method('redirect')
             ->with('/todo');
 
-        $this->controller->add(1, '');
+        $this->controller->add('');
     }
 
     public function testDelete()
@@ -161,13 +165,13 @@ class TodoControllerTest extends TestCase
         ];
         $this->mockModel->expects($this->once())
             ->method('getByUserIdWithPagination')
-            ->with(1, 1, 10)
+            ->with(10, 1, 10)
             ->willReturn($data);
         $this->mockTwig->expects($this->once())
             ->method('render')
             ->with('todos.html', $data)
             ->willReturn('pass');
-        $this->controller->getByUserIdWithPagination(1, 2, 10);
+        $this->controller->getByUserIdWithPagination(2, 10);
     }
 
     public function testGetByUserIdWithPaginationDefaultParams()
@@ -180,13 +184,13 @@ class TodoControllerTest extends TestCase
         ];
         $this->mockModel->expects($this->once())
             ->method('getByUserIdWithPagination')
-            ->with(1, 0, 5)   // default should be pageNum = 0 pageSize = 5
+            ->with(10, 0, 5)   // default should be pageNum = 0 pageSize = 5
             ->willReturn($data);
         $this->mockTwig->expects($this->once())
             ->method('render')
             ->with('todos.html', $data)
             ->willReturn('pass');
-        $this->controller->getByUserIdWithPagination(1);
+        $this->controller->getByUserIdWithPagination();
     }
 
     public function testGetJson()
@@ -202,5 +206,27 @@ class TodoControllerTest extends TestCase
             ->willReturn('pass');
 
         $this->assertEquals('pass', $this->controller->getJson(1));
+    }
+
+    public function testRedirectIfUnAuthenticated()
+    {
+        $this->mockSession = $this->getMockBuilder(SessionServiceProvider::class)
+            ->setMethods(['getFlashBag', 'get'])
+            ->getMock();
+        $this->mockSession->method('get')->willReturn(null);
+        $this->mockApp['session'] = $this->mockSession;
+
+        $this->controller = new TodoController($this->mockApp);
+        $this->mockApp->expects($this->exactly(7))
+            ->method('redirect')
+            ->with('/login');
+
+        $this->controller->get(1);
+        $this->controller->getJson(1);
+        $this->controller->getByUserId(1);
+        $this->controller->add('test');
+        $this->controller->delete(1);
+        $this->controller->toggleComplete(1);
+        $this->controller->getByUserIdWithPagination();
     }
 }

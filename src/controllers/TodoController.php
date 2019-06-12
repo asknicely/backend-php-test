@@ -14,8 +14,29 @@ class TodoController
         $this->model = new TodoModel($app['db']);
     }
 
+    // inject mock model for test
+    public function setModel($model)
+    {
+        $this->model = $model;
+    }
+
+    private function getLoginUser()
+    {
+        return $this->app['session']->get('user');
+    }
+
+    private function redirect(string $url = '/login')
+    {
+        return $this->app->redirect($url);
+    }
+
     public function get(int $id)
     {
+        $usr = $this->getLoginUser();
+        if ($usr === null) {
+            return $this->redirect();
+        }
+
         return $this->app['twig']->render('todo.html', [
             'todo' => $this->model->get($id),
         ]);
@@ -23,21 +44,35 @@ class TodoController
 
     public function getJson(int $id)
     {
+        $usr = $this->getLoginUser();
+        if ($usr === null) {
+            return $this->redirect();
+        }
+
         return $this->app->json($this->model->get($id));
     }
 
-    public function getByUserId(int $user_id)
+    public function getByUserId()
     {
+        $usr = $this->getLoginUser();
+        if ($usr === null) {
+            return $this->redirect();
+        }
         return $this->app['twig']->render('todos.html', [
-            'todos' => $this->model->getAllbyUser($user_id),
+            'todos' => $this->model->getAllbyUser($usr['id']),
         ]);
     }
 
-    public function add(int $user_id, string $description)
+    public function add(string $description)
     {
+        $usr = $this->getLoginUser();
+        if ($usr === null) {
+            return $this->redirect();
+        }
+
         $errors = $this->app['validator']->validate($description, new Assert\NotBlank());
         if (count($errors) == 0) {
-            $this->model->add($user_id, $description);
+            $this->model->add($usr['id'], $description);
             $this->app['session']->getFlashBag()->add('notice', 'add success');
         }
         return $this->app->redirect('/todo');
@@ -45,18 +80,28 @@ class TodoController
 
     public function delete(int $id)
     {
+        $usr = $this->getLoginUser();
+        if ($usr === null) {
+            return $this->redirect();
+        }
+
         $this->model->delete($id);
         $this->app['session']->getFlashBag()->add('notice', 'delete success');
-        return $this->app->redirect('/todo');
+        return $this->redirect('/todo');
     }
 
     public function toggleComplete(int $id)
     {
+        $usr = $this->getLoginUser();
+        if ($usr === null) {
+            return $this->redirect();
+        }
+
         $this->model->toggleComplete($id);
         return $this->app->redirect('/todo');
     }
 
-    public function getByUserIdWithPagination(int $userId, int $pageNum = 1, int $pageSize = 5)
+    public function getByUserIdWithPagination(int $pageNum = 1, int $pageSize = 5)
     {
         /*
           [
@@ -66,13 +111,12 @@ class TodoController
               totalPage => 10,
           ]
         */
-        $data = $this->model->getByUserIdWithPagination($userId, $pageNum - 1, $pageSize);
-        return $this->app['twig']->render('todos.html', $data);
-    }
+        $usr = $this->getLoginUser();
+        if ($usr === null) {
+            return $this->redirect();
+        }
 
-    // inject mock model for test
-    public function setModel($model)
-    {
-        $this->model = $model;
+        $data = $this->model->getByUserIdWithPagination($usr['id'], $pageNum - 1, $pageSize);
+        return $this->app['twig']->render('todos.html', $data);
     }
 }

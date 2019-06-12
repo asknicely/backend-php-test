@@ -11,7 +11,6 @@ $app['controller.todo'] = function () use ($app) {
 
 $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
-
     return $twig;
 }));
 
@@ -36,7 +35,6 @@ $app->match('/login', function (Request $request) use ($app) {
             return $app->redirect('/todo');
         }
     }
-
     return $app['twig']->render('login.html', array());
 });
 
@@ -48,46 +46,31 @@ $app->get('/logout', function () use ($app) {
 
 
 $app->get('/todo/{id}', function (Request $request,  $id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-
     if ($id) {
         return $app['controller.todo']->get($id);
     } else {
         $pageNum =  $request->get('pageNum') ?: 1;
         $pageSize = $request->get('pageSize') ?: 5;
-        return $app['controller.todo']->getByUserIdWithPagination($user['id'], $pageNum, $pageSize);
+        return $app['controller.todo']->getByUserIdWithPagination($pageNum, $pageSize);
     }
 })
     ->value('id', null);
 
 
 $app->post('/todo/add', function (Request $request) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-    $user_id = $user['id'];
     $description = $request->get('description');
-    return $app['controller.todo']->add($user_id, $description);
+    return $app['controller.todo']->add($description);
 });
-
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
     return $app['controller.todo']->delete($id);
 });
 
 $app->post('/todo/{id}/complete', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
     return $app['controller.todo']->toggleComplete($id);
 })->value('id', null);
 
 $app->get('/todo/{id}/json', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
     // if we have a valid id then retreve the data and display it as json
     return $app['controller.todo']->getJson($id);
 })->value('id', null);
