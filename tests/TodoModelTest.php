@@ -2,7 +2,6 @@
 
 require_once('src/models/TodoModel.php');
 use PHPUnit\Framework\TestCase;
-use App\Test\MockDB;
 use App\Models\TodoModel;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Driver\DrizzlePDOMySql\Connection;
@@ -36,10 +35,10 @@ class TodoModelTest extends TestCase
 
         $mockQB->expects($this->exactly(2))
             ->method('setParameter')
-            ->with($this->logicalOr(
-                $this->equalTo(':user_id', 10),
-                $this->equalTo(':id', 1)
-            ))
+            ->withConsecutive(
+                [$this->equalTo(':user_id'), $this->equalTo(10)],
+                [$this->equalTo(':id'), $this->equalTo('1')]
+            )
             ->willReturn($mockQB);
 
         $mockQB->expects($this->at(6))
@@ -244,10 +243,10 @@ class TodoModelTest extends TestCase
 
         $mockQB->expects($this->exactly(2))
             ->method('setParameter')
-            ->with($this->logicalOr(
-                $this->equalTo(':user_id', 10),
-                $this->equalTo(':id', $id)
-            ))
+            ->withConsecutive(
+                [$this->equalTo(':id'), $this->equalTo($id)],
+                [$this->equalTo(':user_id'), $this->equalTo(10)],
+            )
             ->willReturn($mockQB);
 
         $mockQB->expects($this->at(6))
