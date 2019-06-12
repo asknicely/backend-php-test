@@ -122,7 +122,7 @@ class TodoControllerTest extends TestCase
     {
         $this->mockModel->expects($this->once())
             ->method('delete')
-            ->with(999);
+            ->with(10, 999);
 
         $this->mockApp->expects($this->once())
             ->method('redirect')

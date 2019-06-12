@@ -50,11 +50,12 @@ class TodoModel
         ));
         return $this->db->lastInsertId();
     }
-    public function delete($id)
+    public function delete($usrId, $id)
     {
         // DELETE FROM todos WHERE id = ? ($id)
         $this->db->delete(self::TABLE, array(
-            'id' => $id
+            'id' => $id,
+            'user_id' => $usrId
         ));
     }
 

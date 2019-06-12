@@ -146,12 +146,12 @@ class TodoModelTest extends TestCase
             ->method('delete')
             ->with(
                 TodoModel::TABLE,
-                ['id' => 5]
+                ['user_id'=> 10, 'id' => 5]
             )
             ->willReturn(4);
 
         $todoInst = new TodoModel($mockDB);
-        $todoInst->delete(5);
+        $todoInst->delete(10, 5);
     }
 
     public function testGetByUserIdWithPagination()

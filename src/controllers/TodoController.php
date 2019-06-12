@@ -85,7 +85,7 @@ class TodoController
             return $this->redirect();
         }
 
-        $this->model->delete($id);
+        $this->model->delete($usr['id'], $id);
         $this->app['session']->getFlashBag()->add('notice', 'delete success');
         return $this->redirect('/todo');
     }
