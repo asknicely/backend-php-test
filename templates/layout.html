@@ -35,6 +35,26 @@
       <div class="row">
         {% block content %}{% endblock %}
       </div>
+
+      <!-- Alerts block -->
+      {% block alerts %}
+      <div class="row">
+        <div class="col-xs-6 col-xs-offset-3">
+          {% for alertType, alerts in app.session.flashbag.all() %}
+
+            {% for alert in alerts %}
+            <div class="alert alert-{{alertType == 'error' ? 'danger' : alertType }} alert-dismissible fade in show" role="alert">
+              <strong>{{ alertType }}</strong> {{ alert }}.
+              <button type="button" class="close" data-dismiss="alert" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            {% endfor %}
+            
+          {% endfor %}
+        </div>
+      </div>
+      {% endblock %}
     </div>
 
     <!-- Modal -->

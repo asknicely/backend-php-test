@@ -3,6 +3,7 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Validator\Constraints as Assert;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -74,6 +75,22 @@ $app->get('/todo/{id}', function ($id) use ($app) {
 
 // POST [todo]
 $app->post('/todo', function (Request $request) use ($app) {
+    // Payload validation rules
+    $constraint = new Assert\Collection(array(
+        'description' => new Assert\NotBlank()
+    ));
+    $payload = $request->request->all();
+    // Validating the payload.
+    $errors = $app['validator']->validate($payload, $constraint);
+
+    // If we have errors, we fill the session flash bag and return to [todo] list
+    if (count($errors) > 0) {
+        foreach ($errors as $error) {
+            $app['session']->getFlashBag()->add('error', $error->getPropertyPath().' '.$error->getMessage());
+        }
+        return $app->redirect('/todo');
+    }
+    
     $user = $app['session']->get('user');
 
     $user_id = $user['id'];
