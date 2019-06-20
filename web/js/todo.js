@@ -1,6 +1,7 @@
 const Todo = (($, appBasePath) => {
   const resourcePath = 'todo';
   const deleteActionsItemsSelector = 'a[data-action="delete"]';
+  const completedActionsItemsSelector = 'a[data-action="completed"]';
 
   const onReady = () => {
     listenActionsClick();
@@ -9,6 +10,8 @@ const Todo = (($, appBasePath) => {
   const listenActionsClick = () => {
     // Listen for [todo] deletetion
     $(document).on('click', deleteActionsItemsSelector, handleDelete);
+    // Listen for [todo] completed change
+    $(document).on('click', completedActionsItemsSelector, handlePut);
   };
 
   const handleDelete = (event) => {
@@ -43,6 +46,40 @@ const Todo = (($, appBasePath) => {
       })
       .catch(() => null);
   };
+
+  const handlePut = (event) => {
+    // Prevent hash navigation
+    event.preventDefault();
+
+    const todoId = event.target.getAttribute('data-todo-id');
+    const currentCompletedStatus = event.target.getAttribute('data-completed');
+
+    // If it doesn't has todoId or completed status defined just return
+    if (!todoId || !currentCompletedStatus) {
+      return;
+    }
+
+    const callbackPath = event.target.getAttribute('data-callback-path');
+    const ajaxOptions = {
+      method: 'put',
+      url: `${appBasePath}/${resourcePath}/${todoId}`,
+      data: {
+        completed: parseInt(currentCompletedStatus) ? 0 : 1
+      }
+    };
+
+    ajaxRequestPromise(ajaxOptions)
+      .then(() => {
+        // If callback path configurated, it reload
+        if (callbackPath) {
+          window.location.href = `${appBasePath}/${callbackPath}`;
+        } else {
+          // Refresh view
+          fetch();
+        }
+      })
+      .catch((e) => console.log('fail', e));
+  }
 
   const showModal = (message) => {
     return new Promise((resolve, reject) => {
@@ -114,6 +151,9 @@ const Todo = (($, appBasePath) => {
       
       // Adding custom template values
       todo.detail_href = `${appBasePath}/${resourcePath}/${todo.id}`;
+      todo.status_text = parseInt(todo.completed) ? 'completed' : 'pending';
+      todo.mark_as_button_text = parseInt(todo.completed) ? 'pending' : 'completed';
+      todo.status_label_class = parseInt(todo.completed) ? 'success' : 'default';
 
       // Match [todo] properties
       Object.keys(todo).forEach(key => {

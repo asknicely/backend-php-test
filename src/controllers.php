@@ -102,6 +102,37 @@ $app->post('/todo', function (Request $request) use ($app) {
     return $app->redirect('/todo');
 });
 
+// PUT [todo]
+$app->put('/todo/{id}', function (Request $request, $id) use ($app) {
+    // Payload validation rules
+    $constraint = new Assert\Collection(array(
+        'completed' => array(
+            new Assert\NotBlank(),
+            new Assert\Regex('/0|1/')
+        )
+    ));
+    $payload = $request->request->all();
+    // Validating the payload.
+    $errors = $app['validator']->validate($payload, $constraint);
+
+    // If we have errors, we response with http bad request
+    if (count($errors) > 0) {
+        return new Response(Response::$statusTexts[Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
+    }
+
+    // Next status
+    $nextStatus = $payload['completed'];
+
+    // Update [todo]
+    $sql = "UPDATE todos SET completed = '$nextStatus' WHERE id = '$id'";
+    $app['db']->executeUpdate($sql);
+    $app['session']->getFlashBag()->add('success', 'TODO has been updated successfully!');
+
+    // Http Response
+    return new Response(Response::$statusTexts[Response::HTTP_OK], Response::HTTP_OK);
+})
+->assert('id', '\d+');
+
 
 // DELETE [todo]
 $app->delete('/todo/{id}', function ($id) use ($app) {

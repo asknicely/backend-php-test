@@ -5,3 +5,17 @@ body {
 .login-form > div {
     margin-top: 10px;
 }
+
+.container {
+  max-width: 600px;
+}
+
+.todo-detail .panel-body {
+  height: 200px;
+  overflow-y: scroll;
+}
+
+/* Helper classes */
+.no-padding {
+  padding: 0;
+}

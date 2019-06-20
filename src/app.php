@@ -21,7 +21,7 @@ $app->register(new HttpFragmentServiceProvider());
 $app->register(new YamlConfigServiceProvider(__DIR__.'/../config/config.yml'));
 $app->register(new DoctrineServiceProvider, array(
     'db.options' => array(
-        'driver'    => 'pdo_mysql',
+        'driver'    => $app['config']['database']['driver'],
         'host'      => $app['config']['database']['host'],
         'dbname'    => $app['config']['database']['dbname'],
         'user'      => $app['config']['database']['user'],

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{% block title '' %} - Todos</title>
+    <title>{% block title %}:: TODOS Application :: {% endblock %}</title>
 
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ app.request.basepath }}/css/main.css" rel="stylesheet" type="text/css" />
@@ -18,7 +18,7 @@
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li><a href="/todo">Todo list</a></li>
+            <li><a href="/todo">TODO list</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             {% if user %}
@@ -31,10 +31,9 @@
       </div>
     </nav>
 
-    <div class="container">
-      <div class="row">
-        {% block content %}{% endblock %}
-      </div>
+    <main class="container">
+      <!-- Content block -->
+      {% block content %}{% endblock %}
 
       <!-- Alerts block -->
       {% block alerts %}
@@ -55,7 +54,7 @@
         </div>
       </div>
       {% endblock %}
-    </div>
+    </main>
 
     <!-- Modal -->
     {% include 'confirm-modal.html' %}
