@@ -10,6 +10,17 @@ body {
   max-width: 600px;
 }
 
+article.welcome h1 {
+  font-size: 43px;
+}
+
+
+article.todos-list .content .no-items,
+article.todos-list .content .loading {
+  padding: 50px 30px;
+  text-align: center;
+}
+
 article.todos-detail .panel-body {
   height: 200px;
   overflow-y: scroll;

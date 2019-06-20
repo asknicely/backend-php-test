@@ -1,0 +1,23 @@
+<!-- Modal -->
+<div class="modal fade" id="create-modal" tabindex="-1" role="dialog" aria-labelledby="confirm-modal-label">
+    <div class="modal-dialog modal-sm" role="document">
+        <form method="post" action="{{ app.request.baseurl }}/todo">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="confirm-modal-label">Create TODO</h4>
+                </div>
+                <div class="modal-body">            
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <input type="text" class="form-control" id="description" name="description" placeholder="Description" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </div>
+        </form>
+  </div>
+</div>

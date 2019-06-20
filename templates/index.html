@@ -1,6 +1,19 @@
 {% extends "layout.html" %}
 
 {% block content %}
-    <h1>README</h1>
-    <pre class="well">{{ readme }}</pre>
+<article class="welcome">
+    <div class="jumbotron">
+        <h1>Welcome to the best TODO app!</h1>
+        <p>Here you are going to be able to create a TODO list and keep tracking the progress.</p>
+        <p class="text-right">
+            <a class="btn btn-primary btn-lg" href="/todo">Let's start!</a>
+        </p>
+        <pre>
+            <h6>MY TODOS :)</h6>
+            <ul>
+                <li>Flash notification auto close</li>
+            </ul>
+        </pre>
+    </div>
+</article>
 {% endblock %}

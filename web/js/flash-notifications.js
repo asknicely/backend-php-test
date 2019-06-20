@@ -7,7 +7,7 @@ const FlashNotifications = (($) => {
     $(document).ajaxComplete((event, xhr, settings) => {
       const data = xhr.responseJSON;
 
-      if (!data.messages) {
+      if (!data || !data.messages) {
         return;
       }
       const messages = data.messages;

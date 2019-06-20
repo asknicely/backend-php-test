@@ -6,7 +6,7 @@ const Todo = (($, appBasePath) => {
   // Pagination
   let paginatorElementRef;
   let currentPage = 0;
-  let pageSize = 6;
+  let pageSize = 5;
 
   const onReady = () => {
     listenActionsClick();
@@ -159,7 +159,7 @@ const Todo = (($, appBasePath) => {
       })
 
       todosContainerRef.append(newTodoRow);
-    })
+    });
   };
 
   const initPaginator = () => {
@@ -172,14 +172,29 @@ const Todo = (($, appBasePath) => {
       pageSize: pageSize,
       className: 'paginationjs-theme-grey paginationjs-big',
       callback: function(todos, pagination) {
-          // Update currentPage value
-          currentPage = pagination.pageNumber;
-          parseTodos(todos);
+        $('.loading').addClass('hidden');
+        
+        if (!todos.length) {
+          $('.no-items').removeClass('hidden');
+          $('.items').addClass('hidden');
+        } else {
+          $('.no-items').addClass('hidden');
+          $('.items').removeClass('hidden');
+        }
+        // Update currentPage value
+        currentPage = pagination.pageNumber;
+
+        // Parse data
+        parseTodos(todos);
       }
     });
   };
 
   const refreshView = (check) => {
+    $('.loading').removeClass('hidden');
+    $('.no-items').addClass('hidden');
+    $('.items').addClass('hidden');
+
     let nextPage = currentPage;
     if (check) {
       // Calculate the total of [todo] we have once we remove

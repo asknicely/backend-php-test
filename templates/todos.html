@@ -2,40 +2,47 @@
 
 {% block content %}
 
+<!-- Modal -->
+{% include 'create-modal.html' %}
+
 <!-- [todo] row template -->
 {% include 'todo-row-template.html' %}
 
 <article class="todos-list">
     <header>
-        <h1>TODO List:</h1>
+        <h1>
+            TODO List
+            <button type="button" class="btn btn-primary btn-lg pull-right" data-toggle="modal" data-target="#create-modal">Create</button>
+        </h1>
+        
     </header>
-    <section>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>User</th>
-                    <th>Description</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <!-- [todo] list container -->
-            <tbody id="todos-container"></tbody>
-            <tfoot>
-                <form method="post" action="{{ app.request.baseurl }}/todo">
-                    <td colspan="4">
-                        <input type="text" name="description" class="small-6 small-center" placeholder="Description..." required>
-                    </td>
-                    <td>
-                        <button type="submit" class="btn btn-sm btn-primary">Add</button>
-                    </td>
-                </form>
-                
-            </tfoot>
-        </table>
-        <!-- Pagination -->
-        <div id="pages-container" class="pull-right"></div>
+    <section class="content">
+        <div class="items hidden">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <!-- [todo] list container -->
+                <tbody id="todos-container"></tbody>
+            </table>
+            <!-- Pagination -->
+            <div id="pages-container" class="pull-right"></div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading">
+            Loading...
+        </div>
+        
+        <!-- No result fallback -->
+        <div class="no-items hidden">
+            <p>Seems like you haven't created a TODO yet. <a href="#" role="button" data-toggle="modal" data-target="#create-modal">Create it now!</a></p>
+        </div>
     </section>
 </article>
 {% endblock %}
