@@ -15,6 +15,8 @@ if (php_sapi_name() === 'cli-server' && is_file($filename)) {
 $app = require __DIR__.'/../src/app.php';
 // Config
 require __DIR__.'/../config/dev.php';
+// Error Handling
+require __DIR__.'/../src/error-handler.php';
 // Middlewares
 require __DIR__.'/../src/auth.middleware.php';
 require __DIR__.'/../src/flash-notifications.middleware.php';

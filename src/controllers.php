@@ -31,6 +31,9 @@ $app->match('/login', function (Request $request) use ($app) {
             $app['session']->set('user', $user);
             return $app->redirect('/todo');
         }
+
+        // Flash message
+        $app['session']->getFlashBag()->add('error', 'Login error! Try again.');
     }
 
     return $app['twig']->render('login.html', array());
@@ -80,8 +83,12 @@ $app->get('/todo', function (Request $request) use ($app) {
 $app->get('/todo/{id}.{format}', function ($id, $format) use ($app) {
     $user = $app['session']->get('user');
 
-    $sql = "SELECT * FROM todos WHERE id = '$id'";
+    $sql = "SELECT * FROM todos WHERE id = '$id' AND user_id = '${user['id']}'";
     $todo = $app['db']->fetchAssoc($sql);
+
+    if(!$todo) {
+        return $app->abort(404);
+    }
 
     return $app['twig']->render('todo.html', [
         'todo' => $todo,
@@ -140,12 +147,16 @@ $app->put('/todo/{id}', function (Request $request, $id) use ($app) {
         return new Response(Response::$statusTexts[Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
     }
 
+    $user = $app['session']->get('user');
+
     // Next status
     $nextStatus = $payload['completed'];
 
     // Update [todo]
-    $sql = "UPDATE todos SET completed = '$nextStatus' WHERE id = '$id'";
+    $sql = "UPDATE todos SET completed = '$nextStatus' WHERE id = '$id' AND user_id = '${user['id']}'";
     $app['db']->executeUpdate($sql);
+    
+    // Flash message
     $app['session']->getFlashBag()->add('success', 'TODO has been updated successfully!');
 
     // Http Response
@@ -156,8 +167,9 @@ $app->put('/todo/{id}', function (Request $request, $id) use ($app) {
 
 // DELETE [todo]
 $app->delete('/todo/{id}', function ($id) use ($app) {
+    $user = $app['session']->get('user');
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
+    $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '${user['id']}'";
     $app['db']->executeUpdate($sql);
 
     // Flash message
@@ -167,3 +179,11 @@ $app->delete('/todo/{id}', function ($id) use ($app) {
     return new Response(Response::$statusTexts[Response::HTTP_OK], Response::HTTP_OK);
 })
 ->assert('id', '\d+');
+
+// Error routes
+$app->match('/500', function () use ($app) {
+    return $app['twig']->render('500.html');
+});
+$app->match('/404', function () use ($app) {
+    return $app['twig']->render('404.html');
+});
