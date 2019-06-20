@@ -1,0 +1,27 @@
+<template id="todo-row-template">
+    <tr id="todo-row-${id}">
+        <td>${id}</td>
+        <td>${user_id}</td>
+        <td>
+            <a href="${detail_href}">
+                ${description}
+            </a>
+        </td>
+        <td>
+            <div class="dropdown text-center">
+                <button id="actions" type="button" class="btn btn-primary-outline no-padding" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="glyphicon glyphicon-option-vertical"></span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="actions">
+                    <li>
+                        <a href="${detail_href}">View</a>
+                    </li>
+                    <li role="separator" class="divider"></li>
+                    <li>
+                        <a href="#" data-action="delete" data-todo-id="${id}" data-todo-description="${description}">Delete</a>
+                    </li>
+                </ul>
+            </div>
+        </td>
+    </tr>
+</template>

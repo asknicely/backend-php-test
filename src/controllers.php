@@ -2,6 +2,7 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -41,34 +42,39 @@ $app->get('/logout', function () use ($app) {
 });
 
 
+// GET [todo] list or view
+$app->get('/todo', function (Request $request) use ($app) {
+    // If it is not an AJAX request, we just render the view
+    if (!$request->isXmlHttpRequest()) {
+        return $app['twig']->render('todos.html');
+    }
+    
+    $user = $app['session']->get('user');
+    // Fetch [todo]
+    $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+    $todos = $app['db']->fetchAll($sql);
+
+    // Http Response
+    return new JsonResponse($todos, Response::HTTP_OK);
+});
+
+// GET [todo]
 $app->get('/todo/{id}', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
+    $user = $app['session']->get('user');
 
-    if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+    $sql = "SELECT * FROM todos WHERE id = '$id'";
+    $todo = $app['db']->fetchAssoc($sql);
 
-        return $app['twig']->render('todo.html', [
-            'todo' => $todo,
-        ]);
-    } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
-
-        return $app['twig']->render('todos.html', [
-            'todos' => $todos,
-        ]);
-    }
+    return $app['twig']->render('todo.html', [
+        'todo' => $todo,
+    ]);
 })
-->value('id', null);
+->assert('id', '\d+');
 
 
-$app->post('/todo/add', function (Request $request) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
+// POST [todo]
+$app->post('/todo', function (Request $request) use ($app) {
+    $user = $app['session']->get('user');
 
     $user_id = $user['id'];
     $description = $request->get('description');
@@ -80,10 +86,16 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 });
 
 
-$app->match('/todo/delete/{id}', function ($id) use ($app) {
+// DELETE [todo]
+$app->delete('/todo/{id}', function ($id) use ($app) {
 
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
 
-    return $app->redirect('/todo');
-});
+    // Flash message
+    $app['session']->getFlashBag()->add('success', 'TODO deleted successfully!');
+    
+    // Http Response
+    return new Response(Response::$statusTexts[Response::HTTP_OK], Response::HTTP_OK);
+})
+->assert('id', '\d+');
