@@ -17,6 +17,7 @@ $app = require __DIR__.'/../src/app.php';
 require __DIR__.'/../config/dev.php';
 // Middlewares
 require __DIR__.'/../src/auth.middleware.php';
+require __DIR__.'/../src/flash-notifications.middleware.php';
 // Controllers
 require __DIR__.'/../src/controllers.php';
 

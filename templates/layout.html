@@ -40,12 +40,12 @@
       <!-- Alerts block -->
       {% block alerts %}
       <div class="row">
-        <div class="col-xs-6 col-xs-offset-3">
+        <div class="col-xs-12" id="flash-notifications-container">
           {% for alertType, alerts in app.session.flashbag.all() %}
 
             {% for alert in alerts %}
             <div class="alert alert-{{alertType == 'error' ? 'danger' : alertType }} alert-dismissible fade in show" role="alert">
-              <strong>{{ alertType }}</strong> {{ alert }}.
+              {{ alert }}
               <button type="button" class="close" data-dismiss="alert" data-dismiss="alert" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -60,6 +60,9 @@
 
     <!-- Modal -->
     {% include 'confirm-modal.html' %}
+
+    <!-- Flash Notification template -->
+    {% include 'flash-notification-template.html' %}
     
     <script type="text/javascript">
       const appBasePath = '{{ app.request.basepath }}';
@@ -67,6 +70,7 @@
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="{{ app.request.basepath }}/js/todo.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/js/flash-notifications.js"></script>
     <!-- Inline JS Block -->
     {% block javascript %} {% endblock %}
   </body>
