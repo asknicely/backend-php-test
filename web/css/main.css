@@ -10,7 +10,7 @@ body {
   max-width: 600px;
 }
 
-.todo-detail .panel-body {
+article.todos-detail .panel-body {
   height: 200px;
   overflow-y: scroll;
 }

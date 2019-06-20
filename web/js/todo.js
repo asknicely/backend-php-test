@@ -3,6 +3,11 @@ const Todo = (($, appBasePath) => {
   const deleteActionsItemsSelector = 'a[data-action="delete"]';
   const completedActionsItemsSelector = 'a[data-action="completed"]';
 
+  // Pagination
+  let paginatorElementRef;
+  let currentPage = 0;
+  let pageSize = 6;
+
   const onReady = () => {
     listenActionsClick();
   };
@@ -75,7 +80,7 @@ const Todo = (($, appBasePath) => {
           window.location.href = `${appBasePath}/${callbackPath}`;
         } else {
           // Refresh view
-          fetch();
+          refreshView();
         }
       })
       .catch((e) => console.log('fail', e));
@@ -124,18 +129,10 @@ const Todo = (($, appBasePath) => {
     todoRow.fadeOut('slow', () => {
       // Remove DOM element
       todoRow.remove();
+      
       // Refresh view
-      fetch();
+      refreshView(true);
     });
-  }
-
-  const fetch = () => {
-    const ajaxOptions = {
-      url: `${appBasePath}/${resourcePath}`
-    }
-
-    ajaxRequestPromise(ajaxOptions)
-      .then((todos) => parseTodos(todos));
   }
 
   const parseTodos = (todos) => {
@@ -163,11 +160,42 @@ const Todo = (($, appBasePath) => {
 
       todosContainerRef.append(newTodoRow);
     })
+  };
+
+  const initPaginator = () => {
+    paginatorElementRef = $('#pages-container');
+    paginatorElementRef.pagination({
+      dataSource: `${appBasePath}/${resourcePath}`,
+      locator: 'data',
+      pageNumber: currentPage,
+      totalNumberLocator: (response) => response.total,
+      pageSize: pageSize,
+      className: 'paginationjs-theme-grey paginationjs-big',
+      callback: function(todos, pagination) {
+          // Update currentPage value
+          currentPage = pagination.pageNumber;
+          parseTodos(todos);
+      }
+    });
+  };
+
+  const refreshView = (check) => {
+    let nextPage = currentPage;
+    if (check) {
+      // Calculate the total of [todo] we have once we remove
+      const totalTodosOnCurrentPage = paginatorElementRef.pagination('getSelectedPageData') .length- 1;
+      // If we don't have more [todo] on current page and we have a previous one, move there
+      if (!totalTodosOnCurrentPage && 1 < currentPage) {
+        nextPage = currentPage - 1;
+      } 
+    }
+
+    paginatorElementRef.pagination(nextPage);
   }
 
   // Public methods
   return {
     onReady,
-    fetch
+    initPaginator
   }
 })($, appBasePath);

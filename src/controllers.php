@@ -51,12 +51,29 @@ $app->get('/todo', function (Request $request) use ($app) {
     }
     
     $user = $app['session']->get('user');
+
+    // Count total
+    $sql = "SELECT COUNT(*) as total FROM todos WHERE user_id = '${user['id']}'";
+    $total = $app['db']->fetchColumn($sql);
+
+    // Query params
+    $pageSize = $request->query->get('pageSize');
+    $pageNumber = $request->query->get('pageNumber');
+
+    // Pagination
+    $start = ($pageNumber - 1 ) * $pageSize;
+    
     // Fetch [todo]
-    $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+    $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT ${start}, ${pageSize}";
     $todos = $app['db']->fetchAll($sql);
 
+    $response = array(
+        'data' => $todos,
+        'total' => $total
+    );
+
     // Http Response
-    return new JsonResponse($todos, Response::HTTP_OK);
+    return new JsonResponse($response, Response::HTTP_OK);
 });
 
 // GET [todo]

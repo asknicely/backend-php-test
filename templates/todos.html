@@ -5,40 +5,52 @@
 <!-- [todo] row template -->
 {% include 'todo-row-template.html' %}
 
-<div>
-    <h1>TODO List:</h1>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>User</th>
-                <th>Description</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <!-- [todo] list container -->
-        <tbody id="todos-container"></tbody>
-        <tfoot>
-            <form method="post" action="{{ app.request.baseurl }}/todo">
-                <td colspan="4">
-                    <input type="text" name="description" class="small-6 small-center" placeholder="Description..." required>
-                </td>
-                <td>
-                    <button type="submit" class="btn btn-sm btn-primary">Add</button>
-                </td>
-            </form>
-        </tfoot>
-    </table>
-</div>
+<article class="todos-list">
+    <header>
+        <h1>TODO List:</h1>
+    </header>
+    <section>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>User</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <!-- [todo] list container -->
+            <tbody id="todos-container"></tbody>
+            <tfoot>
+                <form method="post" action="{{ app.request.baseurl }}/todo">
+                    <td colspan="4">
+                        <input type="text" name="description" class="small-6 small-center" placeholder="Description..." required>
+                    </td>
+                    <td>
+                        <button type="submit" class="btn btn-sm btn-primary">Add</button>
+                    </td>
+                </form>
+                
+            </tfoot>
+        </table>
+        <!-- Pagination -->
+        <div id="pages-container" class="pull-right"></div>
+    </section>
+</article>
+{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="{{ app.request.basepath }}/css/pagination.css">
 {% endblock %}
 
 {% block javascript %}
+<script type="text/javascript" src="{{ app.request.basepath }}/js/pagination.min.js"></script>
 <script type="text/javascript">
     // On document ready
     $( document ).ready(() => {
         Todo.onReady();
-        Todo.fetch();
+        Todo.initPaginator();
     });
 </script>
 {% endblock %}

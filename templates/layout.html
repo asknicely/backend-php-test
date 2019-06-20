@@ -8,10 +8,12 @@
 
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ app.request.basepath }}/css/main.css" rel="stylesheet" type="text/css" />
+    <!-- Stylesheets block -->
+    {% block stylesheets %}{% endblock %}
   </head>
   <body>
 
-    <nav class="navbar navbar-inverse navbar-fixed-top">
+    <nav class="navbar navbar-inverse navbar-fixed-top" aria-label="Main navigation">
       <div class="container">
         <div class="navbar-header">
           <a class="navbar-brand" href="/"><span class="glyphicon glyphicon-home glyphicon-white"></span></a>
@@ -62,9 +64,9 @@
     <script type="text/javascript">
       const appBasePath = '{{ app.request.basepath }}';
     </script>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-    <script src="{{ app.request.basepath }}/js/todo.js"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/js/todo.js"></script>
     <!-- Inline JS Block -->
     {% block javascript %} {% endblock %}
   </body>
