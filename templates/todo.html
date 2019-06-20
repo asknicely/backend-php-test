@@ -13,9 +13,25 @@
         </h1>
     </header>
     <section>
+        <!-- View options -->
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="btn-group btn-group-justified" role="group" aria-label="format">
+                    <a href="{{ app.request.basepath }}/todo/{{ todo.id }}" class="btn {{ format is empty ? 'btn-info active' : 'btn-default' }}">Details</a>
+                    <a href="{{ app.request.basepath }}/todo/{{ todo.id }}.json" class="btn {{ format == 'json' ? 'btn-info active' : 'btn-default' }}">JSON</a>
+                </div>
+            </div>
+        </div>
+        
         <div class="panel panel-default">
             <!-- Description -->
-            <div class="panel-body">{{ todo.description }}</div>
+            <div class="panel-body">
+                {% if format == 'json' %}
+                    <pre>{{ todo | json_encode }}</pre>
+                {% else %}
+                    {{ todo.description }}
+                {% endif %}
+            </div>
 
             <!-- Actions -->
             <div class="panel-footer">

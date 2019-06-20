@@ -60,7 +60,7 @@ $app->get('/todo', function (Request $request) use ($app) {
 });
 
 // GET [todo]
-$app->get('/todo/{id}', function ($id) use ($app) {
+$app->get('/todo/{id}.{format}', function ($id, $format) use ($app) {
     $user = $app['session']->get('user');
 
     $sql = "SELECT * FROM todos WHERE id = '$id'";
@@ -68,9 +68,12 @@ $app->get('/todo/{id}', function ($id) use ($app) {
 
     return $app['twig']->render('todo.html', [
         'todo' => $todo,
+        'format' => $format
     ]);
 })
-->assert('id', '\d+');
+->assert('id', '\d+')
+->assert('format', 'json')
+->value('format', null);
 
 
 // POST [todo]
