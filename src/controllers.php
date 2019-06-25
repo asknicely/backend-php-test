@@ -3,9 +3,36 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+use Symfony\Component\Form\Extension\Core\Type\FormType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Validator\Constraints as Assert;
+
+use Symfony\Component\Translation\Loader\XliffFileLoader;
+use Symfony\Bridge\Twig\Extension\TranslationExtension;
+use Symfony\Component\Translation\Translator;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+
+//Our add todo form
+$app['form'] = $app['form.factory']->createBuilder(FormType::class)
+    ->add('description', TextType::class, array(  //description field
+        'constraints' => array(new Assert\NotBlank()))) //make sure its not blank
+    ->add('submit', SubmitType::class, [
+            'label' => 'Add',
+    ])
+    ->getForm();
+    
+   
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
+    //need to add translation in here because our form requires it, will be usefull in future when we add other languages
+    $translator = new Translator('en');
+    $translator->addLoader('xlf', new XliffFileLoader());
+    $translator->addResource('xlf', './vendor/symfony/form/Resources/translations/validators.en.xlf', 'en', 'validators');
+    $translator->addResource('xlf', './vendor/symfony/validator/Resources/translations/validators.en.xlf', 'en', 'validators');
+    
+    $twig->addExtension(new TranslationExtension($translator));
+       
     return $twig;
 }));
 
@@ -54,11 +81,13 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
+
         $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
         $todos = $app['db']->fetchAll($sql);
-
+        
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
+            'form' => $app['form']->createView()
         ]);
     }
 })
@@ -71,12 +100,23 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     }
 
     $user_id = $user['id'];
-    $description = $request->get('description');
+  
+    //get our form data from the request
+    $app['form']->handleRequest($request);
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    //if our form data is valid then add the todo into the DB
+    if ($app['form']->isValid()) {
+        $data = $app['form']->getData();
 
-    return $app->redirect('/todo');
+        $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '{$data['description']}')";
+        $app['db']->executeUpdate($sql);
+
+        return $app->redirect('/todo');
+    }
+    else {
+        return $app->abort(403, 'Invalid description'); //No one should end up here as there is client side validation
+    }
+    
 });
 
 
