@@ -16,6 +16,11 @@
             </td>
         </tr>
     </table>
+    {% if todo.completed == "0" %}
+    <form method="post" action="{{ app.request.baseurl }}/todo/complete/{{ todo.id }}">
+        <button type="submit" class="btn btn-block btn-lg btn-success">Mark as completed<span class="glyphicon glyphicon-ok glyphicon-white"></span></button>
+    </form>
+    {% endif %}
 </div>
 
 {% endblock %}
