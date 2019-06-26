@@ -68,11 +68,11 @@ $app->get('/logout', function () use ($app) {
 });
 
 
-$app->get('/todo/{id}', function ($id) use ($app) {
+$app->get('/todo/{page}', function ($page) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
+        
     //clear flash bag of confirm
     $app['session']->getFlashBag()->get('confirm');
      
@@ -81,7 +81,35 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     } else {
         $error = '';
     }
-     
+    
+    $page_size = 5;
+    
+    $offset = ($page - 1) * $page_size;
+    
+    $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT {$offset}, {$page_size}";
+    $todos = $app['db']->fetchAll($sql);
+    
+    $sql = "SELECT COUNT(*) AS count FROM todos WHERE user_id = '${user['id']}'";
+    $count = $app['db']->fetchAssoc($sql)['count'];
+    $pages = ceil($count / $page_size);
+    
+    return $app['twig']->render('todos.html', [
+        'todos' => $todos,
+        'form' => $app['form']->createView(),
+        'error' => $error,
+        'pages' => $pages,
+        'page' => $page
+    ]);
+
+})
+->value('page', 1);
+
+
+$app->get('/todo/view/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+    
     if ($id){
         $sql = "SELECT * FROM todos WHERE id = '$id'";
         $todo = $app['db']->fetchAssoc($sql);
@@ -90,16 +118,9 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
-
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
-        
-        return $app['twig']->render('todos.html', [
-            'todos' => $todos,
-            'form' => $app['form']->createView(),
-            'error' => $error,
-        ]);
+        $app->abort(404, 'Todo not found');
     }
+    
 })
 ->value('id', null);
 

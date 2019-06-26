@@ -17,7 +17,7 @@
                 {% endif %}
                 </td>
                 <td>
-                    <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
+                    <a href="{{ app.request.baseurl }}/todo/view/{{ todo.id }}">
                        {{ todo.description }}
                     </a>
                 </td>
@@ -29,6 +29,15 @@
             </tr>
         {% endfor %}
     </table>
+    {% if page > 1 %}
+        <a href="/todo/{{ page - 1 }}">Previous</a>
+    {% endif %}
+    {% for p in 1..pages %}
+        <a href="/todo/{{ p }}">{{ p  }}</a>
+    {% endfor %}
+    {% if page < pages %}
+        <a href="/todo/{{ page + 1 }}">Next</a>
+    {% endif %}
     
     {% form_theme form 'bootstrap_3_layout.html.twig' %}
     
