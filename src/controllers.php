@@ -32,7 +32,7 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $translator->addResource('xlf', './vendor/symfony/validator/Resources/translations/validators.en.xlf', 'en', 'validators');
     
     $twig->addExtension(new TranslationExtension($translator));
-       
+    
     return $twig;
 }));
 
@@ -73,6 +73,15 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         return $app->redirect('/login');
     }
 
+    //clear flash bag of confirm
+    $app['session']->getFlashBag()->get('confirm');
+     
+    if ($app['session']->getFlashBag()->has('error')) {
+        $error = $app['session']->getFlashBag()->get('error')[0]['message'];
+    } else {
+        $error = '';
+    }
+     
     if ($id){
         $sql = "SELECT * FROM todos WHERE id = '$id'";
         $todo = $app['db']->fetchAssoc($sql);
@@ -87,7 +96,8 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
-            'form' => $app['form']->createView()
+            'form' => $app['form']->createView(),
+            'error' => $error,
         ]);
     }
 })
@@ -116,25 +126,41 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
     $user_id = $user['id'];
-  
-    //get our form data from the request
-    $app['form']->handleRequest($request);
-
-    //if our form data is valid then add the todo into the DB
-    if ($app['form']->isValid()) {
-        $data = $app['form']->getData();
-
-        $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '{$data['description']}')";
-        $app['db']->executeUpdate($sql);
-
-        return $app->redirect('/todo');
-    }
-    else {
-        return $app->abort(403, 'Invalid description'); //No one should end up here as there is client side validation
-    }
     
+    if (!$app['session']->getFlashBag()->has('confirm'))  {
+    
+            $app['form']->handleRequest($request);
+
+            //Although we do have client side verification we still need to do server side verification. We send the user back to /todo with an error message
+            if (!$app['form']->isValid()) {
+                $error['message'] = 'Empty description, please check you have entered in a description';
+                $app['session']->getFlashBag()->add('error', $error);
+                return $app->redirect('/todo');
+            }
+            
+            $confirm['action'] = 'add';
+            $confirm['data'] = $app['form']->getData();
+            $app['session']->getFlashBag()->add('confirm', $confirm);
+   
+           return $app['twig']->render('confirm.html', [
+                'action' => 'add',
+            ]);
+     } else {
+        
+        $action = $app['session']->getFlashBag()->get('confirm')[0];
+        if ($action['action'] == 'add')
+        {
+                $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '{$action['data']['description']}')";
+                $app['db']->executeUpdate($sql);
+
+                return $app->redirect('/todo');
+        
+        }
+        else { 
+            $app->abort(403, 'Invalid confirm');
+        }
+    }
 });
 
 
@@ -149,8 +175,27 @@ $app->match('/todo/complete/{id}', function ($id) use ($app) {
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+   if (!$app['session']->getFlashBag()->has('confirm'))  {
 
-    return $app->redirect('/todo');
+            $confirm['action'] = 'delete';
+            $confirm['id'] = $id;
+            $app['session']->getFlashBag()->add('confirm', $confirm);
+   
+           return $app['twig']->render('confirm.html', [
+                'action' => 'delete',
+            ]);
+      } else {
+        
+        $action = $app['session']->getFlashBag()->get('confirm')[0];
+        if ($action['action'] == 'delete')
+        {
+                
+                $sql = "DELETE FROM todos WHERE id = '{$action['id']}'";
+                $app['db']->executeUpdate($sql);
+
+                return $app->redirect('/todo');
+            } else {
+                $app->abort(403, 'Did not confirm');
+            }
+       }
 });

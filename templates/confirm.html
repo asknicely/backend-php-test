@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="col-md-4 col-md-offset-4">
+    <h1>Are you sure?</h1>
+    <p>Are you sure you wish to {{ action }} this todo?</p>
+    
+    <p>
+        <form method="post" action="{{ app.request.uri }}">
+            <button type="submit" class="btn btn-block btn-lg btn-success">Yes<span class="glyphicon glyphicon-ok glyphicon-white"></span></button>
+        </form>
+    </p>
+    
+    <p>
+        <form method="get" action="{{ app.request.baseurl }}/todo">
+            <button type="submit" class="btn btn-block btn-lg btn-danger">No<span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
+        </form>
+    </p>
+    
+ </div>
+
+{% endblock %}
