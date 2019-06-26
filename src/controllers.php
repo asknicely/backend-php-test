@@ -12,6 +12,8 @@ use Symfony\Bridge\Twig\Extension\TranslationExtension;
 use Symfony\Component\Translation\Translator;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 
+use RedBeanPHP\R;
+
 //Our add todo form
 $app['form'] = $app['form.factory']->createBuilder(FormType::class)
     ->add('description', TextType::class, array(  //description field
@@ -20,8 +22,8 @@ $app['form'] = $app['form.factory']->createBuilder(FormType::class)
             'label' => 'Add',
     ])
     ->getForm();
-    
-   
+
+
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
@@ -30,9 +32,9 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $translator->addLoader('xlf', new XliffFileLoader());
     $translator->addResource('xlf', './vendor/symfony/form/Resources/translations/validators.en.xlf', 'en', 'validators');
     $translator->addResource('xlf', './vendor/symfony/validator/Resources/translations/validators.en.xlf', 'en', 'validators');
-    
+
     $twig->addExtension(new TranslationExtension($translator));
-    
+
     return $twig;
 }));
 
@@ -49,11 +51,14 @@ $app->match('/login', function (Request $request) use ($app) {
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+
+        $user = R::findOne('users','username=:username AND password=:password', array(
+            'username' => $username,
+            'password' => $password
+        ));
 
         if ($user){
-            $app['session']->set('user', $user);
+            $app['session']->set('user', $user->export());
             return $app->redirect('/todo');
         }
     }
@@ -72,27 +77,29 @@ $app->get('/todo/{page}', function ($page) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-        
+    $user_id = $user['id'];
+
     //clear flash bag of confirm
     $app['session']->getFlashBag()->get('confirm');
-     
+
     if ($app['session']->getFlashBag()->has('error')) {
         $error = $app['session']->getFlashBag()->get('error')[0]['message'];
     } else {
         $error = '';
     }
-    
+
     $page_size = 5;
-    
     $offset = ($page - 1) * $page_size;
-    
-    $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT {$offset}, {$page_size}";
-    $todos = $app['db']->fetchAll($sql);
-    
-    $sql = "SELECT COUNT(*) AS count FROM todos WHERE user_id = '${user['id']}'";
-    $count = $app['db']->fetchAssoc($sql)['count'];
+
+    $todos = R::getAll( 'SELECT * FROM todos WHERE user_id =:user_id LIMIT :offset, :page_size',
+        array(':user_id'=>$user_id,
+                    ':offset' => $offset,
+                    ':page_size' => $page_size
+        ));
+    $count = R::getRow('SELECT COUNT(*) AS count FROM todos WHERE user_id=:user_id',
+        array(':user_id' => $user_id))['count'];
     $pages = ceil($count / $page_size);
-    
+
     return $app['twig']->render('todos.html', [
         'todos' => $todos,
         'form' => $app['form']->createView(),
@@ -105,40 +112,39 @@ $app->get('/todo/{page}', function ($page) use ($app) {
 ->value('page', 1);
 
 
-$app->get('/todo/view/{id}', function ($id) use ($app) {
+$app->get('/todo/{id}/view', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-    
+
+
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+        $todo = getTodo($id);
 
         return $app['twig']->render('todo.html', [
-            'todo' => $todo,
+            'todo' => $todo->export(),
         ]);
     } else {
         $app->abort(404, 'Todo not found');
     }
-    
+
 })
 ->value('id', null);
 
 
 $app->get('/todo/{id}/json', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-    
-    $user_id = $user['id'];
-    
-    if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id' AND user_id = '$user_id'";
-        $todo = $app['db']->fetchAssoc($sql);
 
-        return $app->json($todo);
-    } 
-    
+    if (null === $user = $app['session']->get('user')) {
+       return $app->redirect('/login');
+    }
+
+    if ($id){
+
+      $todo = getTodo($id);
+      return $app->json($todo->export());
+
+    }
+
 })
 ->value('id', null);
 
@@ -148,9 +154,9 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         return $app->redirect('/login');
     }
     $user_id = $user['id'];
-    
+
     if (!$app['session']->getFlashBag()->has('confirm'))  {
-    
+
             $app['form']->handleRequest($request);
 
             //Although we do have client side verification we still need to do server side verification. We send the user back to /todo with an error message
@@ -159,26 +165,28 @@ $app->post('/todo/add', function (Request $request) use ($app) {
                 $app['session']->getFlashBag()->add('error', $error);
                 return $app->redirect('/todo');
             }
-            
+
             $confirm['action'] = 'add';
             $confirm['data'] = $app['form']->getData();
             $app['session']->getFlashBag()->add('confirm', $confirm);
-   
+
            return $app['twig']->render('confirm.html', [
                 'action' => 'add',
             ]);
      } else {
-        
+
         $action = $app['session']->getFlashBag()->get('confirm')[0];
         if ($action['action'] == 'add')
         {
-                $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '{$action['data']['description']}')";
-                $app['db']->executeUpdate($sql);
+                $todo = R::dispense('todos');
+                $todo->description = $action['data']['description'];
+                $todo->user_id = $user_id;
+                $id = R::store($todo);
 
                 return $app->redirect('/todo');
-        
+
         }
-        else { 
+        else {
             $app->abort(403, 'Invalid confirm');
         }
     }
@@ -187,36 +195,66 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
 $app->match('/todo/complete/{id}', function ($id) use ($app) {
 
-    $sql = "UPDATE todos SET completed=1 WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $todo = getTodo($id);
+    $todo->completed = 1;
+    R::store($todo);
 
     return $app->redirect('/todo');
+
 });
 
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
+
+   if (null === $user = $app['session']->get('user')) {
+      return $app->redirect('/login');
+   }
 
    if (!$app['session']->getFlashBag()->has('confirm'))  {
 
             $confirm['action'] = 'delete';
             $confirm['id'] = $id;
             $app['session']->getFlashBag()->add('confirm', $confirm);
-   
+
            return $app['twig']->render('confirm.html', [
                 'action' => 'delete',
             ]);
       } else {
-        
+
         $action = $app['session']->getFlashBag()->get('confirm')[0];
         if ($action['action'] == 'delete')
         {
-                
-                $sql = "DELETE FROM todos WHERE id = '{$action['id']}'";
-                $app['db']->executeUpdate($sql);
+          $todo = getTodo($id);
+          R::trash($todo);
 
-                return $app->redirect('/todo');
-            } else {
-                $app->abort(403, 'Did not confirm');
-            }
-       }
+          return $app->redirect('/todo');
+        } else {
+         $app->abort(403, 'Invalid confirm');
+        }
+     }
 });
+
+
+//Returns a todo as a bean, enforces user id
+function getTodo($id)
+{
+  global $app;
+
+  $user_id = $app['session']->get('user')['id'];
+
+  $todo = R::findOne('todos','id = :id AND user_id=:user_id ', array(
+      'id' => $id,
+      'user_id' => $user_id
+  ));
+
+  if (!$todo)
+  {
+    $app->abort(404,'Todo not found');
+  }
+
+  return $todo;
+}

@@ -21,7 +21,9 @@
         "symfony/translation": "~2.3",
         "symfony/twig-bridge": "~2.3",
         "symfony/validator": "~2.3",
+	"phpunit/phpunit": "~7.5",
         "doctrine/dbal": "~2.2",
+	"ivoba/redbean-service-provider": "~2.0",
         "deralex/yaml-config-service-provider": "1.0.x-dev"
     },
     "autoload": {
