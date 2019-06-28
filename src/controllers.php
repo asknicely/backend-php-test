@@ -60,6 +60,32 @@ $app->post('/todo/{id}/check', function ($id, Request $request) use ($app) {
     }
 });
 
+$app->get(
+    '/todo/{id}/json',
+    function ($id, Request $request) use ($app) {
+        if (null === $user = $app['session']->get('user')) {
+            return $app->redirect('/login');
+        }
+        if ($id) {
+            $sql = "SELECT * FROM todos WHERE id = '$id'";
+            $todo = $app['db']->fetchAssoc($sql);
+            if ($todo) {
+                $response = array(
+                    'id' => $todo['id'],
+                    'user_id' => $todo['user_id'],
+                    'description' => $todo['description'],
+                    'completed' => $todo['completed'],
+                );
+            } else {
+                $response = array(
+                    'error' => 'Invalid Todo ID',
+                );
+            }
+            return $app->json($response);
+        }
+    }
+);
+
 $app->get('/todo/{id}', function ($id, Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
