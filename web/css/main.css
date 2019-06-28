@@ -9,3 +9,15 @@ body {
 .error-text {
 	color: red;
 }
+
+.align-center {
+	text-align: center;
+}
+
+.done {
+	text-decoration: line-through;
+}
+
+.todo {
+	text-decoration: none;
+}

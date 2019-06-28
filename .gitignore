@@ -3,3 +3,4 @@ composer.lock
 config/config.yml
 .idea
 .vscode
+debug.txt

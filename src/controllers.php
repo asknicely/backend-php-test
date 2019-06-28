@@ -42,6 +42,24 @@ $app->get('/logout', function () use ($app) {
 });
 
 
+$app->post('/todo/{id}/check', function ($id, Request $request) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+    $completed = $request->get('completed');
+    if ($completed === NULL) $completed = False;
+    if ($id) {
+        $sql = "UPDATE todos SET completed = $completed WHERE id = '$id'";
+        $app['db']->executeUpdate($sql);
+        $response = array(
+            'status' => 'success',
+            'message' => "status changed.",
+            'completed' => $completed,
+        );
+        return $app->json($response);
+    }
+});
+
 $app->get('/todo/{id}', function ($id, Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');

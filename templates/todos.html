@@ -10,14 +10,25 @@
     {% endif %}
     <table class="table table-striped">
         <th>#</th>
+        <th>Completed</th>
         <th>User</th>
         <th>Description</th>
         <th></th>
         {% for todo in todos %}
         <tr>
             <td>{{ todo.id }}</td>
+            <td class="align-center">
+                {% if todo.completed %}
+                <input type="checkbox" name="completed" checked="checked" value="{{todo.id}}" /></td>
+            {% else %}
+            <input type="checkbox" name="completed" value="{{todo.id}}" /></td>
+            {% endif %}
             <td>{{ todo.user_id }}</td>
-            <td>
+            {% if todo.completed %}
+            <td id="todo_desc_{{todo.id}}" class="done">
+                {% else %}
+            <td id="todo_desc_{{todo.id}}" class="todo">
+                {% endif %}
                 <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
                     {{ todo.description }}
                 </a>
