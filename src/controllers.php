@@ -3,7 +3,8 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-$app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
+
+$app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
     return $twig;
@@ -25,7 +26,7 @@ $app->match('/login', function (Request $request) use ($app) {
         $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
         $user = $app['db']->fetchAssoc($sql);
 
-        if ($user){
+        if ($user) {
             $app['session']->set('user', $user);
             return $app->redirect('/todo');
         }
@@ -41,12 +42,12 @@ $app->get('/logout', function () use ($app) {
 });
 
 
-$app->get('/todo/{id}', function ($id) use ($app) {
+$app->get('/todo/{id}', function ($id, Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
 
-    if ($id){
+    if ($id) {
         $sql = "SELECT * FROM todos WHERE id = '$id'";
         $todo = $app['db']->fetchAssoc($sql);
 
@@ -54,15 +55,21 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
+        // If there is an error of code 1, pass error message to template.
+        $error = "";
+        if ($request->get('error') == 1) {
+            $error = "Failed: You must type in a description!";
+        }
         $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
         $todos = $app['db']->fetchAll($sql);
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
+            'error' => $error,
         ]);
     }
 })
-->value('id', null);
+    ->value('id', null);
 
 
 $app->post('/todo/add', function (Request $request) use ($app) {
@@ -72,6 +79,11 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
     $user_id = $user['id'];
     $description = $request->get('description');
+
+    // Validate description
+    if ($description === "") {
+        return $app->redirect('/todo?error=1');
+    }
 
     $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
     $app['db']->executeUpdate($sql);
