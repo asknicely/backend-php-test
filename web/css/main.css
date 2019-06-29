@@ -21,3 +21,7 @@ body {
 .todo {
 	text-decoration: none;
 }
+
+.pagination li:hover {
+	cursor: pointer;
+}

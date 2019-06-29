@@ -3,15 +3,35 @@
 {% block content %}
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo:</h1>
+    {% for alert in app.session.flashbag.get('confirmation') %}
+    <div class="error-message">
+        <div class="alert"><strong>{{ alert }}</strong></div>
+    </div>
+    {% endfor %}
     <table class="table table-striped">
-        <th>#</th><th>User</th><th>Description</th><th></th>
+        <th>#</th>
+        <th>Completed</th>
+        <th>User</th>
+        <th>Description</th>
+        <th></th>
         <tr>
             <td>{{ todo.id }}</td>
+            {% if todo.completed %}
+            <td><input type="checkbox" name="completed" checked="checked" value="{{todo.id}}" /></td>
+            {% else %}
+            <td><input type="checkbox" name="completed" value="{{todo.id}}" /></td>
+            {% endif %}
             <td>{{ todo.user_id }}</td>
-            <td>{{ todo.description }}</td>
+            {% if todo.completed %}
+            <td id="todo_desc_{{todo.id}}" class="done">
+                {% else %}
+            <td id="todo_desc_{{todo.id}}" class="todo">
+                {% endif %}
+                {{ todo.description }}</td>
             <td>
                 <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
-                    <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
+                    <button type="submit" class="btn btn-xs btn-danger"><span
+                            class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                 </form>
             </td>
         </tr>

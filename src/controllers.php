@@ -11,6 +11,14 @@ $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
 }));
 
 
+$app->get('/we', function () use ($app) {
+    # Set flash message and return redirect
+    $app['session']->getFlashBag()->add('example', 'Some example flash message');
+    return $app->redirect('/todo');
+});
+
+
+
 $app->get('/', function () use ($app) {
     return $app['twig']->render('index.html', [
         'readme' => file_get_contents('README.md'),
@@ -131,7 +139,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
     $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
     $app['db']->executeUpdate($sql);
-
+    $app['session']->getFlashBag()->add('confirmation', 'Added a Todo! ');
     return $app->redirect('/todo');
 });
 
@@ -140,6 +148,6 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
-
+    $app['session']->getFlashBag()->add('confirmation', 'Deleted a Todo! ');
     return $app->redirect('/todo');
 });
