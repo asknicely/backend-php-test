@@ -1,11 +1,10 @@
-// Force refresh page
+// Update the status of checkbox
 $(document).ready(function() {
-	if (window.name != "bencalie") {
-		location.reload();
-		window.name = "bencalie";
-	} else {
-		window.name = "";
-	}
+	$("input[name='completed']").each(function(j, item) {
+		var id = item.value;
+		var status = $("#todo_desc_" + id).attr("class");
+		item.checked = status == "done" ? true : false;
+	});
 });
 // Checkbox listener
 $("input[name=completed]").change(function() {
