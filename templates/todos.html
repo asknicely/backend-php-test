@@ -8,6 +8,11 @@
         <div class="alert"><strong>{{ alert }}</strong></div>
     </div>
     {% endfor %}
+    {% for alert in app.session.flashbag.get('error') %}
+    <div class="error-message">
+        <div class="alert error-text"><strong>{{ alert }}</strong></div>
+    </div>
+    {% endfor %}
     {% if error %}
     <ul>
         <li class="error-text">{{error}}</li>

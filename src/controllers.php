@@ -1,8 +1,8 @@
 <?php
 
+use Model\Todo;
+use Model\User;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-
 
 $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -10,62 +10,59 @@ $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     return $twig;
 }));
 
-
-$app->get('/we', function () use ($app) {
-    # Set flash message and return redirect
-    $app['session']->getFlashBag()->add('example', 'Some example flash message');
-    return $app->redirect('/todo');
-});
-
-
-
 $app->get('/', function () use ($app) {
     return $app['twig']->render('index.html', [
         'readme' => file_get_contents('README.md'),
     ]);
 });
 
-
 $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
     $password = $request->get('password');
-
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+        $user = User::exists($app['db'], $username, $password);
 
         if ($user) {
             $app['session']->set('user', $user);
             return $app->redirect('/todo');
         }
     }
-
-    return $app['twig']->render('login.html', array());
+    $error = "Sorry, wrong password!";
+    return $app['twig']->render('login.html', array('error' => $error));
 });
-
 
 $app->get('/logout', function () use ($app) {
     $app['session']->set('user', null);
     return $app->redirect('/');
 });
 
-
 $app->post('/todo/{id}/check', function ($id, Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
     $completed = $request->get('completed');
-    if ($completed === NULL) $completed = False;
-    if ($id) {
-        $sql = "UPDATE todos SET completed = $completed WHERE id = '$id'";
-        $app['db']->executeUpdate($sql);
-        $response = array(
-            'status' => 'success',
-            'message' => "status changed.",
-            'completed' => $completed,
-        );
-        return $app->json($response);
+    if ($completed === null) {
+        $completed = false;
     }
+
+    if ($id) {
+        $res = Todo::update($app['db'], $id, ['completed' => $completed]);
+        $response = array();
+        if ($res) {
+            $response = array(
+                'status' => 'success',
+                'message' => "status changed.",
+                'completed' => $completed,
+            );
+        } else {
+            $response = array(
+                'status' => 'failed',
+                'message' => "error happened.",
+                'error_code' => $res,
+            );
+        }
+    }
+    return $app->json($response);
 });
 
 $app->get(
@@ -74,10 +71,10 @@ $app->get(
         if (null === $user = $app['session']->get('user')) {
             return $app->redirect('/login');
         }
+        $response = array();
         if ($id) {
-            $sql = "SELECT * FROM todos WHERE id = '$id'";
-            $todo = $app['db']->fetchAssoc($sql);
-            if ($todo) {
+            $todo = Todo::find($app['db'], $id);
+            if ($todo and $todo['user_id'] == $user['id']) {
                 $response = array(
                     'id' => $todo['id'],
                     'user_id' => $todo['user_id'],
@@ -89,8 +86,12 @@ $app->get(
                     'error' => 'Invalid Todo ID',
                 );
             }
-            return $app->json($response);
+        } else {
+            $response = array(
+                'error' => 'Invalid Todo ID',
+            );
         }
+        return $app->json($response);
     }
 );
 
@@ -100,29 +101,29 @@ $app->get('/todo/{id}', function ($id, Request $request) use ($app) {
     }
 
     if ($id) {
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
-
-        return $app['twig']->render('todo.html', [
-            'todo' => $todo,
-        ]);
+        $todo = Todo::find($app['db'], $id);
+        if ($todo and $todo['user_id'] == $user['id']) {
+            return $app['twig']->render('todo.html', [
+                'todo' => $todo,
+            ]);
+        } else {
+            $error = "The todo doesn't exist!";
+            $todos = User::todos($app['db'], $user['id']);
+            return $app['twig']->render('todos.html', [
+                'todos' => $todos,
+                'error' => $error,
+            ]);
+        }
     } else {
         // If there is an error of code 1, pass error message to template.
-        $error = "";
-        if ($request->get('error') == 1) {
-            $error = "Failed: You must type in a description!";
-        }
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
-
+        $todos = User::todos($app['db'], $user['id']);
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
-            'error' => $error,
+            'error' => "",
         ]);
     }
 })
     ->value('id', null);
-
 
 $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
@@ -134,20 +135,32 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
     // Validate description
     if ($description === "") {
-        return $app->redirect('/todo?error=1');
+        $app['session']->getFlashBag()->add('error', 'Failed: You must type in a description!');
+        return $app->redirect('/todo');
     }
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
-    $app['session']->getFlashBag()->add('confirmation', 'Added a Todo! ');
+    $res = Todo::add($app['db'], $user_id, $description, 0);
+    if ($res) {
+        $app['session']->getFlashBag()->add('confirmation', 'Added a Todo! ');
+    } else {
+        $app['session']->getFlashBag()->add('error', 'Add Failed! ');
+    }
     return $app->redirect('/todo');
 });
 
-
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+    $user_id = $user['id'];
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
-    $app['session']->getFlashBag()->add('confirmation', 'Deleted a Todo! ');
+    $res = Todo::delete($app['db'], $id, ['user_id' => $user_id]);
+
+    if ($res) {
+        $app['session']->getFlashBag()->add('confirmation', 'Deleted a Todo! ');
+    } else {
+        $app['session']->getFlashBag()->add('error', 'Delete Failed! ');
+    }
     return $app->redirect('/todo');
+
 });

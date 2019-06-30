@@ -2,17 +2,16 @@
 
 namespace Model {
 
-    class Todo
+    use ORM\Model;
+
+    class Todo extends Model
     {
-        public $id;
-        public $user_id;
-        public $description;
-        public $completed = False;
-        function __construct($id, $uid, $description)
+        protected static $table = 'todos';
+        protected static $fields = ['user_id', 'description', 'completed'];
+
+        public static function user()
         {
-            $this->id = $id;
-            $this->user_id = $uid;
-            $this->description = $description;
+            return Todo::belongsTo('users', 'user_id');
         }
     }
 }

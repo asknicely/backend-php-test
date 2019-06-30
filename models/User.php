@@ -1,17 +1,19 @@
 <?php
 
-namespace Model {
-    class User
-    {
-        public $id;
-        public $name;
-        public $password;
+//use App\ORM\Model;
 
-        public function __construct($id, $name, $password)
+namespace Model {
+
+    use ORM\Model;
+
+    class User extends Model
+    {
+        protected static $table = 'users';
+        protected static $fields = ['username', 'password'];
+
+        public static function todos($db, $id)
         {
-            $this->id = $id;
-            $this->name = $name;
-            $this->password = $password;
+            return User::hasMany($db, $id, 'todos', 'user_id');
         }
     }
 }
