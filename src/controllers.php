@@ -13,6 +13,7 @@ $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
 $app->get('/', function () use ($app) {
     return $app['twig']->render('index.html', [
         'readme' => file_get_contents('README.md'),
+        'user' => "",
     ]);
 });
 
@@ -25,10 +26,12 @@ $app->match('/login', function (Request $request) use ($app) {
         if ($user) {
             $app['session']->set('user', $user);
             return $app->redirect('/todo');
+        } else {
+            $error = "Sorry, wrong password!";
+            return $app['twig']->render('login.html', array('error' => $error));
         }
     }
-    $error = "Sorry, wrong password!";
-    return $app['twig']->render('login.html', array('error' => $error));
+    return $app['twig']->render('login.html', array('error' => "", 'user' => ""));
 });
 
 $app->get('/logout', function () use ($app) {
