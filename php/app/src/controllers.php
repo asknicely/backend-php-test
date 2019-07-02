@@ -1,7 +1,7 @@
 <?php
 
+use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -89,11 +89,29 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     return $app->redirect('/todo');
 });
 
-
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
+
+    return $app->redirect('/todo');
+});
+
+$app->match('/todo/completed/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $user_id = (int)$user['id'];
+
+    /** @var Doctrine\DBAL\Connection $db */
+    $db = $app['db'];
+
+    $sql = "UPDATE todos SET completed = :completed WHERE id = :id";
+    $db->executeUpdate($sql, [
+        'id' => $id,
+        'completed' => true,
+    ]);
 
     return $app->redirect('/todo');
 });
