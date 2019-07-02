@@ -1,0 +1,39 @@
+version: '3.3'
+
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile-dev
+    ports:
+      - '8080:80'
+    volumes:
+      - ./php/wp/src:/app/wp
+    depends_on:
+      - php
+
+  php:
+    build: ./php
+    env_file: ./php/.env
+    volumes:
+      - ./php/app:/app
+    expose:
+      - 9000
+    depends_on:
+      - mysql
+      - composer
+
+  composer:
+    image: composer:latest
+    volumes:
+      - ./php/app:/app
+    command: composer install
+
+  mysql:
+    build: ./mysql
+    env_file: ./mysql/.env
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./mysql/db-data:/var/lib/mysql
+    restart: always
