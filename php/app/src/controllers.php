@@ -12,7 +12,7 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
 
 $app->get('/', function () use ($app) {
     return $app['twig']->render('index.html', [
-        'readme' => file_get_contents('README.md'),
+        'readme' => file_get_contents('../README.md'),
     ]);
 });
 
@@ -70,11 +70,21 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         return $app->redirect('/login');
     }
 
-    $user_id = $user['id'];
-    $description = $request->get('description');
+    $user_id = (int)$user['id'];
+    $description = strip_tags($request->get('description'));
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    if (empty($description)) {
+        return $app->redirect('/todo');
+    }
+
+    /** @var Doctrine\DBAL\Connection $db */
+    $db = $app['db'];
+
+    $sql = "INSERT INTO todos (user_id, description) VALUES (:id, :description)";
+    $db->executeUpdate($sql, [
+        'id' => $user_id,
+        'description' => $description,
+    ]);
 
     return $app->redirect('/todo');
 });
