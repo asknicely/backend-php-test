@@ -86,6 +86,8 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         'description' => $description,
     ]);
 
+    $app['session']->getFlashBag()->add('notifications', 'Success - Todo added');
+
     return $app->redirect('/todo');
 });
 
@@ -93,6 +95,8 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
+
+    $app['session']->getFlashBag()->add('notifications', 'Success - Todo deleted');
 
     return $app->redirect('/todo');
 });
