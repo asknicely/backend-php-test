@@ -115,3 +115,22 @@ $app->match('/todo/completed/{id}', function ($id) use ($app) {
 
     return $app->redirect('/todo');
 });
+
+$app->get('todo/{id}/json', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    if ($id){
+        /** @var Doctrine\DBAL\Connection $db */
+        $db = $app['db'];
+
+        $sql = "SELECT * FROM todos WHERE id = :id";
+        $todo = $db->fetchAssoc($sql, ['id' => $id]);
+
+        return json_encode($todo);
+    } else {
+        return json_encode(new stdClass());
+    }
+})
+    ->value('id', null);
