@@ -14,7 +14,6 @@ services:
 
   php:
     build: ./php
-    env_file: ./php/.env
     volumes:
       - ./php/app:/app
     expose:

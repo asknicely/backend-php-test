@@ -18,20 +18,35 @@ $app->get('/', function () use ($app) {
 
 
 $app->match('/login', function (Request $request) use ($app) {
-    $username = $request->get('username');
-    $password = $request->get('password');
+    try {
+        $username = $request->get('username');
+        $password = $request->get('password');
 
-    if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+        if ($username) {
+            /** @var \Doctrine\ORM\EntityManager $em */
+            $em = $app['orm.em'];
 
-        if ($user){
-            $app['session']->set('user', $user);
-            return $app->redirect('/todo');
+            $qry = $em->createQuery("SELECT u FROM App\Entity\Users u WHERE u.username = :username AND u.password = :password");
+            $qry->setParameters([
+                'username' => $username,
+                'password' => $password,
+            ]);
+
+            $user = $qry->getSingleResult();
+
+            if (empty($user) === false){
+                $app['session']->set('user', [
+                    'id' => $user->getId(),
+                    'username' => $user->getUsername(),
+                ]);
+                return $app->redirect('/todo');
+            }
         }
-    }
 
-    return $app['twig']->render('login.html', array());
+        return $app['twig']->render('login.html', array());
+    } catch (\Doctrine\ORM\NoResultException $e) {
+        return $app['twig']->render('login.html', array());
+    }
 });
 
 
@@ -42,111 +57,174 @@ $app->get('/logout', function () use ($app) {
 
 
 $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
+    try {
+        if (null === $user = $app['session']->get('user')) {
+            return $app->redirect('/login');
+        }
 
-    if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+        /** @var \Doctrine\ORM\EntityManager $em */
+        $em = $app['orm.em'];
 
-        return $app['twig']->render('todo.html', [
-            'todo' => $todo,
-        ]);
-    } else {
-        $limit = (int) $request->get('limit', 5);
-        $page = (int) $request->get('page', 1);
-        $offset = ($page - 1) * $limit;
+        if ($id){
+            $qry = $em->createQuery("SELECT t FROM App\Entity\Todos t WHERE t.id = :id AND t.user = :user");
+            $qry->setParameters([
+                'id' => $id,
+                'user' => $user['id'],
+            ]);
 
-        /** @var Doctrine\DBAL\Connection $db */
-        $db = $app['db'];
+            $todo = $qry->getSingleResult();
 
-        $sql = "SELECT count(id) FROM todos WHERE user_id = :userId";
-        $count = (int) array_values($db->fetchAll($sql, ['userId' => $user['id']])[0])[0];
+            return $app['twig']->render('todo.html', [
+                'todo' => $todo,
+            ]);
+        } else {
+            $limit = (int) $request->get('limit', 5);
+            $page = (int) $request->get('page', 1);
+            $offset = ($page - 1) * $limit;
 
-        $sql = "SELECT * FROM todos WHERE user_id = :userId LIMIT $offset, $limit";
-        $todos = $db->fetchAll($sql, ['userId' => $user['id']]);
+            $qry = $em->createQuery("SELECT count(t.id) FROM App\Entity\Todos t WHERE t.user = :user");
+            $qry->setParameters([
+                'user' => $user['id'],
+            ]);
 
-        return $app['twig']->render('todos.html', [
-            'todos' => $todos,
-            'onPage' => $page,
-            'maxPages' => ceil($count / $limit),
-        ]);
+            $totalCount = $qry->getSingleScalarResult();
+
+            $qry = $em->createQuery("SELECT t FROM App\Entity\Todos t WHERE t.user = :user");
+            $qry->setFirstResult($offset)
+                ->setMaxResults($limit)
+                ->setParameters([
+                    'user' => $user['id'],
+                ]);
+
+            $todos = $qry->getResult();
+
+            return $app['twig']->render('todos.html', [
+                'todos' => $todos,
+                'onPage' => $page,
+                'maxPages' => ceil($totalCount / $limit),
+            ]);
+        }
+    } catch (\Doctrine\ORM\NoResultException $e) {
+        return $app->redirect('/todo');
     }
 })
 ->value('id', null);
 
 
 $app->post('/todo/add', function (Request $request) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
+    try {
+        if (null === $user = $app['session']->get('user')) {
+            return $app->redirect('/login');
+        }
 
-    $user_id = (int)$user['id'];
-    $description = strip_tags($request->get('description'));
+        $description = strip_tags($request->get('description'));
 
-    if (empty($description)) {
+        if (empty($description)) {
+            return $app->redirect('/todo');
+        }
+
+        /** @var \Doctrine\ORM\EntityManager $em */
+        $em = $app['orm.em'];
+
+        $user = $em->find('\App\Entity\Users', $user['id']);
+
+        $todo = new \App\Entity\Todos();
+        $todo->setDescription($description)
+            ->setCompleted(false)
+            ->setUser($user);
+
+        $em->persist($todo);
+        $em->flush();
+
+        $app['session']->getFlashBag()->add('notifications', 'Success - Todo added');
+
+        return $app->redirect('/todo');
+    } catch (\Doctrine\ORM\NoResultException $e) {
         return $app->redirect('/todo');
     }
-
-    /** @var Doctrine\DBAL\Connection $db */
-    $db = $app['db'];
-
-    $sql = "INSERT INTO todos (user_id, description) VALUES (:id, :description)";
-    $db->executeUpdate($sql, [
-        'id' => $user_id,
-        'description' => $description,
-    ]);
-
-    $app['session']->getFlashBag()->add('notifications', 'Success - Todo added');
-
-    return $app->redirect('/todo');
 });
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
+    try {
+        if (null === $user = $app['session']->get('user')) {
+            return $app->redirect('/login');
+        }
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+        /** @var \Doctrine\ORM\EntityManager $em */
+        $em = $app['orm.em'];
 
-    $app['session']->getFlashBag()->add('notifications', 'Success - Todo deleted');
+        $qry = $em->createQuery("SELECT t FROM App\Entity\Todos t WHERE t.id = :id AND t.user = :user");
+        $qry->setParameters([
+            'id' => $id,
+            'user' => $user['id'],
+        ]);
 
-    return $app->redirect('/todo');
+        $todo = $qry->getSingleResult();
+        $em->remove($todo);
+        $em->flush();
+
+        $app['session']->getFlashBag()->add('notifications', 'Success - Todo deleted');
+
+        return $app->redirect('/todo');
+    } catch (\Doctrine\ORM\NoResultException $e) {
+        return $app->redirect('/todo');
+    }
 });
 
 $app->match('/todo/completed/{id}', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
+    try {
+        if (null === $user = $app['session']->get('user')) {
+            return $app->redirect('/login');
+        }
+
+        /** @var \Doctrine\ORM\EntityManager $em */
+        $em = $app['orm.em'];
+
+        $qry = $em->createQuery("SELECT t FROM App\Entity\Todos t WHERE t.id = :id AND t.user = :user");
+        $qry->setParameters([
+            'id' => $id,
+            'user' => $user['id'],
+        ]);
+
+        $todo = $qry->getSingleResult();
+        $todo->setCompleted(true);
+
+        $em->persist($todo);
+        $em->flush();
+
+        return $app->redirect('/todo');
+    } catch (\Doctrine\ORM\NoResultException $e) {
+        return $app->redirect('/todo');
     }
-
-    $user_id = (int)$user['id'];
-
-    /** @var Doctrine\DBAL\Connection $db */
-    $db = $app['db'];
-
-    $sql = "UPDATE todos SET completed = :completed WHERE id = :id";
-    $db->executeUpdate($sql, [
-        'id' => $id,
-        'completed' => true,
-    ]);
-
-    return $app->redirect('/todo');
 });
 
 $app->get('todo/{id}/json', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
+        try {
+            if (null === $user = $app['session']->get('user')) {
+                return $app->redirect('/login');
+            }
 
-    if ($id){
-        /** @var Doctrine\DBAL\Connection $db */
-        $db = $app['db'];
+            if (empty($id)) {
+                return json_encode(new stdClass());
+            }
 
-        $sql = "SELECT * FROM todos WHERE id = :id";
-        $todo = $db->fetchAssoc($sql, ['id' => $id]);
+            /** @var \Doctrine\ORM\EntityManager $em */
+            $em = $app['orm.em'];
 
-        return json_encode($todo);
-    } else {
-        return json_encode(new stdClass());
-    }
+            $qry = $em->createQuery("SELECT t FROM App\Entity\Todos t WHERE t.id = :id AND t.user = :user");
+            $qry->setParameters([
+                'id' => $id,
+                'user' => $user['id'],
+            ]);
+
+            $todo = $qry->getSingleResult();
+            return json_encode([
+                'id' => $todo->getId(),
+                'description' => $todo->getDescription(),
+                'completed' => $todo->isCompleted()
+            ]);
+        } catch (\Doctrine\ORM\NoResultException $e) {
+            return json_encode(new stdClass());
+        }
 })
     ->value('id', null);
