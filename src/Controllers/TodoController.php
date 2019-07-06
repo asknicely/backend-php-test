@@ -51,13 +51,14 @@ class TodoController extends Todo
      */
     public function addTodo($request)
     {
-        $data = array(
-            'user_id' => $this->user['id'],
-            'description' => $request->get('description')
-        );
+        if ($request->get('description')) {
+            $data = array(
+                'user_id' => $this->user['id'],
+                'description' => $request->get('description')
+            );
 
-        $todo = Todo::insert($data);
-        $this->app['session']->getFlashBag()->add('alert', 'Added new todo.');
+            $todo = Todo::insert($data);
+        }
 
         return $this->app->redirect('/todo');
     }
@@ -68,6 +69,7 @@ class TodoController extends Todo
     public function deleteTodo($id)
     {
         $todo = Todo::delete($id);
+        $this->app['session']->getFlashBag()->add('alert', 'Deleted todo.');
 
         return $this->app->redirect('/todo');
     }
