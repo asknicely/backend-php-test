@@ -39,6 +39,28 @@
                 </td>
             </form>
         </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>
+                <ul>
+                    {% for number, position in pages %}
+                        {% if position == 'first' %}
+                            <li><a href="?page={{ number }}">&laquo;</a></li>
+                        {% elseif position == 'less' or position == 'more' %}
+                            <li>...</li>
+                        {% elseif position == 'previous' or position == 'next' %}
+                            <li><a href="?page={{ number }}">{{ number }}</a></li>
+                        {% elseif position == 'current' %}
+                            <li>{{ number }}</li>
+                        {% elseif position == 'last' %}
+                            <li><a href="?page={{ number }}">&raquo;</a></li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </td>
+        </tr>
     </table>
 </div>
 {% endblock %}

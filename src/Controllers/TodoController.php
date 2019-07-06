@@ -4,10 +4,16 @@ namespace Controllers;
 
 use Symfony\Component\HttpFoundation\Request;
 use Models\Todo;
-
+use Kilte\Pagination\Pagination;
 
 class TodoController extends Todo
 {
+
+    /**
+     * Default values for pagination
+     */
+    private $perPage = 3;
+    private $currentPage = 1;
 
     /**
      * Constructor
@@ -25,12 +31,31 @@ class TodoController extends Todo
     /**
      * Getting all todos from current user that is logged in
      */
-    public function getAll()
+    public function getAll($request)
     {
-        $todos = Todo::getAllTodosFromCurrentUser($this->user['id'], $this->queryBuilder);
+        // If there is a GET page, that's defining the current page
+        if($request->get('page'))
+            $this->currentPage = $request->get('page');
+
+        // Counting all todos by current user for pagination
+        $totalTodos = Todo::countByCurrentUser($this->user['id']);
+
+        // Getting all todos from current user
+        $todos = Todo::getAllTodosFromCurrentUser($this->user['id'], $this->perPage, $this->currentPage);
+
+        // Pagination for todos
+        $pagination = new Pagination($totalTodos, $this->currentPage, $this->perPage, 5);
+
+        // Offset, limit, and pages going to view file for displaying pagination
+        $offset = $pagination->offset();
+        $limit = $pagination->limit();
+        $pages = $pagination->build();
 
         return $this->app['twig']->render('todos.html', [
             'todos' => $todos,
+            'offset' => $offset,
+            'limit' => $limit,
+            'pages' => $pages
         ]);
     }
 

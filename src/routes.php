@@ -46,9 +46,9 @@ $app->get('/logout', function () use ($app) {
 });
 
 // TODO Routes
-$app->get('/todo', function ($id) use ($app) {
+$app->get('/todo', function ($id, Request $request) use ($app) {
     $todo = new TodoController($app);
-    return $todo->getAll();
+    return $todo->getAll($request);
 })->value('id', null)->before($loginCheck);
 
 $app->get('/todo/{id}', function ($id) use ($app) {

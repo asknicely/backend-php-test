@@ -2,6 +2,18 @@ body {
   padding-top: 50px;
 }
 
+ul {
+    list-style: none;
+}
+
+li {
+    display: inline-block;
+}
+
+td {
+    text-align: center;
+}
+
 .login-form > div {
     margin-top: 10px;
 }
