@@ -58,6 +58,9 @@ class TodoController extends Todo
             );
 
             $todo = Todo::insert($data);
+            $this->app['session']->getFlashBag()->add('alert', 'Added new todo.');
+        } else {
+            $this->app['session']->getFlashBag()->add('alert', 'You have to add description.');
         }
 
         return $this->app->redirect('/todo');
