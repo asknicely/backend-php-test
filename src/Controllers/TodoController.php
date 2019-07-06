@@ -2,7 +2,6 @@
 
 namespace Controllers;
 
-use Symfony\Component\HttpFoundation\Request;
 use Models\Todo;
 use Kilte\Pagination\Pagination;
 
@@ -12,7 +11,7 @@ class TodoController extends Todo
     /**
      * Default values for pagination
      */
-    private $perPage = 3;
+    private $perPage = 5;
     private $currentPage = 1;
 
     /**
@@ -111,4 +110,17 @@ class TodoController extends Todo
 
         return $this->app->redirect('/todo');
     }
+
+    /**
+     * Complete or open again a todo
+     */
+    public function completeTodo($id)
+    {
+        Todo::complete($id);
+
+        $this->app['session']->getFlashBag()->add('alert', 'Completed a todo.');
+
+        return $this->app->redirect('/todo');
+    }
+
 }

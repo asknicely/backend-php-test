@@ -1,7 +1,8 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="col-md-4 col-md-offset-4">
+<div class="col-md-2"></div>
+<div class="col-md-8">
     <!-- alert -->
     {% for alert in app.session.flashbag.get('alert') %}
     <div class="error-message">
@@ -12,7 +13,7 @@
 
     <h1>Todo List:</h1>
     <table class="table table-striped">
-        <th>#</th><th>User</th><th>Description</th><th></th>
+        <th>#</th><th>User</th><th>Description</th><th>Completed</th><th></th>
         {% for todo in todos %}
             <tr>
                 <td>{{ todo.id }}</td>
@@ -23,6 +24,20 @@
                     </a>
                 </td>
                 <td>
+                    {% if todo.completed %}
+                        <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}/complete">
+                            <button type="submit" class="btn btn-xs btn-success">COMPLETED</button>
+                        </a>
+                    {% else %}
+                        <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}/complete">
+                            <button type="submit" class="btn btn-xs btn-danger">NOT COMPLETED</button>
+                        </a>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}/json">
+                        <button type="submit" class="btn btn-xs btn-success">JSON</button>
+                    </a>
                     <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
                         <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                     </form>
@@ -32,14 +47,16 @@
         <tr>
             <form method="post" action="{{ app.request.baseurl }}/todo/add">
                 <td colspan="3">
-                    <input type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
+                    <textarea rows="5" cols="50" name="description"></textarea>
                 </td>
+                <td></td>
                 <td>
                     <button type="submit" class="btn btn-sm btn-primary">Add</button>
                 </td>
             </form>
         </tr>
         <tr>
+            <td></td>
             <td></td>
             <td></td>
             <td></td>
@@ -63,4 +80,6 @@
         </tr>
     </table>
 </div>
+<div class="col-md-2"></div>
+
 {% endblock %}

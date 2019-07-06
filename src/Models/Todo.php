@@ -11,7 +11,7 @@ class Todo
     public function getById($id)
     {
         return $this->queryBuilder
-            ->select('id', 'user_id', 'description')
+            ->select('id', 'user_id', 'description', 'completed')
             ->from('todos')
             ->where('id = ?')
             ->setParameter(0, $id)
@@ -25,7 +25,7 @@ class Todo
     public function getAllTodosFromCurrentUser($userId, $perPage, $currentPage)
     {
         return $this->queryBuilder
-            ->select('id', 'user_id', 'description')
+            ->select('id', 'user_id', 'description', 'completed')
             ->from('todos')
             ->where('user_id = ?')
             ->setParameter(0, $userId)
@@ -57,7 +57,11 @@ class Todo
      */
     public function delete($id)
     {
-        $this->queryBuilder->delete('todos')->where('id = ' . $id)->execute();
+        $this->queryBuilder
+            ->delete('todos')
+            ->where('id = ?')
+            ->setParameter(0, $id)
+            ->execute();
     }
 
     /**
@@ -73,4 +77,19 @@ class Todo
             ->execute()
             ->rowCount();
     }
+
+    /**
+     * Inserting 0 or 1 to completed column for todo by id
+     */
+    public function complete($id)
+    {
+        $this->queryBuilder
+            ->update('todos')
+            ->set('completed', '?')
+            ->where('id = ?')
+            ->setParameter(0, 1)
+            ->setParameter(1, $id)
+            ->execute();
+    }
+
 }

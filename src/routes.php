@@ -1,16 +1,8 @@
 <?php
 
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Controllers\TodoController;
 use Controllers\UserController;
-
-//  todo IMPORT CONTROLLER AND MODEL
-
-//  todo CALL THIS FILE ROUTES
-
-//  todo MOVE ALL LOGIC TO CONTROLLERS AND MODELS
-
 
 // Middleware for checking if user is logged in
 $loginCheck = function (Request $request, $app) {
@@ -69,4 +61,9 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 $app->match('/todo/{id}/json', function ($id) use ($app) {
     $todo = new TodoController($app);
     return $todo->getOneJSON($id);
+})->before($loginCheck);
+
+$app->match('/todo/{id}/complete', function ($id, Request $request) use ($app) {
+    $todo = new TodoController($app);
+    return $todo->completeTodo($id, $request);
 })->before($loginCheck);

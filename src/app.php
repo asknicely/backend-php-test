@@ -10,7 +10,6 @@ use Silex\Provider\HttpFragmentServiceProvider;
 use Silex\Provider\DoctrineServiceProvider;
 use DerAlex\Silex\YamlConfigServiceProvider;
 
-
 $app = new Application();
 $app->register(new SessionServiceProvider());
 $app->register(new UrlGeneratorServiceProvider());
@@ -31,6 +30,5 @@ $app->register(new DoctrineServiceProvider, array(
         'charset'   => 'utf8',
     ),
 ));
-
 
 return $app;
