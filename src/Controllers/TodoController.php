@@ -4,6 +4,7 @@ namespace Controllers;
 
 use Models\Todo;
 use Kilte\Pagination\Pagination;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class TodoController extends Todo
 {
@@ -19,7 +20,6 @@ class TodoController extends Todo
      */
     public function __construct($app)
     {
-
         $this->app = $app;
 
         $this->queryBuilder = $app['db']->createQueryBuilder();
@@ -85,16 +85,18 @@ class TodoController extends Todo
      */
     public function addTodo($request)
     {
-        if ($request->get('description')) {
+        $errors = $this->app['validator']->validate($request->get('description'), array(new Assert\NotBlank(), new Assert\Length(array('min' => 10))));
+
+        if (count($errors) > 0) {
+            $this->app['session']->getFlashBag()->add('alert', $errors);
+        } else {
             $data = array(
                 'user_id' => $this->user['id'],
                 'description' => $request->get('description')
             );
 
-            $todo = Todo::insert($data);
+            Todo::insert($data);
             $this->app['session']->getFlashBag()->add('alert', 'Added new todo.');
-        } else {
-            $this->app['session']->getFlashBag()->add('alert', 'You have to add description.');
         }
 
         return $this->app->redirect('/todo');
@@ -112,7 +114,7 @@ class TodoController extends Todo
     }
 
     /**
-     * Complete or open again a todo
+     * Complete a todo
      */
     public function completeTodo($id)
     {

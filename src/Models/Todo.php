@@ -79,7 +79,7 @@ class Todo
     }
 
     /**
-     * Inserting 0 or 1 to completed column for todo by id
+     * Inserting 1 to completed column for todo by id
      */
     public function complete($id)
     {

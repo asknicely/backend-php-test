@@ -30,6 +30,16 @@ ORM Query Builder implemented, and all queries working with query builder. There
 7. MVC
 Controllers and Models created for todos and users. Entire logic is moved from controllers.php (which is now routes.php), and now everything is happening through Models / Controllers.
 
+8. AJAX
+Delete and complete features are working now asynchronously through javascript
+
+9. Password Hashing
+Passwords are now hashed in db for security reasons, running second created migration will fix user passwords - mysql -u root <database> < resources/002_migration_update_password_rows_users_table.sql
+
+10. Added validator to addTodo method in TodoController, it's a more neat solution for validation then if, and also added description has to be minimum 10 letters.
+
+11. Placed comments all over the code for better understanding
+
 ### Application
 The TODO App allows a user to add reminders of thing he needs to do. Here are the requirement for the app.
 * Users can add, delete and see their todos.

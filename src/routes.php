@@ -22,6 +22,7 @@ $app->get('/', function () use ($app) {
     ]);
 });
 
+// USER Routes
 $app->match('/login', function (Request $request) use ($app) {
     if($request->get('username') && $request->get('password')){
         $user = new UserController($app);

@@ -13,31 +13,43 @@
 
     <h1>Todo List:</h1>
     <table class="table table-striped">
-        <th>#</th><th>User</th><th>Description</th><th>Completed</th><th></th>
+        <th>#</th><th>User</th><th>Description</th><th>Completed</th><th>Actions</th>
         {% for todo in todos %}
             <tr id="todotr_{{ todo.id }}">
+
+                <!-- id and user id -->
                 <td>{{ todo.id }}</td>
                 <td>{{ todo.user_id }}</td>
+                <!-- id and user id -->
+
+                <!-- description -->
                 <td>
                     <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
                        {{ todo.description }}
                     </a>
                 </td>
+                <!-- description end -->
+
+                <!-- complete todo -->
                 <td>
                     {% if todo.completed %}
-                        <button type="button" class="btn btn-xs btn-success">COMPLETED</button>
+                        <button type="button" class="btn btn-xs btn-success custom-btn">COMPLETED</button>
                     {% else %}
-                        <button onclick="completeTodo({{ todo.id }})" type="button" class="btn btn-xs btn-danger" id="completebutton_{{ todo.id }}">NOT COMPLETED</button>
+                        <button onclick="completeTodo({{ todo.id }})" type="button" class="btn btn-xs btn-danger custom-btn" id="completebutton_{{ todo.id }}">NOT COMPLETED</button>
                     {% endif %}
                 </td>
+                <!-- complete todo end -->
+
+                <!-- actions -->
                 <td>
                     <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}/json">
-                        <button type="submit" class="btn btn-xs btn-success">JSON</button>
+                        <button type="submit" class="btn btn-xs btn-success custom-btn">JSON</button>
                     </a>
                     <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
-                        <button onclick="deleteTodo({{ todo.id }})" type="button" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
+                        <button onclick="deleteTodo({{ todo.id }})" type="button" class="btn btn-xs btn-danger custom-btn">DELETE</button>
                     </form>
                 </td>
+                <!-- actions end -->
             </tr>
         {% endfor %}
         <tr>
@@ -47,7 +59,7 @@
                 </td>
                 <td></td>
                 <td>
-                    <button type="submit" class="btn btn-sm btn-primary">Add</button>
+                    <button type="submit" class="btn btn-sm btn-primary custom-btn">Add</button>
                 </td>
             </form>
         </tr>
@@ -57,6 +69,7 @@
             <td></td>
             <td></td>
             <td>
+                <!-- pagination -->
                 <ul>
                     {% for number, position in pages %}
                         {% if position == 'first' %}
@@ -72,6 +85,7 @@
                         {% endif %}
                     {% endfor %}
                 </ul>
+                <!-- pagination end -->
             </td>
         </tr>
     </table>

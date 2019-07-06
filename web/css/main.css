@@ -40,3 +40,7 @@ textarea {
 .alert {
     text-align: center;
 }
+
+.custom-btn {
+    min-width: 110px;
+}

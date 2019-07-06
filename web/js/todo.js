@@ -7,7 +7,7 @@ function completeTodo(id) {
         if (this.readyState == 4 && this.status == 200) {
             const completedTodoButton = document.getElementById('completebutton_' + id);
             completedTodoButton.innerText = "COMPLETED";
-            completedTodoButton.setAttribute("class", "btn btn-xs btn-success");
+            completedTodoButton.setAttribute("class", "btn btn-xs btn-success custom-btn");
         }
     };
 
