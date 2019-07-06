@@ -29,6 +29,7 @@ class UserController extends User
 
             if ($user) {
                 $this->app['session']->set('user', $user);
+                $this->app['session']->getFlashBag()->add('alert', 'Successfully logged in.');
             }
         }
     }

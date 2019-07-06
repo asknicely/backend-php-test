@@ -65,3 +65,8 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     $todo = new TodoController($app);
     return $todo->deleteTodo($id);
 })->before($loginCheck);
+
+$app->match('/todo/{id}/json', function ($id) use ($app) {
+    $todo = new TodoController($app);
+    return $todo->getOneJSON($id);
+})->before($loginCheck);

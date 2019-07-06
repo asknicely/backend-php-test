@@ -47,6 +47,16 @@ class TodoController extends Todo
     }
 
     /**
+     * Getting todo by ID and returning as JSON
+     */
+    public function getOneJSON($id)
+    {
+        $todo = Todo::getById($id);
+
+        return json_encode($todo);
+    }
+
+    /**
      * Add new todo
      */
     public function addTodo($request)
