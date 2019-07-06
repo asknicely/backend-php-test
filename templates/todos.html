@@ -15,7 +15,7 @@
     <table class="table table-striped">
         <th>#</th><th>User</th><th>Description</th><th>Completed</th><th></th>
         {% for todo in todos %}
-            <tr>
+            <tr id="todotr_{{ todo.id }}">
                 <td>{{ todo.id }}</td>
                 <td>{{ todo.user_id }}</td>
                 <td>
@@ -25,13 +25,9 @@
                 </td>
                 <td>
                     {% if todo.completed %}
-                        <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}/complete">
-                            <button type="submit" class="btn btn-xs btn-success">COMPLETED</button>
-                        </a>
+                        <button type="button" class="btn btn-xs btn-success">COMPLETED</button>
                     {% else %}
-                        <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}/complete">
-                            <button type="submit" class="btn btn-xs btn-danger">NOT COMPLETED</button>
-                        </a>
+                        <button onclick="completeTodo({{ todo.id }})" type="button" class="btn btn-xs btn-danger" id="completebutton_{{ todo.id }}">NOT COMPLETED</button>
                     {% endif %}
                 </td>
                 <td>
@@ -39,7 +35,7 @@
                         <button type="submit" class="btn btn-xs btn-success">JSON</button>
                     </a>
                     <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
-                        <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
+                        <button onclick="deleteTodo({{ todo.id }})" type="button" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                     </form>
                 </td>
             </tr>

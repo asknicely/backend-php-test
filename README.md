@@ -1,6 +1,34 @@
 AskNicely PHP backend skill test
 ==========================
 
+### New Features - by Uros
+
+New migrations added run them on following commands:
+
+mysql -u root <database> < resources/001_migration_add_completed_column_to_todos_table.sql
+mysql -u root <database> < resources/002_migration_update_password_rows_users_table.sql
+
+1. Description
+Todos can no longer be added without a description.
+
+2. Marking a todo as completed
+Todos can now be marked as completed, and it's displayed which todos are completed.
+
+3. JSON Format of todo
+Todo can be retrieved in JSON format, it's available on /todo/{id of todo}/json, or it can be accessed through JSON button on todo list.
+
+4. Confirmation Messages
+Confirmation messages are implemented through FlashBag, there are notifications coming up for: 
+1)Adding a new todo, 2)Deleting a todo, 3)If description is missing on adding new todo, 4)On completing a todo, 5)On logging in as a user
+ 
+5. Pagination
+Pagination is added to todo list, it's currently paginated to be 5 per page, it can be changed directly in TodoController if needed.
+ 
+6. ORM
+ORM Query Builder implemented, and all queries working with query builder. There is no plain SQL in the code (except migrations)
+ 
+7. MVC
+Controllers and Models created for todos and users. Entire logic is moved from controllers.php (which is now routes.php), and now everything is happening through Models / Controllers.
 
 ### Application
 The TODO App allows a user to add reminders of thing he needs to do. Here are the requirement for the app.
