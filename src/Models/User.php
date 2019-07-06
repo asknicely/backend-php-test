@@ -13,7 +13,7 @@ class User
     public function getUserByUsernameAndPass($data)
     {
         $hash = $this->passwordEncode($data['password']);
-
+        
         return $this->queryBuilder
             ->select('id', 'username', 'password')
             ->from('users')
