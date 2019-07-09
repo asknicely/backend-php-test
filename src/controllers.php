@@ -8,6 +8,8 @@ CONST STATUSES = [
     'pending'
 ];
 
+CONST PAGINATION_LIMIT = 10;
+
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
@@ -59,11 +61,21 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+        $limit = PAGINATION_LIMIT;
+        $offset = isset($_GET['page']) ? ($_GET['page'] - 1) * $limit: 0;
+        $sql = "SELECT * 
+          FROM todos 
+          WHERE user_id = '${user['id']}' 
+          LIMIT $offset, $limit";
         $todos = $app['db']->fetchAll($sql);
 
+        $sql = "SELECT count(*) as count
+          FROM todos 
+          WHERE user_id = '${user['id']}'";
+        $totalPages = round($app['db']->fetchColumn($sql) / $limit);
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
+            'total_pages' => $totalPages,
         ]);
     }
 })
