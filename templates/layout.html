@@ -37,6 +37,11 @@
           {{ alert }}
         </div>
       {% endfor %}
+      {% for alert in app.session.flashbag.get('success') %}
+        <div class="alert alert-success" role="alert">
+          {{ alert }}
+        </div>
+      {% endfor %}
       <div class="row">
         {% block content %}{% endblock %}
       </div>
