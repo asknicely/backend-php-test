@@ -3,6 +3,11 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+CONST STATUSES = [
+    'complete',
+    'pending'
+];
+
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
@@ -83,6 +88,17 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     return $app->redirect('/todo');
 });
 
+$app->match('/todo/update/{id}/{status}', function ($id, $status) use ($app) {
+
+    if (!in_array($status, STATUSES)) {
+        $app['session']->getFlashBag()->add('error', 'Invalid Status');
+    } else {
+        $sql = "UPDATE todos SET status = '$status' WHERE id = '$id'";
+        $app['db']->executeUpdate($sql);
+    }
+
+    return $app->redirect('/todo');
+});
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
