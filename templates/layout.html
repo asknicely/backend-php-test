@@ -32,6 +32,11 @@
     </nav>
 
     <div class="container">
+      {% for alert in app.session.flashbag.get('error') %}
+        <div class="alert alert-danger" role="alert">
+          {{ alert }}
+        </div>
+      {% endfor %}
       <div class="row">
         {% block content %}{% endblock %}
       </div>
