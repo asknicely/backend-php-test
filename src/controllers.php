@@ -29,11 +29,17 @@ $app->match('/login', function (Request $request) use ($app) {
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+        $entityManager = $app['orm.em'];
+        $user = $entityManager->getRepository('\App\Entity\User')
+            ->findBy(
+                [
+                    'username' => $username,
+                    'password' => $password
+                ]
+            );
 
         if ($user){
-            $app['session']->set('user', $user);
+            $app['session']->set('user', $user[0]);
             return $app->redirect('/todo');
         }
     }
@@ -52,30 +58,32 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
+    $entityManager = $app['orm.em'];
 
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
-
         return $app['twig']->render('todo.html', [
-            'todo' => $todo,
+            'todo' => $entityManager->find('\App\Entity\Todo', $id),
         ]);
     } else {
         $limit = PAGINATION_LIMIT;
         $offset = isset($_GET['page']) ? ($_GET['page'] - 1) * $limit: 0;
-        $sql = "SELECT * 
-          FROM todos 
-          WHERE user_id = '${user['id']}' 
-          LIMIT $offset, $limit";
-        $todos = $app['db']->fetchAll($sql);
 
-        $sql = "SELECT count(*) as count
-          FROM todos 
-          WHERE user_id = '${user['id']}'";
-        $totalPages = round($app['db']->fetchColumn($sql) / $limit);
+        $results = $entityManager
+            ->getRepository('\App\Entity\Todo')
+            ->findBy(
+                ['userId' => $user->getId()]
+            );
+
         return $app['twig']->render('todos.html', [
-            'todos' => $todos,
-            'total_pages' => $totalPages,
+            'todos' => $entityManager
+                ->getRepository('\App\Entity\Todo')
+                ->findBy(
+                    ['userId' => $user->getId()],
+                    null,
+                    $limit,
+                    $offset
+                ),
+            'total_pages' => ceil(count($results) / $limit),
         ]);
     }
 })
@@ -86,27 +94,29 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
         return $app->redirect('/login');
     }
 
-    $sql = "SELECT * FROM todos WHERE id = '$id'";
-    $todo = $app['db']->fetchAssoc($sql);
-
-    return json_encode($todo);
+    $entityManager = $app['orm.em'];
+    $todo = $entityManager->find('\App\Entity\Todo', $id);
+    return $todo->serializer();
 })
 ->value('id', null);
-
 
 $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
-    $user_id = $user['id'];
     $description = $request->get('description');
 
     if ($description == '') {
         $app['session']->getFlashBag()->add('error', 'Description field cannot be blank. Please fill the description field.');
     } else {
-        $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-        $app['db']->executeUpdate($sql);
+        $entityManager = $app['orm.em'];
+        $todo = new \App\Entity\Todo();
+        $todo->setDescription($description)
+            ->setUser_Id($user->getId())
+            ->setStatus('pending');
+        $entityManager->persist($todo);
+        $entityManager->flush();
+
         $app['session']->getFlashBag()->add('success', 'Todo successfully added');
     }
 
@@ -114,12 +124,19 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 });
 
 $app->match('/todo/update/{id}/{status}', function ($id, $status) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
 
+    $entityManager = $app['orm.em'];
     if (!in_array($status, STATUSES)) {
         $app['session']->getFlashBag()->add('error', 'Invalid Status');
     } else {
-        $sql = "UPDATE todos SET status = '$status' WHERE id = '$id'";
-        $app['db']->executeUpdate($sql);
+        $todo = $entityManager->find('\App\Entity\Todo', $id);
+        $todo->setStatus('complete');
+        $entityManager->persist($todo);
+        $entityManager->flush();
+
         $app['session']->getFlashBag()->add('success', 'Todo status successfully updated');
     }
 
@@ -127,9 +144,15 @@ $app->match('/todo/update/{id}/{status}', function ($id, $status) use ($app) {
 });
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    $entityManager = $app['orm.em'];
+    $todo = $entityManager->find('\App\Entity\Todo', $id);
+    $entityManager->remove($todo);
+    $entityManager->flush();
+
     $app['session']->getFlashBag()->add('success', 'Todo status successfully deleted');
 
     return $app->redirect('/todo');

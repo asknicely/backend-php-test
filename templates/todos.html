@@ -30,7 +30,7 @@
                 </td>
                 <td>
                     <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}/json">
-                        {{ todo|json_encode() }}
+                        {{ todo.serializer|raw }}
                     </a>
                 </td>
                 <td class="text-center">
