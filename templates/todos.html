@@ -7,6 +7,7 @@
         <th>#</th>
         <th>User</th>
         <th>Description</th>
+        <th>JSON</th>
         <th class="text-center">Status</th>
         <th class="text-center">Actions</th>
         {% for todo in todos %}
@@ -16,6 +17,11 @@
                 <td>
                     <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
                        {{ todo.description }}
+                    </a>
+                </td>
+                <td>
+                    <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}/json">
+                        {{ todo|json_encode() }}
                     </a>
                 </td>
                 <td class="text-center">
