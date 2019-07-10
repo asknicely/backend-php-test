@@ -56,7 +56,6 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     } else {
         $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
         $todos = $app['db']->fetchAll($sql);
-
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
         ]);
@@ -89,5 +88,11 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
 
+    return $app->redirect('/todo');
+});
+
+$app->post('/todo/complete/{id}', function ($id) use ($app) {
+    $sql = "UPDATE todos SET completed = true WHERE id = '$id'";
+    $app['db']->executeUpdate($sql);
     return $app->redirect('/todo');
 });
