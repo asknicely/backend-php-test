@@ -1,0 +1,32 @@
+    <table class="table table-striped">
+        <th>#</th><th>User</th><th>Description</th><th></th>
+        {% for todo in todos %}
+            <tr class="todolidTR{{ todo.id }}">
+                <td>{{ todo.id }}</td>
+                <td>{{ todo.user_id }}</td>
+                <td>
+                    <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
+                       {{ todo.description }}
+                    </a>
+                </td>
+                <td>
+				 <button todoid="{{ todo.id }}" type="button" class="btn btn-xs btn-danger deletetodo"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
+                  {% if todo.status == 0 %}
+				 <button todoid="{{ todo.id }}" type="button" class="btn btn-xs btn-success completetodo"><span class="glyphicon glyphicon-plus glyphicon-white"></span></button>          
+                  {% elseif todo.status == 1 %}
+				 <button todoid="{{ todo.id }}" type="button" class="btn btn-xs btn-info inprogresstodo"><span class="glyphicon glyphicon-minus glyphicon-white"></span></button>          
+                  {% endif %}
+				</td>
+            </tr>
+        {% endfor %}
+        <tr id="traddTodos">
+            <form method="post" action="{{ app.request.baseurl }}/todo/add">
+                <td colspan="3">
+                    <input type="textbox" id="description" name="description" class="small-6 small-center" placeholder="Description...">
+                </td>
+                <td>
+                    <button type="button" id="addtodos" class="btn btn-sm btn-primary">Add <span class="glyphicon glyphicon-refresh glyphicon-spin" style="display:none;"></span></button>
+                </td>
+            </form>
+        </tr>
+    </table>

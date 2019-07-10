@@ -87,3 +87,65 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     return $app->redirect('/todo');
 });
+
+/*
+Changes:
+ 1) Todos listing 
+ 2) Delete Todo
+ 3) Change status to complete
+	 Change todos status 
+	 status 0: In progress
+	 status 1: completed
+ 4) Add Todos 
+Added by Hems
+*/
+
+
+$app->get('/todoslist/{id}', function ($id) use ($app) {
+  if (null === $user = $app['session']->get('user')) {
+        return "login required";
+    }
+    $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+    $todos = $app['db']->fetchAll($sql);
+
+	return $app['twig']->render('ajax_todos.html', [
+		'todos' => $todos,
+	]);
+ })->value('id', null);
+
+$app->match('/todos/ajaxdelete/{id}', function ($id) use ($app) {
+	if (null === $user = $app['session']->get('user')) {
+        return "login required";
+    }
+    $sql = "DELETE FROM todos WHERE id = '$id'";
+    $app['db']->executeUpdate($sql);
+    return "deleted successfully";
+});
+
+$app->match('/todos/completetodo/{id}', function ($id) use ($app) {
+	if (null === $user = $app['session']->get('user')) {
+        return "login required";
+    }
+    $sql = "UPDATE todos SET status=1 WHERE id = '$id'";
+    $app['db']->executeUpdate($sql);
+
+    return "updated successfully";
+});
+
+
+$app->post('/todos/ajaxadd', function (Request $request) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return "login required";
+    }
+
+    $user_id = $user['id'];
+    $description = $request->get('description');
+
+    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
+    $insertObj= $app['db']->executeUpdate($sql);
+
+	$addedtodo['id'] =$app['db']->lastInsertId();
+	$addedtodo['description'] =$description;
+	$addedtodo['user_id'] =$user_id;
+	return json_encode($addedtodo);
+});
