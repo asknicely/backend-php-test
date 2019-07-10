@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="col-md-4 col-md-offset-4">
+    <h1>Json view</h1>
+    <table class="table table-striped">
+        <th>Todo - {{id}}</th>
+        <tr>
+            <td>{{ todo }}</td>
+        </tr>
+        <tr>
+            <td><a href="{{ app.request.baseurl }}/todo">Back</a></td>
+        </tr>
+    </table>
+</div>
+{% endblock %}

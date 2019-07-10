@@ -96,3 +96,16 @@ $app->post('/todo/complete/{id}', function ($id) use ($app) {
     $app['db']->executeUpdate($sql);
     return $app->redirect('/todo');
 });
+
+$app->get('/todo/{id}/json', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $sql = "SELECT * FROM todos WHERE id = '$id'";
+    $todo = $app['db']->fetchAssoc($sql);
+    return $app['twig']->render('todo_json.html', [
+        'id' => $id,
+        'todo' => json_encode($todo)
+    ]);
+})->value('id', null);
