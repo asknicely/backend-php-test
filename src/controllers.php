@@ -41,7 +41,7 @@ $app->get('/logout', function () use ($app) {
 });
 
 
-$app->get('/todo/{id}', function ($id) use ($app) {
+$app->get('/todo/{id}', function ($id, Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
@@ -54,10 +54,18 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+        $user_id = $user['id'];
+        $limit = (int)$request->get('limit', 5);
+        $page = (int)$request->get('page', 1);
+        $offset = ($page - 1) * $limit;
+        $sql = "SELECT count(id) as total_todos FROM todos WHERE user_id = '$user_id'";
+        $count = $app['db']->fetchAssoc($sql)['total_todos'];
+        $sql = "SELECT * FROM todos WHERE user_id = '$user_id' LIMIT $offset, $limit";
         $todos = $app['db']->fetchAll($sql);
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
+            'onPage' => $page,
+            'maxPages' => ceil($count / $limit),
         ]);
     }
 })
