@@ -1,5 +1,6 @@
 
 // Load Todos list Start
+if( $('#todoslist').length ) {
 $.ajax({
     type: "GET",
     url: '/todoslist',
@@ -14,6 +15,7 @@ $.ajax({
  	var message="Something wrong. Try again.....";
 	$('#todoslist').html(message);  
 });
+}
 // Load Todos list End
 
 // Delete Todo start
