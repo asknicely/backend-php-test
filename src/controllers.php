@@ -65,6 +65,8 @@ $app->get('/todo/{id}', function ($id) use ($app) {
 ->value('id', null);
 
 
+
+
 $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
@@ -81,10 +83,8 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
-
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
-
     return $app->redirect('/todo');
 });
 
@@ -153,3 +153,34 @@ $app->post('/todos/ajaxadd', function (Request $request) use ($app) {
 	$addedtodo['user_id'] =$user_id;
 	return json_encode($addedtodo);
 });
+
+
+$app->get('/todo/{id}/json', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+       $todo["error"]= "Unauthorized  Access";
+	   return json_encode($todo);
+    }
+        $sql = "SELECT * FROM todos WHERE id = '$id'";
+        $todo = $app['db']->fetchAssoc($sql);
+		if(!$todo){
+			$todo["error"]= "Todo not found";
+		}
+		return json_encode($todo);
+
+})
+->value('id', null);
+$app->get('/todos/json', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        $todo["error"]= "Unauthorized  Access";
+	   return json_encode($todo);
+    }
+
+      $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+      $todos = $app['db']->fetchAll($sql);
+	  if(!$todos){
+			$todos["error"]= "Todos not found found for Auth users";
+		}
+      return json_encode($todos);
+
+})
+->value('id', null);
