@@ -3,6 +3,7 @@ INSERT INTO users (username, password) VALUES
 ('user2', 'user2'),
 ('user3', 'user3');
 
+
 INSERT INTO `todos` (`id`, `user_id`, `description`, `status`) VALUES
 (1, 1, 'Vivamus tempus', 0),
 (2, 1, 'lorem ac odio', 0),

@@ -89,15 +89,12 @@ $(document).on('click', '.inprogresstodo', function() {
 // Add Todo and update list Start
 $(document).on('click', '#addtodos', function() {
 var cthis = $(this);
-/*
 	if($("#description").val().trim() == ""){
 		alert("Please insert description");
 		$("#description").val("");
 		$("#description").focus();
 		return;
 	}
-	
-	*/
 	$(this).find("span").show();
 	$.ajax({
 		type: "POST",

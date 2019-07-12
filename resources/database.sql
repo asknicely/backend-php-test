@@ -5,6 +5,7 @@ CREATE TABLE users (
   PRIMARY KEY (id)
 ) Engine=InnoDB CHARSET=utf8;
 
+
 CREATE TABLE todos (
   id INT(11) NOT NULL AUTO_INCREMENT,
   user_id INT(11) NOT NULL,

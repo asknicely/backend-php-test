@@ -19,7 +19,7 @@ $app->get('/', function () use ($app) {
 
 $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
-    $password = $request->get('password');
+    $password = md5($request->get('password'));
 
     if ($username) {
         $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
