@@ -47,7 +47,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     }
 
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
+        $sql = "SELECT * FROM todos WHERE id = '$id' and user_id = '${user['id']}'";
         $todo = $app['db']->fetchAssoc($sql);
 
         return $app['twig']->render('todo.html', [
@@ -101,23 +101,53 @@ Added by Hems
 */
 
 
-$app->get('/todoslist/{id}', function ($id) use ($app) {
+$app->get('/todoslist', function () use ($app) {
   if (null === $user = $app['session']->get('user')) {
         return "login required";
     }
-    $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+	
+	
+	$sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' ";
     $todos = $app['db']->fetchAll($sql);
 
 	return $app['twig']->render('ajax_todos.html', [
 		'todos' => $todos,
 	]);
  })->value('id', null);
+ 
+ $app->get('/todowithpagination/{pagenum}', function ($pagenum=1) use ($app) {
+  if (null === $user = $app['session']->get('user')) {
+        return "login required";
+    }
+	$totalpagedata=10;
+	$startfrom = $pagenum;
+	
+	$startfrom = ($pagenum-1)*$totalpagedata;
+	if($startfrom < 0) $startfrom = 0;
+	$sql = "SELECT count(*) as totaldata FROM todos WHERE user_id = '${user['id']}' ";
+    $todo = $app['db']->fetchAll($sql);
+	
+	$totaldata= $todo[0]["totaldata"];
+	 
+	$sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT  $startfrom , $totalpagedata";
+    $todos = $app['db']->fetchAll($sql);
+	
+	$pages = ceil($totaldata/$totalpagedata);
+	return $app['twig']->render('todoswithpagination.html', [
+            'todos' => $todos, "totaldata" =>$totaldata, "pagenum" =>$pagenum,"pages"=>$pages
+        ]);
+		
+	return ;
+	
+ });
+ 
+ 
 
 $app->match('/todos/ajaxdelete/{id}', function ($id) use ($app) {
 	if (null === $user = $app['session']->get('user')) {
         return "login required";
     }
-    $sql = "DELETE FROM todos WHERE id = '$id'";
+    $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '${user['id']}'";
     $app['db']->executeUpdate($sql);
     return "deleted successfully";
 });
@@ -126,7 +156,7 @@ $app->match('/todos/completetodo/{id}', function ($id) use ($app) {
 	if (null === $user = $app['session']->get('user')) {
         return "login required";
     }
-    $sql = "UPDATE todos SET status=1 WHERE id = '$id'";
+    $sql = "UPDATE todos SET status=1 WHERE id = '$id' AND user_id = '${user['id']}'";
     $app['db']->executeUpdate($sql);
 
     return "updated successfully";
@@ -142,9 +172,6 @@ $app->post('/todos/ajaxadd', function (Request $request) use ($app) {
 	if(trim($description)== ""){
 	     return "Please add description"; 
 	}
-
-    
-
     $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
     $insertObj= $app['db']->executeUpdate($sql);
 
@@ -160,7 +187,7 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
        $todo["error"]= "Unauthorized  Access";
 	   return json_encode($todo);
     }
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
+        $sql = "SELECT * FROM todos WHERE id = '$id' AND user_id = '${user['id']}' ";
         $todo = $app['db']->fetchAssoc($sql);
 		if(!$todo){
 			$todo["error"]= "Todo not found";
