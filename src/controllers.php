@@ -137,9 +137,13 @@ $app->post('/todos/ajaxadd', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return "login required";
     }
-
-    $user_id = $user['id'];
+	$user_id = $user['id'];
     $description = $request->get('description');
+	if(trim($description)== ""){
+	     return "Please add description"; 
+	}
+
+    
 
     $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
     $insertObj= $app['db']->executeUpdate($sql);

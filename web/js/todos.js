@@ -31,7 +31,13 @@ var todoid= $(this).attr("todoid");
 		   location.href = '\login';
 		  }
 		  //remove from list
-	    $('tr.todolidTR'+todoid).hide(1000);                     
+	    $('tr.todolidTR'+todoid).hide(1000);   
+		$(".successMessage").find("span").html("Todo deleted successfully.");
+			$(".successMessage").show(1000);
+			setInterval(function(){
+			    $(".successMessage").hide(1000);
+			}, 4000); 
+			
 	}).fail(function(){
 		alert('Something wrong. Try again.....');
 	});
@@ -60,6 +66,13 @@ var todoid= $(this).attr("todoid");
 			 cthis.addClass("btn-info");
 			 cthis.removeClass("btn-success");
 			 cthis.removeClass("completetodo");
+			 
+			$(".successMessage").find("span").html("Todo completed successfully.");
+			$(".successMessage").show(1000);
+			setInterval(function(){
+			    $(".successMessage").hide(1000);
+			}, 4000); 
+			 
 	}).fail(function(){
 		alert('Something wrong. Try again.....');
 		cthis.find("span").removeClass("glyphicon-refresh glyphicon-spin");
@@ -75,15 +88,17 @@ $(document).on('click', '.inprogresstodo', function() {
 
 // Add Todo and update list Start
 $(document).on('click', '#addtodos', function() {
-var cthis = $(this); 
+var cthis = $(this);
+/*
 	if($("#description").val().trim() == ""){
 		alert("Please insert description");
 		$("#description").val("");
 		$("#description").focus();
 		return;
 	}
+	
+	*/
 	$(this).find("span").show();
-
 	$.ajax({
 		type: "POST",
 		url: '/todos/ajaxadd',
@@ -92,6 +107,15 @@ var cthis = $(this);
 			// if user session is expire
 			if(response == "login required"){
 			   location.href = '\login';
+			  }else if(response == "Please add description"){
+				  cthis.find("span").hide(2000);
+				$(".errorMesssage").find("span").html("Please add description.");
+				$(".errorMesssage").show(1000);
+				setInterval(function(){
+					$(".errorMesssage").hide(1000);
+					return;
+				}, 4000);
+				return;
 			  }
 			  
 			var obj = JSON.parse(response);
@@ -105,6 +129,12 @@ var cthis = $(this);
 				   + '</td><tr>';
 			$("#traddTodos").before(trhtml);
 			cthis.find("span").hide(2000);
+			$(".successMessage").find("span").html("Todo added successfully.");
+			$(".successMessage").show(1000);
+			setInterval(function(){
+			    $(".successMessage").hide(1000);
+			}, 4000);
+			
 		}).fail(function(){
 			alert('Something wrong. Try again.....');
 			cthis.find("span").hide(2000);
