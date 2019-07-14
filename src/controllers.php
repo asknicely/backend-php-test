@@ -1,8 +1,13 @@
 <?php
 
+use App\Model\TodoModel;
+use App\Model\UserModel;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Constraints as Assert;
 
+$app['todomodel'] = new TodoModel($app['db']);
+
+$app['usermodel'] = new UserModel($app['db']);
 $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
@@ -21,15 +26,15 @@ $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
     $password = $request->get('password');
 
-    if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+    if ($username && $password) {
+        $user = $app['usermodel']->checkLogin($username, $password);
 
         if ($user) {
             $app['session']->set('user', $user);
             return $app->redirect('/todo');
         }
     }
+
 
     return $app['twig']->render('login.html', array());
 });
@@ -47,8 +52,7 @@ $app->get('/todo/{id}', function ($id, Request $request) use ($app) {
     }
 
     if ($id) {
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+        $todo = $app['todomodel']->get($id);
 
         return $app['twig']->render('todo.html', [
             'todo' => $todo,
@@ -58,10 +62,11 @@ $app->get('/todo/{id}', function ($id, Request $request) use ($app) {
         $limit = (int)$request->get('limit', 5);
         $page = (int)$request->get('page', 1);
         $offset = ($page - 1) * $limit;
-        $sql = "SELECT count(id) as total_todos FROM todos WHERE user_id = '$user_id'";
-        $count = $app['db']->fetchAssoc($sql)['total_todos'];
-        $sql = "SELECT * FROM todos WHERE user_id = '$user_id' LIMIT $offset, $limit";
-        $todos = $app['db']->fetchAll($sql);
+
+        $count = $app['todomodel']->getCount($user_id);
+
+        $todos = $app['todomodel']->getAllbyUser($user_id, $offset, $limit);
+
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
             'onPage' => $page,
@@ -83,8 +88,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     //validate description field
     $errors = $app['validator']->validate($description, new Assert\NotBlank());
     if (count($errors) == 0) {
-        $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-        $app['db']->executeUpdate($sql);
+        $app['todomodel']->add($user_id, $description);
         $app['session']->getFlashBag()->add('notice', 'Added todo successfully!');
     }
 
@@ -93,17 +97,14 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
-
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    $app['todomodel']->delete($id);
     $app['session']->getFlashBag()->add('notice', 'Deleted todo successfully!');
 
     return $app->redirect('/todo');
 });
 
 $app->post('/todo/complete/{id}', function ($id) use ($app) {
-    $sql = "UPDATE todos SET completed = true WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    $app['todomodel']->setAsCompleted($id);
     return $app->redirect('/todo');
 });
 
@@ -111,9 +112,7 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
-    $sql = "SELECT * FROM todos WHERE id = '$id'";
-    $todo = $app['db']->fetchAssoc($sql);
+    $todo = $app['todomodel']->get($id);
     return $app['twig']->render('todo_json.html', [
         'id' => $id,
         'todo' => json_encode($todo)
