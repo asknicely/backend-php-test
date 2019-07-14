@@ -52,7 +52,7 @@ $app->get('/todo/{id}', function ($id, Request $request) use ($app) {
     }
 
     if ($id) {
-        $todo = $app['todomodel']->get($id);
+        $todo = $app['todomodel']->get($id, $user['id']);
 
         return $app['twig']->render('todo.html', [
             'todo' => $todo,
@@ -112,7 +112,7 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-    $todo = $app['todomodel']->get($id);
+    $todo = $app['todomodel']->get($id, $user['id']);
     return $app['twig']->render('todo_json.html', [
         'id' => $id,
         'todo' => json_encode($todo)

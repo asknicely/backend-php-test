@@ -12,16 +12,16 @@ class TodoModel
         $this->db = $db;
     }
 
-    public function get($id)
+    public function get($id, $userId)
     {
         // retrieve a single todo record
-        return $this->db->fetchAssoc('SELECT * FROM ' . self::TABLE . ' WHERE id = ?', array($id));
+        return $this->db->fetchAssoc('SELECT id,description,completed FROM ' . self::TABLE . ' WHERE id = ? and user_id= ?', array($id, $userId));
     }
 
-    public function getCount($id)
+    public function getCount($userId)
     {
         // retrieve a single todo record
-        return ($this->db->fetchAssoc('SELECT count(id) as total_todos FROM ' . self::TABLE . ' WHERE user_id = ?', array($id)))['total_todos'];
+        return ($this->db->fetchAssoc('SELECT count(id) as total_todos FROM ' . self::TABLE . ' WHERE user_id = ?', array($userId)))['total_todos'];
     }
 
     public function getAllbyUser($userId, $offset, $limit)
@@ -42,6 +42,7 @@ class TodoModel
 
     public function setAsCompleted($id)
     {
+        // update todo
         $this->db->update(self::TABLE,
             array('completed' => true),
             array('id' => $id));
@@ -50,7 +51,7 @@ class TodoModel
 
     public function delete($id)
     {
-        // DELETE FROM todos WHERE id = ? ($id)
+        // delete todo
         $this->db->delete(self::TABLE, array(
             'id' => $id
         ));
