@@ -42,7 +42,7 @@ $app->get('/logout', function () use ($app) {
 });
 
 
-$app->get('/todo/{id}', function ($id) use ($app) {
+$app->get('/todo/{id}', function (Request $request, $id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
@@ -55,11 +55,23 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+        $_limit = 10;
+        $page = $request->get('page', 1);
+        $_offset = $_limit * ($page - 1);
+
+
+        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT $_limit OFFSET $_offset";
         $todos = $app['db']->fetchAll($sql);
+
+        $sql = "SELECT COUNT(*) as cnt FROM todos WHERE user_id = '${user['id']}'";
+        $count = $app['db']->fetchAssoc($sql);
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
+            'pagination' => [
+                'total' => ceil($count['cnt'] / $_limit),
+                'current' => $page,
+            ]
         ]);
     }
 })->value('id', null);
@@ -72,9 +84,9 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
     $sql = "SELECT * FROM todos WHERE id = '$id'";
     $todo = $app['db']->fetchAssoc($sql);
 
-    if($todo) {
+    if ($todo) {
         return $app->json($todo);
-    }else{
+    } else {
         return $app->json([]);
     }
 });
@@ -94,11 +106,16 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
         $app['db']->executeUpdate($sql);
         $app['session']->getFlashBag()->add('alert', 'TODO task added successfully.');
+
+        $sql = "SELECT COUNT(*) as cnt FROM todos WHERE user_id = '${user['id']}'";
+        $count = $app['db']->fetchAssoc($sql);
+
+        return $app->redirect('/todo?page=' . ceil($count['cnt'] / 10));
     } else {
         $app['session']->getFlashBag()->add('error', 'Please add a description.');
     }
 
-    return $app->redirect('/todo');
+    return $app->redirect($request->headers->get('referer'));
 });
 
 $app->put('/todo/complete/{id}', function ($id) use ($app) {
