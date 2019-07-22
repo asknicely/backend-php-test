@@ -93,6 +93,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     if (count($errors) === 0) {
         $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
         $app['db']->executeUpdate($sql);
+        $app['session']->getFlashBag()->add('alert', 'TODO task added successfully.');
     } else {
         $app['session']->getFlashBag()->add('error', 'Please add a description.');
     }
@@ -110,13 +111,15 @@ $app->put('/todo/complete/{id}', function ($id) use ($app) {
     $sql = "UPDATE todos SET completed=1 WHERE id='$id' AND user_id='$user_id'";
     $app['db']->executeUpdate($sql);
 
-    return true;
+    return $app->json(['html' => '<div class="alert alert-success">TODO task completed successfully.</div>']);
 });
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
+
+    $app['session']->getFlashBag()->add('alert', 'TODO task deleted successfully.');
 
     return $app->redirect('/todo');
 });

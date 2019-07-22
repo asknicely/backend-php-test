@@ -3,6 +3,14 @@
 {% block content %}
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo List:</h1>
+    <div id="alert-container">
+        {% for error in app.session.flashbag.get('error') %}
+            <div class="alert alert-danger"><strong>Error:</strong> {{ error }}</div>
+        {% endfor %}
+        {% for alert in app.session.flashbag.get('alert') %}
+            <div class="alert alert-success">{{ alert }}</div>
+        {% endfor %}
+    </div>
     <table class="table table-striped">
         <th>#</th>
         <th>User</th>
@@ -41,8 +49,5 @@
             </form>
         </tr>
     </table>
-    {% for error in app.session.flashbag.get('error') %}
-        <div class="alert alert-danger"><strong>Error:</strong> {{ error }}</div>
-    {% endfor %}
 </div>
 {% endblock %}
