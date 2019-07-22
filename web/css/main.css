@@ -1,7 +1,17 @@
 body {
-  padding-top: 50px;
+    padding-top: 50px;
 }
 
 .login-form > div {
     margin-top: 10px;
+}
+
+.complete-todo {
+    text-decoration: none;
+    cursor: pointer;
+    color: #3c763d;
+}
+
+.task-row.completed .description{
+    text-decoration: line-through;
 }
