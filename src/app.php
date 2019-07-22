@@ -9,6 +9,7 @@ use Silex\Provider\ServiceControllerServiceProvider;
 use Silex\Provider\HttpFragmentServiceProvider;
 use Silex\Provider\DoctrineServiceProvider;
 use DerAlex\Silex\YamlConfigServiceProvider;
+use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
 
 $app = new Application();
 $app->register(new SessionServiceProvider());
@@ -18,16 +19,46 @@ $app->register(new ServiceControllerServiceProvider());
 $app->register(new TwigServiceProvider());
 $app->register(new HttpFragmentServiceProvider());
 
-$app->register(new YamlConfigServiceProvider(__DIR__.'/../config/config.yml'));
+$app->register(new YamlConfigServiceProvider(__DIR__ . '/../config/config.yml'));
 $app->register(new DoctrineServiceProvider, array(
     'db.options' => array(
-        'driver'    => 'pdo_mysql',
-        'host'      => $app['config']['database']['host'],
-        'dbname'    => $app['config']['database']['dbname'],
-        'user'      => $app['config']['database']['user'],
-        'password'  => $app['config']['database']['password'],
-        'charset'   => 'utf8',
+        'driver' => 'pdo_mysql',
+        'host' => $app['config']['database']['host'],
+        'dbname' => $app['config']['database']['dbname'],
+        'user' => $app['config']['database']['user'],
+        'password' => $app['config']['database']['password'],
+        'charset' => 'utf8',
     ),
 ));
+
+$app->register(new DoctrineOrmServiceProvider, array(
+    'orm.proxies_dir' => __DIR__ . '/doctrine/proxies',
+    'orm.em.options' => array(
+        'mappings' => array(
+            // Using actual filesystem paths
+            array(
+                'type' => 'annotation',
+                'namespace' => 'App\Entities',
+                'path' => __DIR__ . '/App/Entities',
+            ),
+        ),
+    ),
+));
+
+
+$app->register(new DoctrineOrmServiceProvider, [
+    'orm.proxies_dir' => 'src/App/Entities/Proxy',
+    'orm.auto_generate_proxies' => true,
+    'orm.em.options' => [
+        'mappings' => [
+            [
+                'type' => 'annotation',
+                'namespace' => 'App\\Entities\\',
+                'path' =>  __DIR__ . '/App/Entities',
+                'use_simple_annotation_reader' => false,
+            ],
+        ],
+    ]
+]);
 
 return $app;

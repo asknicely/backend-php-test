@@ -1,8 +1,27 @@
 <?php
 
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Validator\Constraints as Assert;
+use App\Controllers\AuthController;
+use App\Controllers\TaskController;
+
+
+/* BASIC MIDDLEWARE */
+// Check if user is already logged in, and if true redirect to task list
+$guest = function (Request $request, $app) {
+    if ((new \App\Controllers\AuthController($app))->isAuth()) return $app->redirect('/todo');
+};
+
+// Check is user is not logged in, if true redirect to login page
+$validateAuth = function (Request $request, $app) {
+    if (!(new \App\Controllers\AuthController($app))->isAuth()) return $app->redirect('/login');
+};
+
+// Return 401 Unathorized for ajax requests where user is not logged in
+$validateAuthAjax = function (Request $request, $app) {
+    if (!(new \App\Controllers\AuthController($app))->isAuth()) return $app->abort(401);
+};
+/* END MIDDLEWARE */
+
 
 $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -19,124 +38,93 @@ $app->get('/', function () use ($app) {
 
 
 $app->match('/login', function (Request $request) use ($app) {
-    $username = $request->get('username');
-    $password = $request->get('password');
+    $ac = new AuthController($app);
 
-    if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
-
-        if ($user) {
-            $app['session']->set('user', $user);
-            return $app->redirect('/todo');
-        }
+    if ($ac->login($request->get('username'), $request->get('password'))) {
+        return $app->redirect('/todo');
     }
 
     return $app['twig']->render('login.html', array());
-});
+})->before($guest);
 
 
 $app->get('/logout', function () use ($app) {
-    $app['session']->set('user', null);
+    $ac = new AuthController($app);
+    $ac->logout();
+
     return $app->redirect('/');
 });
 
 
 $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
+    $tk = new TaskController($app);
 
     if ($id) {
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+        $task = $tk->getTask($id);
 
-        return $app['twig']->render('todo.html', [
-            'todo' => $todo,
-        ]);
+        if ($task) {
+            return $app['twig']->render('todo.html', [
+                'todo' => $task,
+            ]);
+        }
+
+        return $app->redirect('/todo');
     } else {
-        $_limit = 10;
         $page = $request->get('page', 1);
-        $_offset = $_limit * ($page - 1);
-
-
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT $_limit OFFSET $_offset";
-        $todos = $app['db']->fetchAll($sql);
-
-        $sql = "SELECT COUNT(*) as cnt FROM todos WHERE user_id = '${user['id']}'";
-        $count = $app['db']->fetchAssoc($sql);
 
         return $app['twig']->render('todos.html', [
-            'todos' => $todos,
+            'todos' => $tk->getTasks($page),
             'pagination' => [
-                'total' => ceil($count['cnt'] / $_limit),
+                'total' => $tk->getTotalPages(),
                 'current' => $page,
             ]
         ]);
     }
-})->value('id', null);
+})->value('id', null)->before($validateAuth);
+
 
 $app->get('/todo/{id}/json', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
+    $tk = new TaskController($app);
+    $task = $tk->getTask($id);
+
+    if ($task) {
+        return $app->json($task);
     }
 
-    $sql = "SELECT * FROM todos WHERE id = '$id'";
-    $todo = $app['db']->fetchAssoc($sql);
-
-    if ($todo) {
-        return $app->json($todo);
-    } else {
-        return $app->json([]);
-    }
-});
+    return $app->json([]);
+})->before($validateAuth);
 
 
 $app->post('/todo/add', function (Request $request) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
+    $tk = new TaskController($app);
 
-    $user_id = $user['id'];
-    $description = $request->get('description');
-
-    $errors = $app['validator']->validate($description, new Assert\NotBlank());
-
-    if (count($errors) === 0) {
-        $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-        $app['db']->executeUpdate($sql);
+    if ($result = $tk->createTask($request->get('description'))) {
         $app['session']->getFlashBag()->add('alert', 'TODO task added successfully.');
 
-        $sql = "SELECT COUNT(*) as cnt FROM todos WHERE user_id = '${user['id']}'";
-        $count = $app['db']->fetchAssoc($sql);
-
-        return $app->redirect('/todo?page=' . ceil($count['cnt'] / 10));
+        return $app->redirect('/todo?page=' . $tk->getTotalPages());
     } else {
         $app['session']->getFlashBag()->add('error', 'Please add a description.');
     }
 
     return $app->redirect($request->headers->get('referer'));
-});
+})->before($validateAuth);
+
 
 $app->put('/todo/complete/{id}', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->abort(401);
+    $tk = new TaskController($app);
+
+    if ($tk->completeTask($id)) {
+        return $app->json(['html' => '<div class="alert alert-success">TODO task completed successfully.</div>']);
     }
 
-    $user_id = $user['id'];
+    return $app->abort(401);
+})->before($validateAuthAjax);
 
-    $sql = "UPDATE todos SET completed=1 WHERE id='$id' AND user_id='$user_id'";
-    $app['db']->executeUpdate($sql);
-
-    return $app->json(['html' => '<div class="alert alert-success">TODO task completed successfully.</div>']);
-});
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
+    $tk = new TaskController($app);
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
-
-    $app['session']->getFlashBag()->add('alert', 'TODO task deleted successfully.');
+    if ($tk->deleteTask($id)) $app['session']->getFlashBag()->add('alert', 'TODO task deleted successfully.');
 
     return $app->redirect('/todo');
-});
+})->before($validateAuth);
