@@ -6,12 +6,41 @@ body {
     margin-top: 10px;
 }
 
+#alert-container{
+    position: absolute;
+    top:9px;
+    left:0;
+    width:100%;
+}
+
 .complete-todo {
     text-decoration: none;
     cursor: pointer;
     color: #3c763d;
 }
 
-.task-row.completed .description{
+.task-row.completed .description {
     text-decoration: line-through;
+}
+
+td.username{
+    white-space: nowrap;
+}
+
+td input[type="textbox"] {
+    padding: 3px 3px;
+    width: 100%;
+}
+
+td.actions form {
+    display: inline-block;
+}
+
+td.actions {
+    min-width: 68px;
+    text-align: right;
+}
+
+.pagination {
+    margin-top: 0;
 }

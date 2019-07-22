@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="col-md-4 col-md-offset-4">
+<div class="col-md-8 col-md-offset-2">
     <h1>Todo List:</h1>
     <div id="alert-container">
         {% for error in app.session.flashbag.get('error') %}
@@ -16,22 +16,19 @@
         <th>User</th>
         <th>Description</th>
         <th></th>
-        <th></th>
         {% for todo in todos %}
         <tr class="task-row {% if todo.completed %} completed {% endif %}">
             <td>{{ todo.id }}</td>
-            <td>{{ todo.user_id }}</td>
+            <td class="username">[{{ todo.user_id }}] {{ user.username }}</td>
             <td class="description">
                 <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
                     {{ todo.description }}
                 </a>
             </td>
-            <td>
+            <td class="actions">
                 {% if not todo.completed %}
-                    <a href="" title="Complete task" class="btn btn-xs btn-default complete-todo" data-task-id="{{ todo.id }}" onclick="app.todo.complete.do(this)"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></a>
+                <a href="#" title="Complete task" class="btn btn-xs btn-default complete-todo" data-task-id="{{ todo.id }}" onclick="app.todo.complete.do(this)"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span></a>
                 {% endif %}
-            </td>
-            <td>
                 <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
                     <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                 </form>
@@ -40,10 +37,10 @@
         {% endfor %}
         <tr>
             <form method="post" action="{{ app.request.baseurl }}/todo/add">
-                <td colspan="4">
-                    <input type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
+                <td colspan="3">
+                    <input type="textbox" name="description" class="small-6 small-center" maxlength="255" placeholder="Description...">
                 </td>
-                <td>
+                <td class="actions">
                     <button type="submit" class="btn btn-sm btn-primary">Add</button>
                 </td>
             </form>
