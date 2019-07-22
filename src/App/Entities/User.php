@@ -35,6 +35,67 @@ class User
      */
     private $password;
 
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="hash_type", type="string")
+     */
+    private $hash_type;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="salt", type="string")
+     */
+    private $salt;
+
+    /**
+     * @return string
+     */
+    public function getPassword()
+    {
+        return $this->password;
+    }
+
+    /**
+     * @param string $password
+     */
+    public function setPassword($password)
+    {
+        $this->password = $password;
+    }
+
+    /**
+     * @return string
+     */
+    public function getHashType()
+    {
+        return $this->hash_type;
+    }
+
+    /**
+     * @param string $hash_type
+     */
+    public function setHashType($hash_type)
+    {
+        $this->hash_type = $hash_type;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSalt()
+    {
+        return $this->salt;
+    }
+
+    /**
+     * @param string $salt
+     */
+    public function setSalt($salt)
+    {
+        $this->salt = $salt;
+    }
 
     public function toArray()
     {

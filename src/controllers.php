@@ -44,6 +44,8 @@ $app->match('/login', function (Request $request) use ($app) {
         return $app->redirect('/todo');
     }
 
+    if ($request->isMethod('post')) $app['session']->getFlashBag()->add('error', 'Invalid username or password.');
+
     return $app['twig']->render('login.html', array());
 })->before($guest);
 

@@ -18,7 +18,9 @@
                     <button type="submit" class="btn btn-primary pull-right"><i class="glyphicon glyphicon-log-in"></i> login</button>
                 </div>
             </div>
-
+            {% for error in app.session.flashbag.get('error') %}
+            <div class="alert alert-danger"><strong>Error:</strong> {{ error }}</div>
+            {% endfor %}
         </form>
     </div>
 {% endblock %}
