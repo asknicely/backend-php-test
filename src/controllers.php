@@ -64,6 +64,21 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     }
 })->value('id', null);
 
+$app->get('/todo/{id}/json', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $sql = "SELECT * FROM todos WHERE id = '$id'";
+    $todo = $app['db']->fetchAssoc($sql);
+
+    if($todo) {
+        return $app->json($todo);
+    }else{
+        return $app->json([]);
+    }
+});
+
 
 $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
@@ -89,7 +104,7 @@ $app->put('/todo/complete/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->abort(401);
     }
-    
+
     $user_id = $user['id'];
 
     $sql = "UPDATE todos SET completed=1 WHERE id='$id' AND user_id='$user_id'";
