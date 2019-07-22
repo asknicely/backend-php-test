@@ -11,9 +11,9 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
 
 
 $app->get('/', function () use ($app) {
-    return $app['twig']->render('index.html', [
-        'readme' => file_get_contents('README.md'),
-    ]);
+    return $app['twig']->render('index.html', array(
+        'readme' => file_get_contents('../README.md')
+    ));
 });
 
 
@@ -50,16 +50,16 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         $sql = "SELECT * FROM todos WHERE id = '$id'";
         $todo = $app['db']->fetchAssoc($sql);
 
-        return $app['twig']->render('todo.html', [
-            'todo' => $todo,
-        ]);
+        return $app['twig']->render('todo.html', array(
+            'todo' => $todo
+        ));
     } else {
         $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
         $todos = $app['db']->fetchAll($sql);
 
-        return $app['twig']->render('todos.html', [
-            'todos' => $todos,
-        ]);
+        return $app['twig']->render('todos.html', array(
+            'todos' => $todos
+        ));
     }
 })
 ->value('id', null);
