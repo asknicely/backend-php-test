@@ -36,7 +36,7 @@ class AuthController extends Common
 
 
         if ($_uname !== '' && $_pass != '') {
-            if ($user = $this->_em->getRepository('\App\Entities\User')->findBy(['username' => $username])) {
+            if ($user = $this->_em->getRepository('\App\Entities\User')->findBy(array('username' => $username))) {
 
                 if (count($user) > 0 && $user[0] instanceof User) {
                     $user = $user[0];

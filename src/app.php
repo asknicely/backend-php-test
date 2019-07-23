@@ -46,19 +46,19 @@ $app->register(new DoctrineOrmServiceProvider, array(
 ));
 
 
-$app->register(new DoctrineOrmServiceProvider, [
+$app->register(new DoctrineOrmServiceProvider, array(
     'orm.proxies_dir' => 'src/App/Entities/Proxy',
     'orm.auto_generate_proxies' => true,
-    'orm.em.options' => [
-        'mappings' => [
-            [
+    'orm.em.options' => array(
+        'mappings' => array(
+            array(
                 'type' => 'annotation',
                 'namespace' => 'App\\Entities\\',
                 'path' => __DIR__ . '/App/Entities',
                 'use_simple_annotation_reader' => false,
-            ],
-        ],
-    ]
-]);
+            ),
+        ),
+    )
+));
 
 return $app;

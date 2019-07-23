@@ -8,17 +8,20 @@ use App\Controllers\TaskController;
 /* BASIC MIDDLEWARE */
 // Check if user is already logged in, and if true redirect to task list
 $guest = function (Request $request, $app) {
-    if ((new \App\Controllers\AuthController($app))->isAuth()) return $app->redirect('/todo');
+    $ac = new AuthController($app);
+    if ($ac->isAuth()) return $app->redirect('/todo');
 };
 
 // Check is user is not logged in, if true redirect to login page
 $validateAuth = function (Request $request, $app) {
-    if (!(new \App\Controllers\AuthController($app))->isAuth()) return $app->redirect('/login');
+    $ac = new AuthController($app);
+    if (!$ac->isAuth()) return $app->redirect('/login');
 };
 
 // Return 401 Unathorized for ajax requests where user is not logged in
 $validateAuthAjax = function (Request $request, $app) {
-    if (!(new \App\Controllers\AuthController($app))->isAuth()) return $app->abort(401);
+    $ac = new AuthController($app);
+    if (!$ac->isAuth()) return $app->abort(401);
 };
 /* END MIDDLEWARE */
 
@@ -31,9 +34,9 @@ $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
 
 
 $app->get('/', function () use ($app) {
-    return $app['twig']->render('index.html', [
+    return $app['twig']->render('index.html', array(
         'readme' => file_get_contents('../README.md'),
-    ]);
+    ));
 });
 
 
@@ -65,22 +68,22 @@ $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
         $task = $tk->getTask($id);
 
         if ($task) {
-            return $app['twig']->render('todo.html', [
+            return $app['twig']->render('todo.html', array(
                 'todo' => $task,
-            ]);
+            ));
         }
 
         return $app->redirect('/todo');
     } else {
         $page = $request->get('page', 1);
 
-        return $app['twig']->render('todos.html', [
+        return $app['twig']->render('todos.html', array(
             'todos' => $tk->getTasks($page),
-            'pagination' => [
+            'pagination' => array(
                 'total' => $tk->getTotalPages(),
                 'current' => $page,
-            ]
-        ]);
+            )
+        ));
     }
 })->value('id', null)->before($validateAuth);
 
@@ -116,7 +119,7 @@ $app->put('/todo/complete/{id}', function ($id) use ($app) {
     $tk = new TaskController($app);
 
     if ($tk->completeTask($id)) {
-        return $app->json(['html' => '<div class="alert alert-success">TODO task completed successfully.</div>']);
+        return $app->json(array('html' => '<div class="alert alert-success">TODO task completed successfully.</div>'));
     }
 
     return $app->abort(401);

@@ -99,9 +99,9 @@ class User
 
     public function toArray()
     {
-        return [
+        return array(
             'id' => $this->id,
             'username' => $this->username
-        ];
+        );
     }
 }

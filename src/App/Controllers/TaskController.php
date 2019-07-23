@@ -45,7 +45,7 @@ class TaskController extends Common
     {
         $_offset = $this->_limit * ($page - 1);
 
-        return $this->_em->getRepository('\App\Entities\Task')->findBy(['user_id' => (int)$this->_user['id']], null, $this->_limit, $_offset);
+        return $this->_em->getRepository('\App\Entities\Task')->findBy(array('user_id' => (int)$this->_user['id']), null, $this->_limit, $_offset);
     }
 
     /**
@@ -55,7 +55,7 @@ class TaskController extends Common
      */
     public function getTotalPages()
     {
-        $tasks = $this->_em->getRepository('\App\Entities\Task')->findBy(['user_id' => (int)$this->_user['id']]);
+        $tasks = $this->_em->getRepository('\App\Entities\Task')->findBy(array('user_id' => (int)$this->_user['id']));
 
         return ceil(count($tasks) / $this->_limit);
     }
