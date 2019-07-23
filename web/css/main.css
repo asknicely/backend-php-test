@@ -5,3 +5,11 @@ body {
 .login-form > div {
     margin-top: 10px;
 }
+
+body > .container {
+    padding-top: 70px;
+}
+
+.login-form > .input-group {
+    margin-bottom: 10px;
+}
