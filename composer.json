@@ -24,7 +24,9 @@
         "doctrine/dbal": "~2.9",
         "deralex/yaml-config-service-provider": "1.0.x-dev",
         "dflydev/doctrine-orm-service-provider": "1.0.6",
-        "doctrine/common": "^2.10"
+        "doctrine/common": "^2.10",
+        "phpunit/phpunit": "^4",
+        "symfony/http-client": "^4.3"
     },
     "autoload": {
         "psr-0": { "": "src/" }

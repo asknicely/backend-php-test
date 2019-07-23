@@ -79,7 +79,7 @@ class TaskController extends Common
             $this->_em->persist($task);
             $this->_em->flush();
 
-            return true;
+            return $task->getId();
         }
 
         return false;
