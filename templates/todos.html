@@ -50,16 +50,51 @@
                 </td>
             </tr>
         {% endfor %}
-        <tr>
-            <form method="post" action="{{ app.request.baseurl }}/todo/add">
-                <td colspan="4">
-                    <input type="textbox" name="description" class="small-6 small-center" placeholder="Description..." required>
-                </td>
-                <td>
-                    <button type="submit" class="btn btn-sm btn-primary">Add</button>
-                </td>
-            </form>
-        </tr>
     </table>
+    <div>
+        <div class="pagination-info">
+            <small>
+                <strong>{{ (pagination.currentPage - 1) * pagination.itemsPerPage + 1 }}</strong> to
+                <strong>{{ (pagination.currentPage - 1) * pagination.itemsPerPage + pagination.currentPageItems }}</strong> of
+                <strong>{{ pagination.totalCount }}</strong> todos
+            </small>
+        </div>
+        {% if pagination.totalCount > 1 %}
+        <nav>
+            <ul class="pagination">
+                {% if pagination.currentPage > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ app.request.baseurl }}/todos/{{ pagination.currentPage - 1 }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                        <span class="sr-only">Previous</span>
+                    </a>
+                </li>
+                {% endif %}
+                {% for p in range(1, pagination.totalPages) %}
+                    <li class="page-item{{ (p == pagination.currentPage) ? ' active' : '' }}"><a class="page-link" href="{{ app.request.baseurl }}/todos/{{ p }}">{{ p }}</a></li>
+                {% endfor %}
+                {% if pagination.currentPage < pagination.totalPages %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ app.request.baseurl }}/todos/{{ pagination.currentPage + 1 }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                        <span class="sr-only">Next</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+    <hr>
+    <div id="add-todo-wrapper">
+        <form method="post" action="{{ app.request.baseurl }}/todo/add">
+            <td colspan="4">
+                <input type="textbox" name="description" class="small-6 small-center" placeholder="Description..." required>
+            </td>
+            <td>
+                <button type="submit" class="btn btn-sm btn-primary">Add</button>
+            </td>
+        </form>
+    </div>
 </div>
 {% endblock %}

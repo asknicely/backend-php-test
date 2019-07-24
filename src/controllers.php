@@ -27,7 +27,7 @@ $app->match('/login', function (Request $request) use ($app) {
 
         if ($user){
             $app['session']->set('user', $user);
-            return $app->redirect('/todo');
+            return $app->redirect('/todos');
         }
     }
 
@@ -40,6 +40,40 @@ $app->get('/logout', function () use ($app) {
     return $app->redirect('/');
 });
 
+$app->get('/todos/{pid}', function ($pid) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    if (is_numeric($pid) && is_int((int)$pid)) {
+        $pid = (int)$pid;
+    } else {
+        $pid = 1;
+    }
+
+    $itemsPerPage = 10;
+    $offset = 10 * ($pid - 1);
+
+    $totalCountSQL = "SELECT count(*) FROM todos WHERE user_id = '${user['id']}'";
+    $totalCount = (int)$app['db']->fetchColumn($totalCountSQL);
+
+    $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT {$itemsPerPage} OFFSET {$offset}";
+    $todos = $app['db']->fetchAll($sql);
+
+    $pagination = array(
+        'totalCount' => $totalCount,
+        'totalPages' => ceil($totalCount / $itemsPerPage),
+        'currentPage' => $pid,
+        'currentPageItems' => count($todos),
+        'itemsPerPage' => $itemsPerPage
+    );
+
+    return $app['twig']->render('todos.html', array(
+        'todos' => $todos,
+        'pagination' => $pagination
+    ));
+
+})->value('pid', '1');
 
 $app->get('/todo/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
@@ -54,12 +88,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo
         ));
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
-
-        return $app['twig']->render('todos.html', array(
-            'todos' => $todos
-        ));
+        return $app->redirect('/todos');
     }
 })
 ->value('id', null);
@@ -78,12 +107,7 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
             'todo' => $todo
         ));
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
-
-        return $app['twig']->render('todos.html', array(
-            'todos' => $todos
-        ));
+        return $app->redirect('/todos');
     }
 })
 ->value('id', null);
@@ -103,13 +127,13 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         $execResult = $app['db']->executeUpdate($sql);
 
         if ($execResult === 1) {
-            $app['session']->getFlashBag()->add('message', array('type' => 'success', 'content' => "Todo was successfully added."));
+            $app['session']->getFlashBag()->add('message', array('type' => 'success', 'content' => "Todo {$description} was successfully added."));
         } else {
-            $app['session']->getFlashBag()->add('message', array('type' => 'danger', 'content' => "Todo failed to add."));
+            $app['session']->getFlashBag()->add('message', array('type' => 'danger', 'content' => "Todo {$description} failed to add."));
         }
     }
 
-    return $app->redirect('/todo');
+    return $app->redirect('/todos');
 });
 
 
@@ -124,7 +148,7 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
         $app['session']->getFlashBag()->add('message', array('type' => 'danger', 'content' => "Todo #{$id} failed to delete."));
     }
 
-    return $app->redirect('/todo');
+    return $app->redirect('/todos');
 });
 
 $app->match('/todo/complete/{id}', function ($id) use ($app) {
@@ -132,7 +156,7 @@ $app->match('/todo/complete/{id}', function ($id) use ($app) {
     $sql = "UPDATE todos SET completed = '1' WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
 
-    return $app->redirect('/todo');
+    return $app->redirect('/todos');
 });
 
 $app->match('/todo/undo/{id}', function ($id) use ($app) {
@@ -140,5 +164,5 @@ $app->match('/todo/undo/{id}', function ($id) use ($app) {
     $sql = "UPDATE todos SET completed = '0' WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
 
-    return $app->redirect('/todo');
+    return $app->redirect('/todos');
 });

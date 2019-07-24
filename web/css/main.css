@@ -17,3 +17,26 @@ body > .container {
 .alert.alert-dismissible .close {
     top: -22px
 }
+table.table {
+    margin-bottom: 10px;
+}
+nav {
+    height: 34px;
+}
+nav .pagination {
+    margin: 0;
+    float: right;
+}
+nav .pagination .page-link {
+    padding: 4px 8px;
+}
+#add-todo-wrapper input {
+    width: 80%;
+    padding: 4px;
+}
+#add-todo-wrapper button {
+    float: right;
+}
+.pagination-info {
+    float: left;
+}
