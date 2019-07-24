@@ -3,6 +3,18 @@
 {% block content %}
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo List:</h1>
+    {% if app.session.flashbag.peek('message') %}
+    <div class="row">
+        {% for message in app.session.flashbag.get('message') %}
+        <div class="alert alert-{{ message.type }} alert-dismissible show" role="alert">
+            <p>{{ message.content }}</p>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     <table class="table table-striped">
         <tr>
             <th>#</th>

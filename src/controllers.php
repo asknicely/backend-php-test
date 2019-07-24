@@ -100,7 +100,13 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     // if not empty string
     if (!empty($description)) {
         $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-        $app['db']->executeUpdate($sql);
+        $execResult = $app['db']->executeUpdate($sql);
+
+        if ($execResult === 1) {
+            $app['session']->getFlashBag()->add('message', array('type' => 'success', 'content' => "Todo was successfully added."));
+        } else {
+            $app['session']->getFlashBag()->add('message', array('type' => 'danger', 'content' => "Todo failed to add."));
+        }
     }
 
     return $app->redirect('/todo');
@@ -110,7 +116,13 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    $execResult = $app['db']->executeUpdate($sql);
+
+    if ($execResult === 1) {
+        $app['session']->getFlashBag()->add('message', array('type' => 'success', 'content' => "Todo #{$id} was successfully deleted."));
+    } else {
+        $app['session']->getFlashBag()->add('message', array('type' => 'danger', 'content' => "Todo #{$id} failed to delete."));
+    }
 
     return $app->redirect('/todo');
 });
