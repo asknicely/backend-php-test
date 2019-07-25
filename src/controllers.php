@@ -2,6 +2,7 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -16,7 +17,7 @@ $app->get('/', function () use ($app) {
     ));
 });
 
-
+//login
 $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
     $password = $request->get('password');
@@ -27,22 +28,33 @@ $app->match('/login', function (Request $request) use ($app) {
 
         if ($user){
             $app['session']->set('user', $user);
-            return $app->redirect('/todos');
+            return $app->redirect('/todo-list');
         }
     }
 
     return $app['twig']->render('login.html', array());
 });
 
-
+//logout
 $app->get('/logout', function () use ($app) {
     $app['session']->set('user', null);
     return $app->redirect('/');
 });
 
-$app->get('/todos/{pid}', function ($pid) use ($app) {
+//get todos list template
+$app->get('/todo-list', function () use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
+    }
+
+    return $app['twig']->render('todo-list.html');
+});
+
+//get todos ajax
+$app->get('/todos/{pid}', function ($pid) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        $error = array('message' => 'The user was not found.');
+        return $app->json($error, 404);
     }
 
     if (is_numeric($pid) && is_int((int)$pid)) {
@@ -60,6 +72,10 @@ $app->get('/todos/{pid}', function ($pid) use ($app) {
     $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT {$itemsPerPage} OFFSET {$offset}";
     $todos = $app['db']->fetchAll($sql);
 
+    if ($pid > ceil($totalCount / $itemsPerPage)) {
+        $pid = ceil($totalCount / $itemsPerPage);
+    }
+
     $pagination = array(
         'totalCount' => $totalCount,
         'totalPages' => ceil($totalCount / $itemsPerPage),
@@ -68,13 +84,15 @@ $app->get('/todos/{pid}', function ($pid) use ($app) {
         'itemsPerPage' => $itemsPerPage
     );
 
-    return $app['twig']->render('todos.html', array(
-        'todos' => $todos,
-        'pagination' => $pagination
-    ));
-
+    return $app->json(
+        array(
+            'todos' => $todos,
+            'pagination' => $pagination
+        )
+    );
 })->value('pid', '1');
 
+//get singleTodo
 $app->get('/todo/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
@@ -93,26 +111,25 @@ $app->get('/todo/{id}', function ($id) use ($app) {
 })
 ->value('id', null);
 
+//get singleTodo with JSON format
 $app->get('/todo/{id}/json', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
+        $error = array('message' => 'The user was not found.');
+        return $app->json($error, 404);
     }
 
     if ($id){
         $sql = "SELECT * FROM todos WHERE id = '$id'";
         $todo = $app['db']->fetchAssoc($sql);
-        $todo['json_format'] = json_encode($todo);
 
-        return $app['twig']->render('todo-json.html', array(
-            'todo' => $todo
-        ));
+        return $app->json($todo);
     } else {
-        return $app->redirect('/todos');
+        return $app->json(array('message' => "Todo not found"), 404);
     }
 })
 ->value('id', null);
 
-
+//add
 $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
@@ -136,7 +153,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     return $app->redirect('/todos');
 });
 
-
+//delete
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     $sql = "DELETE FROM todos WHERE id = '$id'";
@@ -148,21 +165,23 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
         $app['session']->getFlashBag()->add('message', array('type' => 'danger', 'content' => "Todo #{$id} failed to delete."));
     }
 
-    return $app->redirect('/todos');
+    return $app->json(array('message' => "Todo #{$id} was successfully deleted."));
 });
 
+//complete
 $app->match('/todo/complete/{id}', function ($id) use ($app) {
 
     $sql = "UPDATE todos SET completed = '1' WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
 
-    return $app->redirect('/todos');
+    return $app->json(array('message' => "Todo #{$id} was completed."));
 });
 
+//undo
 $app->match('/todo/undo/{id}', function ($id) use ($app) {
 
     $sql = "UPDATE todos SET completed = '0' WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
 
-    return $app->redirect('/todos');
+    return $app->json(array('message' => "Todo #{$id} was restored."));
 });

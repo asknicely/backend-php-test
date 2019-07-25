@@ -20,6 +20,14 @@ body > .container {
 table.table {
     margin-bottom: 10px;
 }
+table.table tr.strikeout td:before {
+    content: " ";
+    position: absolute;
+    top: 45.9%;
+    left: 0;
+    border-bottom: 1px solid #666;
+    width: 96%;
+}
 nav {
     height: 34px;
 }
