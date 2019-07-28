@@ -136,7 +136,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     }
 
     $user_id = $user['id'];
-    $description = trim($request->get('description'));
+    $description = filter_var(trim($request->get('description')), FILTER_SANITIZE_STRING);
 
     // if not empty string
     if (!empty($description)) {
