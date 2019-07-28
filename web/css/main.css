@@ -20,13 +20,18 @@ body > .container {
 table.table {
     margin-bottom: 10px;
 }
-table.table tr.strikeout td:before {
+table.table tr td {
+    position: relative;
+}
+table.table tr.strikeout td:nth-child(1):before,
+table.table tr.strikeout td:nth-child(2):before,
+table.table tr.strikeout td:nth-child(3):before {
     content: " ";
     position: absolute;
-    top: 45.9%;
+    top: 50%;
     left: 0;
     border-bottom: 1px solid #666;
-    width: 96%;
+    width: 100%;
 }
 nav {
     height: 34px;
@@ -47,4 +52,14 @@ nav .pagination .page-link {
 }
 .pagination-info {
     float: left;
+}
+.spinner {
+    height: 70px;
+    position: relative;
+}
+.spinner .fa-spin {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    font-size: 15px;
 }

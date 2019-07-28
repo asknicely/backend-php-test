@@ -64,7 +64,7 @@ $app->get('/todos/{pid}', function ($pid) use ($app) {
     }
 
     $itemsPerPage = 10;
-    $offset = 10 * ($pid - 1);
+    $offset = $itemsPerPage * ($pid - 1);
 
     $totalCountSQL = "SELECT count(*) FROM todos WHERE user_id = '${user['id']}'";
     $totalCount = (int)$app['db']->fetchColumn($totalCountSQL);
@@ -150,22 +150,48 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         }
     }
 
-    return $app->redirect('/todos');
+    return $app->redirect('/todo-list');
 });
 
 //delete
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $execResult = $app['db']->executeUpdate($sql);
-
-    if ($execResult === 1) {
-        $app['session']->getFlashBag()->add('message', array('type' => 'success', 'content' => "Todo #{$id} was successfully deleted."));
-    } else {
-        $app['session']->getFlashBag()->add('message', array('type' => 'danger', 'content' => "Todo #{$id} failed to delete."));
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
     }
 
-    return $app->json(array('message' => "Todo #{$id} was successfully deleted."));
+    $sql = "DELETE FROM todos WHERE id = '$id'";
+    $app['db']->executeUpdate($sql);
+
+    $pid = 1;
+    $itemsPerPage = 10;
+    $offset = $itemsPerPage * ($pid - 1);
+
+    $totalCountSQL = "SELECT count(*) FROM todos WHERE user_id = '${user['id']}'";
+    $totalCount = (int)$app['db']->fetchColumn($totalCountSQL);
+
+    $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT {$itemsPerPage} OFFSET {$offset}";
+    $todos = $app['db']->fetchAll($sql);
+
+    if ($pid > ceil($totalCount / $itemsPerPage)) {
+        $pid = ceil($totalCount / $itemsPerPage);
+    }
+
+    $pagination = array(
+        'totalCount' => $totalCount,
+        'totalPages' => ceil($totalCount / $itemsPerPage),
+        'currentPage' => $pid,
+        'currentPageItems' => count($todos),
+        'itemsPerPage' => $itemsPerPage
+    );
+
+    return $app->json(array(
+        'type' => "success",
+        'message' => "Todo #{$id} was successfully deleted.",
+        'id' => $id,
+        'todos' => $todos,
+        'pagination' => $pagination
+    ));
 });
 
 //complete
@@ -174,7 +200,11 @@ $app->match('/todo/complete/{id}', function ($id) use ($app) {
     $sql = "UPDATE todos SET completed = '1' WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
 
-    return $app->json(array('message' => "Todo #{$id} was completed."));
+    return $app->json(array(
+        'type' => "success",
+        'message' => "Todo #{$id} was completed.",
+        'id' => $id
+    ));
 });
 
 //undo
@@ -183,5 +213,9 @@ $app->match('/todo/undo/{id}', function ($id) use ($app) {
     $sql = "UPDATE todos SET completed = '0' WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
 
-    return $app->json(array('message' => "Todo #{$id} was restored."));
+    return $app->json(array(
+        'type' => "success",
+        'message' => "Todo #{$id} was restored.",
+        'id' => $id
+    ));
 });
