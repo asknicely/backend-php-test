@@ -130,13 +130,13 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
 ->value('id', null);
 
 //add
-$app->post('/todo/add', function (Request $request) use ($app) {
+$app->post('/todo/add/{description}', function ($description) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
 
     $user_id = $user['id'];
-    $description = filter_var(trim($request->get('description')), FILTER_SANITIZE_STRING);
+    $description = filter_var(trim($description), FILTER_SANITIZE_STRING);
 
     // if not empty string
     if (!empty($description)) {
@@ -144,13 +144,46 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         $execResult = $app['db']->executeUpdate($sql);
 
         if ($execResult === 1) {
-            $app['session']->getFlashBag()->add('message', array('type' => 'success', 'content' => "Todo {$description} was successfully added."));
-        } else {
-            $app['session']->getFlashBag()->add('message', array('type' => 'danger', 'content' => "Todo {$description} failed to add."));
-        }
-    }
+            $pid = 1;
+            $itemsPerPage = 10;
+            $offset = $itemsPerPage * ($pid - 1);
 
-    return $app->redirect('/todo-list');
+            $totalCountSQL = "SELECT count(*) FROM todos WHERE user_id = '${user['id']}'";
+            $totalCount = (int)$app['db']->fetchColumn($totalCountSQL);
+
+            $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT {$itemsPerPage} OFFSET {$offset}";
+            $todos = $app['db']->fetchAll($sql);
+
+            if ($pid > ceil($totalCount / $itemsPerPage)) {
+                $pid = ceil($totalCount / $itemsPerPage);
+            }
+
+            $pagination = array(
+                'totalCount' => $totalCount,
+                'totalPages' => ceil($totalCount / $itemsPerPage),
+                'currentPage' => $pid,
+                'currentPageItems' => count($todos),
+                'itemsPerPage' => $itemsPerPage
+            );
+
+            return $app->json(array(
+                'type' => "success",
+                'message' => "Todo: {$description} was successfully added.",
+                'todos' => $todos,
+                'pagination' => $pagination
+            ));
+        } else {
+            return $app->json(array(
+                'type' => "danger",
+                'message' => "Failed to add new todo."
+            ));
+        }
+    } else {
+        return $app->json(array(
+            'type' => "danger",
+            'message' => "Please fill the description."
+        ));
+    }
 });
 
 //delete

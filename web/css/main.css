@@ -43,6 +43,9 @@ nav .pagination {
 nav .pagination .page-link {
     padding: 4px 8px;
 }
+#add-todo-wrapper {
+    margin-top: 20px;
+}
 #add-todo-wrapper input {
     width: 80%;
     padding: 4px;
