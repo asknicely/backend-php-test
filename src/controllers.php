@@ -3,6 +3,7 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation;
+use Parsedown;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -12,13 +13,18 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
 
 
 $app->get('/', function () use ($app) {
+    $Parsedown = new Parsedown();
     return $app['twig']->render('index.html', array(
-        'readme' => file_get_contents('../README.md')
+        'readme' => $Parsedown->text(file_get_contents('../README.md'))
     ));
 });
 
 //login
 $app->match('/login', function (Request $request) use ($app) {
+    if (null !== $user = $app['session']->get('user')) {
+        return $app->redirect('/todo-list');
+    }
+
     $username = $request->get('username');
     $password = $request->get('password');
 
@@ -106,7 +112,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo
         ));
     } else {
-        return $app->redirect('/todos');
+        return $app->redirect('/todo-list');
     }
 })
 ->value('id', null);
