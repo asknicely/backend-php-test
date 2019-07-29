@@ -11,9 +11,20 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
 
 
 $app->get('/', function () use ($app) {
-    return $app['twig']->render('index.html', [
-        'readme' => file_get_contents('README.md'),
-    ]);
+    //Actully I don't suggest to do this, it's a waste of the server bandwidth,
+    //if this is dynamic we can do this via database otherwise via the CDN
+    $filePath = dirname(__FILE__) . "/../README.md";
+
+    if(!file_exists($filePath)){
+        $app["monolog"]->debug("%s is not exists." , array("s" => $filePath));
+        $fileContent = "Oops, we can't find the file";
+    }else{
+        $fileContent = file_get_contents($filePath);
+    }
+
+    return $app['twig']->render('index.html', array(
+        'readme' => $fileContent,
+    ));
 });
 
 
@@ -22,8 +33,8 @@ $app->match('/login', function (Request $request) use ($app) {
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+        $sql = "SELECT * FROM users WHERE username = ? and password = ?";
+        $user = $app['db']->fetchAssoc($sql, array($username, $password));
 
         if ($user){
             $app['session']->set('user', $user);
