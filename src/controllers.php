@@ -3,7 +3,8 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-$app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
+$app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
+
     $twig->addGlobal('user', $app['session']->get('user'));
 
     return $twig;
@@ -15,10 +16,10 @@ $app->get('/', function () use ($app) {
     //if this is dynamic we can do this via database otherwise via the CDN
     $filePath = dirname(__FILE__) . "/../README.md";
 
-    if(!file_exists($filePath)){
-        $app["monolog"]->debug("%s is not exists." , array("s" => $filePath));
+    if (!file_exists($filePath)) {
+        $app["monolog"]->debug(sprintf("%s is not exists.", $filePath));
         $fileContent = "Oops, we can't find the file";
-    }else{
+    } else {
         $fileContent = file_get_contents($filePath);
     }
 
@@ -31,12 +32,11 @@ $app->get('/', function () use ($app) {
 $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
     $password = $request->get('password');
+    $em = $app["db.orm.em"];
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = ? and password = ?";
-        $user = $app['db']->fetchAssoc($sql, array($username, $password));
-
-        if ($user){
+        $user = $em->getRepository("Entity\User")->findOneBy(array("userName" => $username, "passWord" => $password));
+        if ($user) {
             $app['session']->set('user', $user);
             return $app->redirect('/todo');
         }
@@ -57,44 +57,59 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         return $app->redirect('/login');
     }
 
-    if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+    $em = $app["db.orm.em"];
 
-        return $app['twig']->render('todo.html', [
+    //first we get the presist user from database
+    $u = $em->getRepository("Entity\User")->find($user->getId());
+
+    if ($id) {
+        $todo = $em->getRepository("Entity\ToDo")->findOneBy(array("id" => $id, "author" => $u));
+
+        if (!$todo) {
+            $app["monolog"]->debug(sprintf("user %u's todo %t is not exists", $user->getId(), $id));
+            return $app->redirect("/todo");
+        }
+        return $app['twig']->render('todo.html', array(
             'todo' => $todo,
-        ]);
+        ));
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
-
-        return $app['twig']->render('todos.html', [
+        $todos = $u->getTodos()->toArray();
+        return $app['twig']->render('todos.html', array(
             'todos' => $todos,
-        ]);
+        ));
     }
-})
-->value('id', null);
+})->value('id', null);
 
 
 $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
-    $user_id = $user['id'];
     $description = $request->get('description');
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    $em = $app["db.orm.em"];
+    $u = $em->getRepository("Entity\User")->find($user->getId());
+
+    $t = new \Entity\ToDo();
+    $t->setDescription($description);
+    $t->setAuthor($u);
+    $em->persist($t);
+    $em->flush();
 
     return $app->redirect('/todo');
 });
 
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    $em = $app["db.orm.em"];
+    $u = $em->getRepository("Entity\User")->find($user->getId());
+    $t = $em->getRepository("Entity\ToDo")->findOneBy(array("id" => $id, "author" => $u));
+    $em->remove($t);
+    $em->flush();
 
     return $app->redirect('/todo');
 });
