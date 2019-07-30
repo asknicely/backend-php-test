@@ -28,4 +28,20 @@ class Todo extends \Illuminate\Database\Eloquent\Model
     {
         return $this->belongsTo('App\User')->withDefault();
     }
+
+
+    /**
+     * Scope a query to only include active users.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int  $page
+     * @param  int  $perPage
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopePage($query, $page = 1, $perPage = 10)
+    {
+        $offset = ($page - 1) * $perPage;
+        return $query->skip($offset)
+            ->take($perPage);
+    }
 }

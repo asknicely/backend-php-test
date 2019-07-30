@@ -67,7 +67,8 @@ $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
         $currentPage = $request->get('page') ?? 1;
 
         $count = $user->todos->count();
-        $todos = $user->todos->forPage($currentPage, PER_PAGE);
+        // $todos = $user->todos->forPage($currentPage, PER_PAGE);
+        $todos = $user->todos()->page($currentPage, PER_PAGE)->get();
         $maxPages = ceil($count / PER_PAGE);
 
         return $app['twig']->render(
