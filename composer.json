@@ -28,6 +28,9 @@
     "autoload": {
         "psr-4": {"App\\": "src/App"}
     },
+    "require-dev": {
+        "phpunit/phpunit": "^7.5"
+    },
     "extra": {
         "branch-alias": {
             "dev-master": "1.1.x-dev"
