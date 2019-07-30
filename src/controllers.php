@@ -2,6 +2,7 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Validator\Constraint as Assert;
 
 $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
 
@@ -85,7 +86,15 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
+
     $description = $request->get('description');
+
+    $errors = $app["validator"]->validate($description, new \Symfony\Component\Validator\Constraints\NotBlank());
+
+    if (count($errors) > 0) {
+        $app["monolog"]->debug(sprintf("Got errors %s when we validate the post add function", (string)$errors));
+        return $app->redirect('/todo');
+    }
 
     $em = $app["db.orm.em"];
     $u = $em->getRepository("Entity\User")->find($user->getId());
