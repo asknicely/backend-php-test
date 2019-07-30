@@ -101,12 +101,14 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     // Validate rule for description
     $errors = $app['validator']->validate($description, new Assert\NotBlank());
     if (count($errors) > 0) {
-        return $app->abort(400, "Can't add a task without a description.");
+        $app['session']->getFlashBag()->add('alerts', ['type' => 'danger', 'message' => "Can't add a task without a description."]);
+        return $app->redirect('/todo');
     }
 
     $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
     $app['db']->executeUpdate($sql);
 
+    $app['session']->getFlashBag()->add('alerts', ['type' => 'success', 'message' => 'Added successfully.']);
     return $app->redirect('/todo');
 });
 
@@ -119,6 +121,7 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '$user_id'";
     $app['db']->executeUpdate($sql);
 
+    $app['session']->getFlashBag()->add('alerts', ['type' => 'success', 'message' => 'Rmoved successfully.']);
     return $app->redirect('/todo');
 });
 
@@ -137,5 +140,6 @@ $app->put('/todo/complete/{id}', function (Request $request, $id) use ($app) {
     $sql = "UPDATE todos SET status = '$taskStatus' WHERE id = '$id' AND user_id = '$user_id'";
     $app['db']->executeUpdate($sql);
 
+    $app['session']->getFlashBag()->add('alerts', ['type' => 'success', 'message' => 'Completed task.']);
     return $app->redirect('/todo');
 });
