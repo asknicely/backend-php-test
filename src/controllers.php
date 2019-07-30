@@ -6,6 +6,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 const COMPLETED = 1;
 const PROCESSING = 0;
+const PER_PAGE = 5;
 
 // Allow to get put method
 Request::enableHttpMethodParameterOverride();
@@ -44,7 +45,7 @@ $app->get('/logout', function () use ($app) {
     return $app->redirect('/');
 });
 
-$app->get('/todo/{id}', function ($id) use ($app) {
+$app->get('/todo/{id}', function (Request $request, $id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
@@ -57,12 +58,29 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+        $currentPage = $request->get('page') ?? 1;
+        $offest = ($currentPage - 1) * PER_PAGE;
+
+        $user_id = $user['id'];
+
+        // get total page number
+        $sql = "SELECT COUNT(*) AS cnt FROM todos WHERE user_id = '$user_id'";
+        $count = $app['db']->fetchAssoc($sql)['cnt'];
+        $maxPages = ceil($count / PER_PAGE);
+
+        // get todo list on currecnt page
+        $limit = PER_PAGE;
+        $sql = "SELECT * FROM todos WHERE user_id = '$user_id' LIMIT $offest, $limit";
         $todos = $app['db']->fetchAll($sql);
 
-        return $app['twig']->render('todos.html', [
-            'todos' => $todos,
-        ]);
+        return $app['twig']->render(
+            'todos.html',
+            compact(
+                'todos',
+                'maxPages',
+                'currentPage'
+            )
+        );
     }
 })->value('id', null);
 

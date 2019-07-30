@@ -51,5 +51,17 @@
             </tr>
         </tbody>
     </table>
+
+    <div class="row">
+        {% if maxPages > 1 %}
+        <ul class="pagination pagination-sm">
+            {% for i in 1..maxPages %}
+                <li {{ currentPage == i ? 'class="active"' }}>
+                    <a href="{{ app.request.baseurl }}/todo?page={{ i }}">{{ i }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
