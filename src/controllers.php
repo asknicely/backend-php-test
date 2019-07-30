@@ -152,11 +152,10 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     return $app->redirect('/todo');
 })->before($authMiddleware);
 
-$app->put('/todo/complete/{id}', function (Request $request, $id) use ($app) {
+$app->put('/todo/complete/{id}', function ($id) use ($app) {
     $user = $app['currentUser'];
     $todo = $user->todos->find($id);
-    // Toggle status
-    $todo->status = !$todo->status;
+    $todo->toggleStatus();
     $result = $todo->save();
 
     if ($result) {

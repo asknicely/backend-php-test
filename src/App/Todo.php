@@ -29,7 +29,6 @@ class Todo extends \Illuminate\Database\Eloquent\Model
         return $this->belongsTo('App\User')->withDefault();
     }
 
-
     /**
      * Scope a query to only include active users.
      *
@@ -43,5 +42,10 @@ class Todo extends \Illuminate\Database\Eloquent\Model
         $offset = ($page - 1) * $perPage;
         return $query->skip($offset)
             ->take($perPage);
+    }
+
+    public function toggleStatus()
+    {
+        $this->status = !$this->status;
     }
 }
