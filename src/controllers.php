@@ -81,6 +81,38 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     }
 })->value('id', null);
 
+
+//show todos as json
+$app->get('/todo/{id}/json', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $em = $app["db.orm.em"];
+
+    $errors = $app["validator"]->validate($id, new  \Symfony\Component\Validator\Constraints\GreaterThan(0));
+
+    if (count($errors) > 0) {
+        $app["monolog"]->debug(sprintf("Got errors %s when we validate the view todo as json format", (string)$errors));
+        return $app->redirect('/todo');
+    }
+
+    //first we get the presist user from database
+    $u = $em->getRepository("Entity\User")->find($user->getId());
+
+    $todo = $em->getRepository("Entity\ToDo")->findOneBy(array("id" => $id, "author" => $u));
+
+    if (!$todo) {
+        $app["monolog"]->debug(sprintf("user %u's todo %t is not exists", $user->getId(), $id));
+        return $app->redirect("/todo");
+    }
+
+    return $app['twig']->render('todo_json.html', array(
+        "id" => $id,
+        'todo' => json_encode(array("id" => $todo->getId(), "user_id" => $todo->getAuthor()->getId(), "description" => $todo->getDescription())),
+    ));
+})->value('id', null);
+
 //add todos
 $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
@@ -143,3 +175,4 @@ $app->match('/todo/done/{id}', function ($id) use ($app) {
 
     return $app->redirect('/todo');
 });
+

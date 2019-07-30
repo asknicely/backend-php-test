@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="col-md-4 col-md-offset-4">
+    <h1>Todo:</h1>
+    <table class="table table-striped">
+        <th>#</th>
+        <th>ToDo</th>
+        <tr>
+            <td><a title="View as Table" href={{ "/todo/#{ id }" }}>{{ id }}</a></td>
+            <td>{{ todo }}</td>
+        </tr>
+    </table>
+</div>
+
+{% endblock %}

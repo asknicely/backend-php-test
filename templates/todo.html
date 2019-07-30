@@ -9,7 +9,7 @@
         <th>Description</th>
         <th></th>
         <tr>
-            <td>{{ todo.id }}</td>
+            <td><a title="View as Json" href={{ "/todo/#{ todo.id }/json" }}>{{ todo.id }}</a></td>
             <td>{{ todo.author.id }}</td>
             <td>{{ todo.description }}</td>
             <td>
