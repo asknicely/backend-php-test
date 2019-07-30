@@ -4,8 +4,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Constraints as Assert;
 
-const COMPLETED = 1;
-const PROCESSING = 0;
+use App\User;
+use App\Todo;
+
 const PER_PAGE = 5;
 
 // Allow to get put method
@@ -28,11 +29,13 @@ $app->match('/login', function (Request $request) use ($app) {
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+        $user = User::where([
+            'username' => $username,
+            'password' => $password,
+        ])->first();
 
         if ($user) {
-            $app['session']->set('user', $user);
+            $app['session']->set('user', $user->toArray());
             return $app->redirect('/todo');
         }
     }
@@ -50,28 +53,22 @@ $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
         return $app->redirect('/login');
     }
 
-    if ($id) {
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+    $user_id = $user['id'];
+    $user = User::findOrFail($user_id);
 
+    // Show
+    if ($id) {
+        $todo = $user->todos->find($id);
         return $app['twig']->render('todo.html', [
             'todo' => $todo,
         ]);
     } else {
+        // List
         $currentPage = $request->get('page') ?? 1;
-        $offest = ($currentPage - 1) * PER_PAGE;
 
-        $user_id = $user['id'];
-
-        // get total page number
-        $sql = "SELECT COUNT(*) AS cnt FROM todos WHERE user_id = '$user_id'";
-        $count = $app['db']->fetchAssoc($sql)['cnt'];
+        $count = $user->todos->count();
+        $todos = $user->todos->forPage($currentPage, PER_PAGE);
         $maxPages = ceil($count / PER_PAGE);
-
-        // get todo list on currecnt page
-        $limit = PER_PAGE;
-        $sql = "SELECT * FROM todos WHERE user_id = '$user_id' LIMIT $offest, $limit";
-        $todos = $app['db']->fetchAll($sql);
 
         return $app['twig']->render(
             'todos.html',
@@ -96,16 +93,16 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
     }
 
     $user_id = $user['id'];
-    $sql = "SELECT id, user_id, description FROM todos WHERE id = '$id' AND user_id = '$user_id' Limit 1";
-    $todos = $app['db']->fetchAssoc($sql);
+    $user = User::findOrFail($user_id);
+    $todo = $user->todos->find($id);
 
-    if (!$todos) {
+    if (!$todo) {
         return $app->json([
             'error' => 'Unable to find any result.'
         ]);
     }
 
-    return $app->json($todos);
+    return $app->json($todo);
 })->assert('id', '\d+');
 
 $app->post('/todo/add', function (Request $request) use ($app) {
@@ -114,6 +111,8 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     }
 
     $user_id = $user['id'];
+    $user = User::findOrFail($user_id);
+
     $description = trim($request->get('description'));
 
     // Validate rule for description
@@ -123,10 +122,20 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         return $app->redirect('/todo');
     }
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    $newTodo = new Todo;
+    $newTodo->description = $description;
+    $newTodo->user()->associate($user);
+    $result = $newTodo->save();
 
-    $app['session']->getFlashBag()->add('alerts', ['type' => 'success', 'message' => 'Added successfully.']);
+    if ($result) {
+        $type = "success";
+        $message = "Added successfully.";
+    } else {
+        $type = "danger";
+        $message = "Unable to add new task.";
+    }
+
+    $app['session']->getFlashBag()->add('alerts', ['type' => $type, 'message' => $message]);
     return $app->redirect('/todo');
 });
 
@@ -136,10 +145,19 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     }
 
     $user_id = $user['id'];
-    $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '$user_id'";
-    $app['db']->executeUpdate($sql);
+    $user = User::findOrFail($user_id);
+    $todo = $user->todos->find($id);
+    $result = $todo->delete();
 
-    $app['session']->getFlashBag()->add('alerts', ['type' => 'success', 'message' => 'Rmoved successfully.']);
+    if ($result) {
+        $type = "success";
+        $message = "Rmoved successfully.";
+    } else {
+        $type = "danger";
+        $message = "Unable to remove selected task.";
+    }
+
+    $app['session']->getFlashBag()->add('alerts', ['type' => $type, 'message' => $message]);
     return $app->redirect('/todo');
 });
 
@@ -150,14 +168,20 @@ $app->put('/todo/complete/{id}', function (Request $request, $id) use ($app) {
     }
 
     // Switch status
-    $taskStatus = $request->get('status');
-    $taskStatus = $taskStatus == COMPLETED
-        ? PROCESSING : COMPLETED;
-
     $user_id = $user['id'];
-    $sql = "UPDATE todos SET status = '$taskStatus' WHERE id = '$id' AND user_id = '$user_id'";
-    $app['db']->executeUpdate($sql);
+    $user = User::findOrFail($user_id);
+    $todo = $user->todos->find($id);
+    $todo->status = !$todo->status;
+    $result = $todo->save();
 
-    $app['session']->getFlashBag()->add('alerts', ['type' => 'success', 'message' => 'Completed task.']);
+    if ($result) {
+        $type = "success";
+        $message = "Completed task.";
+    } else {
+        $type = "danger";
+        $message = "Unable to udpate task.";
+    }
+
+    $app['session']->getFlashBag()->add('alerts', ['type' => $type, 'message' => $message]);
     return $app->redirect('/todo');
 });
