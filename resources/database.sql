@@ -12,3 +12,5 @@ CREATE TABLE todos (
   PRIMARY KEY (id),
   FOREIGN KEY (user_id) REFERENCES users(id)
 ) Engine=InnoDB CHARSET=utf8;
+
+ALTER TABLE `todos` add column `is_done` TINYINT(1) NOT NULL DEFAULT 0 COMMENT "has been finished";

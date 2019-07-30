@@ -11,7 +11,7 @@ $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     return $twig;
 }));
 
-
+//dash board
 $app->get('/', function () use ($app) {
     //Actully I don't suggest to do this, it's a waste of the server bandwidth,
     //if this is dynamic we can do this via database otherwise via the CDN
@@ -29,7 +29,7 @@ $app->get('/', function () use ($app) {
     ));
 });
 
-
+//login in
 $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
     $password = $request->get('password');
@@ -46,13 +46,13 @@ $app->match('/login', function (Request $request) use ($app) {
     return $app['twig']->render('login.html', array());
 });
 
-
+//log out
 $app->get('/logout', function () use ($app) {
     $app['session']->set('user', null);
     return $app->redirect('/');
 });
 
-
+//todos list
 $app->get('/todo/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
@@ -81,7 +81,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     }
 })->value('id', null);
 
-
+//add todos
 $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
@@ -108,7 +108,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     return $app->redirect('/todo');
 });
 
-
+//delete todos
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
@@ -119,6 +119,27 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     $t = $em->getRepository("Entity\ToDo")->findOneBy(array("id" => $id, "author" => $u));
     $em->remove($t);
     $em->flush();
+
+    return $app->redirect('/todo');
+});
+
+// mark todos is done
+$app->match('/todo/done/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $em = $app["db.orm.em"];
+    $u = $em->getRepository("Entity\User")->find($user->getId());
+    $t = $em->getRepository("Entity\ToDo")->findOneBy(array("id" => $id, "author" => $u));
+    try {
+        $t->setIsDone($t::ISDONE);
+        $em->persist($t);
+        $em->flush();
+    } catch (InvalidArgumentException $e) {
+        $app["monolog"]->warn(sprintf("Get an excetion %s when we set the is_done status", $e->getMessage()));
+        return $app->redirect("/todo");
+    }
 
     return $app->redirect('/todo');
 });

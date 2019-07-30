@@ -3,6 +3,7 @@
 namespace Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Psr\Log\InvalidArgumentException;
 
 /**
  * @Entity
@@ -10,6 +11,9 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class ToDo
 {
+    const ISDONE = 1;
+    const ONGOING = 0;
+
     /**
      * @Column(type="integer")
      * @Id
@@ -80,4 +84,30 @@ class ToDo
     {
         $this->author = $author;
     }
+
+    /**
+     * @Column(type="integer", name="is_done", options={"default":0})
+     */
+    private $isDone = 0;
+
+    /**
+     * @param mixed $isDone
+     */
+    public function setIsDone($isDone)
+    {
+        if (!in_array($isDone, array(self::ISDONE, self::ONGOING))) {
+            throw new InvalidArgumentException("Invalid done status");
+        }
+        $this->isDone = $isDone;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function hasDone()
+    {
+        return $this->isDone == 1;
+    }
+
+
 }
