@@ -12,6 +12,19 @@ const PER_PAGE = 5;
 // Allow to get put method
 Request::enableHttpMethodParameterOverride();
 
+/**
+ * Auth middleware
+ */
+$authMiddleware = function () use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $user_id = $user['id'];
+    $user = User::findOrFail($user_id);
+    $app['currentUser'] = $user;
+};
+
 $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
@@ -49,12 +62,7 @@ $app->get('/logout', function () use ($app) {
 });
 
 $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-
-    $user_id = $user['id'];
-    $user = User::findOrFail($user_id);
+    $user = $app['currentUser'];
 
     // Show
     if ($id) {
@@ -67,7 +75,6 @@ $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
         $currentPage = $request->get('page') ?? 1;
 
         $count = $user->todos->count();
-        // $todos = $user->todos->forPage($currentPage, PER_PAGE);
         $todos = $user->todos()->page($currentPage, PER_PAGE)->get();
         $maxPages = ceil($count / PER_PAGE);
 
@@ -80,23 +87,17 @@ $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
             )
         );
     }
-})->value('id', null);
+})->value('id', null)->before($authMiddleware);
 
 $app->get('/todo/{id}/json', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-
+    $user = $app['currentUser'];
     if (!$id) {
         return $app->json([
             'error' => 'Invalid ID.'
         ]);
     }
 
-    $user_id = $user['id'];
-    $user = User::findOrFail($user_id);
     $todo = $user->todos->find($id);
-
     if (!$todo) {
         return $app->json([
             'error' => 'Unable to find any result.'
@@ -104,16 +105,10 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
     }
 
     return $app->json($todo);
-})->assert('id', '\d+');
+})->assert('id', '\d+')->before($authMiddleware);
 
 $app->post('/todo/add', function (Request $request) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-
-    $user_id = $user['id'];
-    $user = User::findOrFail($user_id);
-
+    $user = $app['currentUser'];
     $description = trim($request->get('description'));
 
     // Validate rule for description
@@ -138,15 +133,10 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
     $app['session']->getFlashBag()->add('alerts', ['type' => $type, 'message' => $message]);
     return $app->redirect('/todo');
-});
+})->before($authMiddleware);
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-
-    $user_id = $user['id'];
-    $user = User::findOrFail($user_id);
+    $user = $app['currentUser'];
     $todo = $user->todos->find($id);
     $result = $todo->delete();
 
@@ -160,18 +150,12 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     $app['session']->getFlashBag()->add('alerts', ['type' => $type, 'message' => $message]);
     return $app->redirect('/todo');
-});
+})->before($authMiddleware);
 
 $app->put('/todo/complete/{id}', function (Request $request, $id) use ($app) {
-    // TODO:: Refactory helper or middleware for checking session
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-
-    // Switch status
-    $user_id = $user['id'];
-    $user = User::findOrFail($user_id);
+    $user = $app['currentUser'];
     $todo = $user->todos->find($id);
+    // Switch status
     $todo->status = !$todo->status;
     $result = $todo->save();
 
@@ -185,4 +169,4 @@ $app->put('/todo/complete/{id}', function (Request $request, $id) use ($app) {
 
     $app['session']->getFlashBag()->add('alerts', ['type' => $type, 'message' => $message]);
     return $app->redirect('/todo');
-});
+})->before($authMiddleware);
