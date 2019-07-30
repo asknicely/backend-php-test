@@ -67,9 +67,31 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todos' => $todos,
         ]);
     }
-})
-    ->value('id', null);
+})->value('id', null);
 
+$app->get('/todo/{id}/json', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    if (!$id) {
+        return $app->json([
+            'error' => 'Invalid ID.'
+        ]);
+    }
+
+    $user_id = $user['id'];
+    $sql = "SELECT id, user_id, description FROM todos WHERE id = '$id' AND user_id = '$user_id' Limit 1";
+    $todos = $app['db']->fetchAssoc($sql);
+
+    if (!$todos) {
+        return $app->json([
+            'error' => 'Unable to find any result.'
+        ]);
+    }
+
+    return $app->json($todos);
+})->assert('id', '\d+');
 
 $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
