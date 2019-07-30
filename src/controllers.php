@@ -88,8 +88,12 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
+    $user_id = $user['id'];
+    $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '$user_id'";
     $app['db']->executeUpdate($sql);
 
     return $app->redirect('/todo');
