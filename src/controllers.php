@@ -4,6 +4,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Constraints as Assert;
 
+const COMPLETED = 1;
+const PROCESSING = 0;
+
+Request::enableHttpMethodParameterOverride();
+
 $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
@@ -94,6 +99,24 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     $user_id = $user['id'];
     $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '$user_id'";
+    $app['db']->executeUpdate($sql);
+
+    return $app->redirect('/todo');
+});
+
+$app->put('/todo/complete/{id}', function (Request $request, $id) use ($app) {
+    // TODO:: Refactory helper or middleware for checking session
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    // Switch status
+    $taskStatus = $request->get('status');
+    $taskStatus = $taskStatus == COMPLETED
+        ? PROCESSING : COMPLETED;
+
+    $user_id = $user['id'];
+    $sql = "UPDATE todos SET status = '$taskStatus' WHERE id = '$id' AND user_id = '$user_id'";
     $app['db']->executeUpdate($sql);
 
     return $app->redirect('/todo');
