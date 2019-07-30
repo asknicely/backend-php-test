@@ -7,6 +7,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 const COMPLETED = 1;
 const PROCESSING = 0;
 
+// Allow to get put method
 Request::enableHttpMethodParameterOverride();
 
 $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
@@ -15,13 +16,11 @@ $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     return $twig;
 }));
 
-
 $app->get('/', function () use ($app) {
     return $app['twig']->render('index.html', [
         'readme' => file_get_contents('README.md'),
     ]);
 });
-
 
 $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
@@ -40,12 +39,10 @@ $app->match('/login', function (Request $request) use ($app) {
     return $app['twig']->render('login.html', array());
 });
 
-
 $app->get('/logout', function () use ($app) {
     $app['session']->set('user', null);
     return $app->redirect('/');
 });
-
 
 $app->get('/todo/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
@@ -101,7 +98,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $user_id = $user['id'];
     $description = trim($request->get('description'));
 
-    // validate rule for description
+    // Validate rule for description
     $errors = $app['validator']->validate($description, new Assert\NotBlank());
     if (count($errors) > 0) {
         return $app->abort(400, "Can't add a task without a description.");
@@ -112,7 +109,6 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
     return $app->redirect('/todo');
 });
-
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
