@@ -155,7 +155,7 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 $app->put('/todo/complete/{id}', function (Request $request, $id) use ($app) {
     $user = $app['currentUser'];
     $todo = $user->todos->find($id);
-    // Switch status
+    // Toggle status
     $todo->status = !$todo->status;
     $result = $todo->save();
 
