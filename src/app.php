@@ -35,12 +35,15 @@ $app->register(new DoctrineServiceProvider, array(
 ));
 
 //register the orm provider
-//$app['autoloader']->registerNamespace('ORM', __DIR__ . '/vendor/silex-orm-extension/lib');
 $app->register(new DoctrineORMServiceProvider(), array(
-//    "db.orm.class_path" => __DIR__ . "/../vender/doctrine/orm/lib",
-    "db.orm.proxies_dir" => __DIR__ . "/../var/cache/doctrine/Proxy",
+    "db.orm.proxies_dir" => __DIR__ . "/../var/",
     "db.orm.proxies_namespace" => "DoctrineProxy",
     "db.orm.auto_generate_proxies" => false,
+
+    //We set the is devmode to true forever, this may take more memmory, but if we change it to false, we need to combine the
+    //CI/CD processing to make sure before we develop the code online, we'll generate the entity proxy manually
+    "db.orm.config" => \Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration(array("Entity"), true),
+
     "db.orm.entities" => array(
         array(
             "type" => "annotation",
@@ -50,5 +53,15 @@ $app->register(new DoctrineORMServiceProvider(), array(
     )
 
 ));
+
+//regirster the pagerfanta provider
+$app->register(new FranMoreno\Silex\Provider\PagerfantaServiceProvider(), array(
+    "pageParameter" => '[page]',
+    'proximity' => 3,
+    'next_message' => '&raquo;',
+    'previous_message' => '&laquo;',
+    'default_view' => 'default'
+));
+
 
 return $app;

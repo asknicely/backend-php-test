@@ -24,7 +24,9 @@
     "doctrine/dbal": "~2.2",
     "deralex/yaml-config-service-provider": "1.0.x-dev",
     "doctrine/orm": "^2.4",
-    "fredjuvaux/doctrine-orm-provider": "1.0.*@dev"
+    "fredjuvaux/doctrine-orm-provider": "1.0.*@dev",
+    "pagerfanta/pagerfanta": "^1.1",
+    "franmomu/silex-pagerfanta-provider": "^1.1"
   },
   "autoload": {
     "psr-0": {

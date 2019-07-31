@@ -39,7 +39,7 @@ $app->match('/login', function (Request $request) use ($app) {
         $user = $em->getRepository("Entity\User")->findOneBy(array("userName" => $username, "passWord" => $password));
         if ($user) {
             $app['session']->set('user', $user);
-            return $app->redirect('/todo');
+            return $app->redirect('/todos');
         }
     }
 
@@ -53,9 +53,20 @@ $app->get('/logout', function () use ($app) {
 });
 
 //todos list
-$app->get('/todo/{id}', function ($id) use ($app) {
+$app->get("/todos", function (Request $request) use ($app) {
+
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
+    }
+
+    $page = $request->get('page');
+
+    $errors = $app["validator"]->validate($page, new  \Symfony\Component\Validator\Constraints\GreaterThan(0));
+
+    if (count($errors) > 0) {
+        $app["monolog"]->debug(sprintf("Got errors %s when we validate the view todo as json format", (string)$errors));
+        $app["session"]->getFlashBag()->add("warning", "Page is invalid");
+        return $app->redirect('/todos');
     }
 
     $em = $app["db.orm.em"];
@@ -63,22 +74,57 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     //first we get the presist user from database
     $u = $em->getRepository("Entity\User")->find($user->getId());
 
-    if ($id) {
-        $todo = $em->getRepository("Entity\ToDo")->findOneBy(array("id" => $id, "author" => $u));
+    $todos = $em->createQueryBuilder()->select("t")->from("Entity\ToDo", "t")->where("t.author = ?1")->setParameter(1, $u);
 
-        if (!$todo) {
-            $app["monolog"]->debug(sprintf("user %u's todo %t is not exists", $user->getId(), $id));
-            return $app->redirect("/todo");
-        }
-        return $app['twig']->render('todo.html', array(
-            'todo' => $todo,
-        ));
-    } else {
-        $todos = $u->getTodos()->toArray();
-        return $app['twig']->render('todos.html', array(
-            'todos' => $todos,
-        ));
+    $adapter = new \Pagerfanta\Adapter\DoctrineORMAdapter($todos);
+
+    try {
+        $pagerfanta = new \Pagerfanta\Pagerfanta($adapter);
+        $pagerfanta->setMaxPerPage($app["config"]["list"]["number"]);
+        $pagerfanta->setCurrentPage($page);
+    } catch (Exception $e) {
+        $app["monolog"]->error(sprintf("Got an exception %s when we fetch the todos pagnation", $e->getMessage()));
+        return $app->redirect('/todos');
     }
+
+    return $app['twig']->render('todos.html', array(
+        'todos' => $pagerfanta->getCurrentPageResults(),
+        "pager" => $pagerfanta,
+    ));
+
+
+})->value("page", 1);
+
+//todos detail
+$app->get('/todo/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $errors = $app["validator"]->validate($id, new  \Symfony\Component\Validator\Constraints\GreaterThan(0));
+
+    if (count($errors) > 0) {
+        $app["monolog"]->debug(sprintf("Got errors %s when we validate the view todo as json format", (string)$errors));
+        $app["session"]->getFlashBag()->add("warning", "Page is invalid");
+        return $app->redirect('/todos');
+    }
+
+    $em = $app["db.orm.em"];
+
+    //first we get the presist user from database
+    $u = $em->getRepository("Entity\User")->find($user->getId());
+
+    $todo = $em->getRepository("Entity\ToDo")->findOneBy(array("id" => $id, "author" => $u));
+
+    if (!$todo) {
+        $app["monolog"]->debug(sprintf("user %u's todo %t is not exists", $user->getId(), $id));
+        return $app->redirect("/todos");
+    }
+
+    return $app['twig']->render('todo.html', array(
+        'todo' => $todo,
+    ));
+
 })->value('id', null);
 
 
@@ -94,7 +140,7 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
 
     if (count($errors) > 0) {
         $app["monolog"]->debug(sprintf("Got errors %s when we validate the view todo as json format", (string)$errors));
-        return $app->redirect('/todo');
+        return $app->redirect('/todos');
     }
 
     //first we get the presist user from database
@@ -104,7 +150,7 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
 
     if (!$todo) {
         $app["monolog"]->debug(sprintf("user %u's todo %t is not exists", $user->getId(), $id));
-        return $app->redirect("/todo");
+        return $app->redirect("/todos");
     }
 
     return $app['twig']->render('todo_json.html', array(
@@ -128,7 +174,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         foreach ($errors as $error) {
             $app["session"]->getFlashBag()->add("danger", $error->getMessage());
         }
-        return $app->redirect('/todo');
+        return $app->redirect('/todos');
     }
 
     $em = $app["db.orm.em"];
@@ -142,11 +188,11 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     if ($t->getId()) {
         $app["session"]->getFlashBag()->add("info", "Add todo success!");
     }
-    return $app->redirect('/todo');
+    return $app->redirect('/todos');
 });
 
 //delete todos
-$app->match('/todo/delete/{id}', function ($id) use ($app) {
+$app->post('/todo/delete/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
@@ -160,11 +206,11 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
         $app["session"]->getFlashBag()->add("info", "Delete todo success!");
     }
 
-    return $app->redirect('/todo');
+    return $app->redirect('/todos');
 });
 
 // mark todos is done
-$app->match('/todo/done/{id}', function ($id) use ($app) {
+$app->post('/todo/done/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
@@ -178,9 +224,9 @@ $app->match('/todo/done/{id}', function ($id) use ($app) {
         $em->flush();
     } catch (InvalidArgumentException $e) {
         $app["monolog"]->warn(sprintf("Get an excetion %s when we set the is_done status", $e->getMessage()));
-        return $app->redirect("/todo");
+        return $app->redirect("/todos");
     }
 
-    return $app->redirect('/todo');
+    return $app->redirect('/todos');
 });
 
