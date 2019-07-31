@@ -2,7 +2,7 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Validator\Constraint as Assert;
+use Symfony\Component\Validator\Constraints as Assert;
 
 $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
 
@@ -167,7 +167,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
     $description = $request->get('description');
 
-    $errors = $app["validator"]->validate($description, new \Symfony\Component\Validator\Constraints\NotBlank());
+    $errors = $app["validator"]->validate($description, array(new Assert\NotBlank(), new Assert\Length(array("min" => 1, "max" => 255))));
 
     if (count($errors) > 0) {
         $app["monolog"]->debug(sprintf("Got errors %s when we validate the post add function", (string)$errors));
