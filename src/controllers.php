@@ -36,7 +36,7 @@ $app->match('/login', function (Request $request) use ($app) {
     $em = $app["db.orm.em"];
 
     if ($username) {
-        $user = $em->getRepository("Entity\User")->findOneBy(array("userName" => $username, "passWord" => $password));
+        $user = $em->getRepository("Entity\User")->findOneBy(array("userName" => $username, "passWord" => md5($password)));
         if ($user) {
             $app['session']->set('user', $user);
             return $app->redirect('/todos');
