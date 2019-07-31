@@ -125,6 +125,9 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
     if (count($errors) > 0) {
         $app["monolog"]->debug(sprintf("Got errors %s when we validate the post add function", (string)$errors));
+        foreach ($errors as $error) {
+            $app["session"]->getFlashBag()->add("danger", $error->getMessage());
+        }
         return $app->redirect('/todo');
     }
 
@@ -136,7 +139,9 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $t->setAuthor($u);
     $em->persist($t);
     $em->flush();
-
+    if ($t->getId()) {
+        $app["session"]->getFlashBag()->add("info", "Add todo success!");
+    }
     return $app->redirect('/todo');
 });
 
@@ -151,6 +156,9 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     $t = $em->getRepository("Entity\ToDo")->findOneBy(array("id" => $id, "author" => $u));
     $em->remove($t);
     $em->flush();
+    if ($t->getId() == null) {
+        $app["session"]->getFlashBag()->add("info", "Delete todo success!");
+    }
 
     return $app->redirect('/todo');
 });
