@@ -4,6 +4,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Constraints as Assert;
 
+$isLogin = function (Request $request, Silex\Application $app) {
+
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+};
+
 $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
 
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -55,10 +62,6 @@ $app->get('/logout', function () use ($app) {
 //todos list
 $app->get("/todos", function (Request $request) use ($app) {
 
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-
     $page = $request->get('page');
 
     $errors = $app["validator"]->validate($page, new  \Symfony\Component\Validator\Constraints\GreaterThan(0));
@@ -72,7 +75,7 @@ $app->get("/todos", function (Request $request) use ($app) {
     $em = $app["db.orm.em"];
 
     //first we get the presist user from database
-    $u = $em->getRepository("Entity\User")->find($user->getId());
+    $u = $em->getRepository("Entity\User")->find($app["session"]->get('user')->getId());
 
     $todos = $em->createQueryBuilder()->select("t")->from("Entity\ToDo", "t")->where("t.author = ?1")->setParameter(1, $u);
 
@@ -93,13 +96,10 @@ $app->get("/todos", function (Request $request) use ($app) {
     ));
 
 
-})->value("page", 1);
+})->value("page", 1)->before($isLogin);
 
 //todos detail
 $app->get('/todo/{id}', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
 
     $errors = $app["validator"]->validate($id, new  \Symfony\Component\Validator\Constraints\GreaterThan(0));
 
@@ -112,12 +112,12 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     $em = $app["db.orm.em"];
 
     //first we get the presist user from database
-    $u = $em->getRepository("Entity\User")->find($user->getId());
+    $u = $em->getRepository("Entity\User")->find($app["session"]->get('user')->getId());
 
     $todo = $em->getRepository("Entity\ToDo")->findOneBy(array("id" => $id, "author" => $u));
 
     if (!$todo) {
-        $app["monolog"]->debug(sprintf("user %u's todo %t is not exists", $user->getId(), $id));
+        $app["monolog"]->debug(sprintf("user %u's todo %t is not exists", $app["session"]->get('user')->getId(), $id));
         return $app->redirect("/todos");
     }
 
@@ -125,14 +125,11 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         'todo' => $todo,
     ));
 
-})->value('id', null);
+})->value('id', null)->before($isLogin);
 
 
 //show todos as json
 $app->get('/todo/{id}/json', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
 
     $em = $app["db.orm.em"];
 
@@ -144,12 +141,12 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
     }
 
     //first we get the presist user from database
-    $u = $em->getRepository("Entity\User")->find($user->getId());
+    $u = $em->getRepository("Entity\User")->find($app["session"]->get('user')->getId());
 
     $todo = $em->getRepository("Entity\ToDo")->findOneBy(array("id" => $id, "author" => $u));
 
     if (!$todo) {
-        $app["monolog"]->debug(sprintf("user %u's todo %t is not exists", $user->getId(), $id));
+        $app["monolog"]->debug(sprintf("user %u's todo %t is not exists", $app["session"]->get('user')->getId(), $id));
         return $app->redirect("/todos");
     }
 
@@ -157,13 +154,10 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
         "id" => $id,
         'todo' => json_encode(array("id" => $todo->getId(), "user_id" => $todo->getAuthor()->getId(), "description" => $todo->getDescription())),
     ));
-})->value('id', null);
+})->value('id', null)->before($isLogin);
 
 //add todos
 $app->post('/todo/add', function (Request $request) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
 
     $description = $request->get('description');
 
@@ -178,7 +172,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     }
 
     $em = $app["db.orm.em"];
-    $u = $em->getRepository("Entity\User")->find($user->getId());
+    $u = $em->getRepository("Entity\User")->find($app["session"]->get('user')->getId());
 
     $t = new \Entity\ToDo();
     $t->setDescription($description);
@@ -189,7 +183,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         $app["session"]->getFlashBag()->add("info", "Add todo success!");
     }
     return $app->redirect('/todos');
-});
+})->before($isLogin);
 
 //delete todos
 $app->post('/todo/delete/{id}', function ($id) use ($app) {
@@ -207,16 +201,13 @@ $app->post('/todo/delete/{id}', function ($id) use ($app) {
     }
 
     return $app->redirect('/todos');
-});
+})->before($isLogin);
 
 // mark todos is done
 $app->post('/todo/done/{id}', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
 
     $em = $app["db.orm.em"];
-    $u = $em->getRepository("Entity\User")->find($user->getId());
+    $u = $em->getRepository("Entity\User")->find($app["session"]->get('user')->getId());
     $t = $em->getRepository("Entity\ToDo")->findOneBy(array("id" => $id, "author" => $u));
     try {
         $t->setIsDone($t::ISDONE);
@@ -228,5 +219,5 @@ $app->post('/todo/done/{id}', function ($id) use ($app) {
     }
 
     return $app->redirect('/todos');
-});
+})->before($isLogin);
 
