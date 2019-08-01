@@ -182,24 +182,21 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     if ($t->getId()) {
         $app["session"]->getFlashBag()->add("info", "Add todo success!");
     }
-    return $app->redirect('/todos');
+    return $app->redirect('/todo/' . $t->getId());
 })->before($isLogin);
 
 //delete todos
 $app->post('/todo/delete/{id}', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-
     $em = $app["db.orm.em"];
-    $u = $em->getRepository("Entity\User")->find($user->getId());
+    $u = $em->getRepository("Entity\User")->find($app["session"]->get('user')->getId());
     $t = $em->getRepository("Entity\ToDo")->findOneBy(array("id" => $id, "author" => $u));
-    $em->remove($t);
-    $em->flush();
-    if ($t->getId() == null) {
-        $app["session"]->getFlashBag()->add("info", "Delete todo success!");
+    if ($t) {
+        $em->remove($t);
+        $em->flush();
+        if ($t->getId() == null) {
+            $app["session"]->getFlashBag()->add("info", "Delete todo success!");
+        }
     }
-
     return $app->redirect('/todos');
 })->before($isLogin);
 
@@ -209,15 +206,16 @@ $app->post('/todo/done/{id}', function ($id) use ($app) {
     $em = $app["db.orm.em"];
     $u = $em->getRepository("Entity\User")->find($app["session"]->get('user')->getId());
     $t = $em->getRepository("Entity\ToDo")->findOneBy(array("id" => $id, "author" => $u));
-    try {
-        $t->setIsDone($t::ISDONE);
-        $em->persist($t);
-        $em->flush();
-    } catch (InvalidArgumentException $e) {
-        $app["monolog"]->warn(sprintf("Get an excetion %s when we set the is_done status", $e->getMessage()));
-        return $app->redirect("/todos");
+    if ($t) {
+        try {
+            $t->setIsDone($t::ISDONE);
+            $em->persist($t);
+            $em->flush();
+        } catch (InvalidArgumentException $e) {
+            $app["monolog"]->warn(sprintf("Get an excetion %s when we set the is_done status", $e->getMessage()));
+            return $app->redirect("/todos");
+        }
     }
-
     return $app->redirect('/todos');
 })->before($isLogin);
 
