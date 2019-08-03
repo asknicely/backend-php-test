@@ -22,40 +22,50 @@
           </button>
         </div>
     {% endfor %}
-    <table class="table table-striped">
-        <th>#</th><th>User</th><th></th><th>Description</th><th></th>
-        {% for todo in todos %}
+    <table id="todo_table" class="display table table-striped">
+        <thead>
             <tr>
-                <td>{{ todo.id }}</td>
-                <td>{{ todo.user_id }}</td>
-                <td>
-                  <label class="checkbox-label">
-                      <input type="checkbox" class="complete_checkbox regular-checkbox" name="complete" data-id="{{ todo.id }}" {% if todo.complete %}checked{% endif %}>
-                      <span class="checkbox-custom rectangular"></span>
-                  </label>
-                </td>
-                <td>
-                    <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}" id="description{{ todo.id }}" class="{% if todo.complete %}completed-task{% endif %}">
-                       {{ todo.description }}
-                    </a>
-                </td>
-                <td>
-                    <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
-                        <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
-                    </form>
+                <th>#</th>
+                <th>User</th>
+                <th></th>
+                <th>Description</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+          {% for todo in todos %}
+              <tr>
+                  <td>{{ todo.id }}</td>
+                  <td>{{ todo.user_id }}</td>
+                  <td>
+                    <label class="checkbox-label">
+                        <input type="checkbox" class="complete_checkbox regular-checkbox" name="complete" data-id="{{ todo.id }}" {% if todo.complete %}checked{% endif %}>
+                        <span class="checkbox-custom rectangular"></span>
+                    </label>
+                  </td>
+                  <td>
+                      <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}" id="description{{ todo.id }}" class="{% if todo.complete %}completed-task{% endif %}">
+                         {{ todo.description }}
+                      </a>
+                  </td>
+                  <td>
+                      <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
+                          <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
+                      </form>
+                  </td>
+              </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="5">
+                  <form method="post" action="{{ app.request.baseurl }}/todo/add">
+                      <input type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
+                      <button type="submit" class="btn btn-sm btn-primary pull-right">Add</button>
+                  </form>
                 </td>
             </tr>
-        {% endfor %}
-        <tr>
-            <form method="post" action="{{ app.request.baseurl }}/todo/add">
-                <td colspan="4">
-                    <input type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
-                </td>
-                <td>
-                    <button type="submit" class="btn btn-sm btn-primary">Add</button>
-                </td>
-            </form>
-        </tr>
+        </tfoot>
     </table>
 </div>
 {% endblock %}
@@ -63,6 +73,15 @@
 {% block jsscript %}
 <script>
 $( document ).ready(function() {
+
+  // initialise datatable
+  $('#todo_table').DataTable({
+      "searching": false, // disable searching field
+      "ordering": false, // disable sorting ability
+      "lengthChange": false, // disable user's ability to change the paging display length of the table
+      "pageLength": 10 // number of rows per page
+  });
+
   $(document).on("click",".complete_checkbox",function() {
       var id = $(this).data('id')
 
