@@ -13,13 +13,19 @@
         </div>
     {% endfor %}
     <table class="table table-striped">
-        <th>#</th><th>User</th><th>Description</th><th></th>
+        <th>#</th><th>User</th><th></th><th>Description</th><th></th>
         {% for todo in todos %}
             <tr>
                 <td>{{ todo.id }}</td>
                 <td>{{ todo.user_id }}</td>
                 <td>
-                    <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
+                  <label class="checkbox-label">
+                      <input type="checkbox" class="complete_checkbox regular-checkbox" name="complete" data-id="{{ todo.id }}" {% if todo.complete %}checked{% endif %}>
+                      <span class="checkbox-custom rectangular"></span>
+                  </label>
+                </td>
+                <td>
+                    <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}" id="description{{ todo.id }}" class="{% if todo.complete %}completed-task{% endif %}">
                        {{ todo.description }}
                     </a>
                 </td>
@@ -32,7 +38,7 @@
         {% endfor %}
         <tr>
             <form method="post" action="{{ app.request.baseurl }}/todo/add">
-                <td colspan="3">
+                <td colspan="4">
                     <input type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
                 </td>
                 <td>
@@ -42,4 +48,27 @@
         </tr>
     </table>
 </div>
+{% endblock %}
+
+{% block jsscript %}
+<script>
+$( document ).ready(function() {
+  $(document).on("click",".complete_checkbox",function() {
+      var id = $(this).data('id')
+
+      // Update complete value using ajax call
+			$.post( "/todo/updateComplete", { id: id })
+				.done(function( response ) {
+            if(response == 'success'){
+              var el = document.getElementById("description"+id);
+
+              // If completed-task class is set remove it, otherwise add it
+              el.classList.toggle("completed-task");
+            }
+  		      //console.log(response);
+			});
+
+  });
+});
+</script>
 {% endblock %}

@@ -97,3 +97,15 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     return $app->redirect('/todo');
 });
+
+// This will be called by ajax when user clicked the checkbox in to do list
+$app->post('/todo/updateComplete', function (Request $request) use ($app) {
+
+    $id = $request->get('id');
+
+    // Update the complete column in todos table, if it sets to 0, update it to 1 and vice versa.
+    $sql = "UPDATE todos SET complete = IF(complete = 0, 1, 0) WHERE id = '$id'";
+    $app['db']->executeUpdate($sql);
+
+    return "success";
+});
