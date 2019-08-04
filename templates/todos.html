@@ -13,6 +13,13 @@
         </div>
     {% endfor %}
 
+    <div class="alert alert-success ajax_flash" role="alert">
+      <span class="ajax_flash_message"></span>
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+
     <!-- Display error message if any -->
     {% for message in app.session.getFlashBag.get('error_message') %}
         <div class="alert alert-danger" role="alert">
@@ -22,6 +29,7 @@
           </button>
         </div>
     {% endfor %}
+
     <table id="todo_table" class="display table table-striped">
         <thead>
             <tr>
@@ -33,10 +41,10 @@
             </tr>
         </thead>
         <tbody>
-          {% for todo in todos %}
-              <tr>
-                  <td>{{ todo.id }}</td>
-                  <td>{{ todo.user_id }}</td>
+          {% for key, todo in todos %}
+              <tr id="row{{ todo.id }}">
+                  <td>{{ key+1 }}</td>
+                  <td>{{ user.username }}</td>
                   <td>
                     <label class="checkbox-label">
                         <input type="checkbox" class="complete_checkbox regular-checkbox" name="complete" data-id="{{ todo.id }}" {% if todo.complete %}checked{% endif %}>
@@ -49,9 +57,7 @@
                       </a>
                   </td>
                   <td>
-                      <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
-                          <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
-                      </form>
+                      <button type="submit" class="btn btn-xs btn-danger btn-delete" data-id="{{ todo.id }}"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                   </td>
               </tr>
           {% endfor %}
@@ -85,7 +91,7 @@ $( document ).ready(function() {
   $(document).on("click",".complete_checkbox",function() {
       var id = $(this).data('id')
 
-      // Update complete value using ajax call
+      // Update complete value via ajax
 			$.post( "/todo/updateComplete", { id: id })
 				.done(function( response ) {
             if(response == 'success'){
@@ -94,9 +100,30 @@ $( document ).ready(function() {
               // If completed-task class is set remove it, otherwise add it
               el.classList.toggle("completed-task");
             }
-  		      //console.log(response);
 			});
 
+  });
+
+  $(document).on("click",".btn-delete",function() {
+      var result = confirm("Are you sure you want to delete this item?");
+      if (result) {
+        var id = $(this).data('id')
+
+        // Delete a todo via ajax
+  			$.post( "/todo/deleteTodo", { id: id })
+  				.done(function( response ) {
+              if(response == 'success'){
+
+                // Remove record from frontend
+                $( "tr" ).remove( "#row"+id );
+
+                // Display flash message
+                $( ".alert" ).hide();
+                $(".ajax_flash_message").text("The todo is deleted successfully.");
+                $( ".ajax_flash" ).show();
+              }
+  			});
+      }
   });
 });
 </script>
