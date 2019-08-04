@@ -4,6 +4,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 use Symfony\Component\Validator\Constraints as Assert;
+use Doctrine\ORM\Query;
+use Entity\Todos;
+use Form\TodosType;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -20,14 +23,24 @@ $app->get('/', function () use ($app) {
 
 
 $app->match('/login', function (Request $request) use ($app) {
+
     $username = $request->get('username');
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+        // Select a user where username and password are match through Entity Manager
+        $em = $app['db.orm.em'];
+        $entity = $em->getRepository('Entity\Users')->findOneBy(array('username' => $username, 'password' => hash('sha256', $password)));
 
-        if ($user){
+        if ($entity){
+
+
+            // Get ID and Username from entity
+            $user = [
+              'id' => $entity->getId(),
+              'username' => $entity->getUsername()
+            ];
+
             $app['session']->set('user', $user);
             return $app->redirect('/todo');
         }
@@ -49,18 +62,30 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     }
 
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+        // // Select a todos by id through Entity Manager
+        // $em = $app['db.orm.em'];
+        // $entity= $em->getRepository('Entity\Todos')->find($id);
+        //
+        // // Return 404 if no record found or the record is not for current user
+        // if (!$entity || $entity->getUser_id() != $user['id']) {
+        //     $app->abort(404, 'No entity found for id '.$id);
+        // }
+        //
+        // return $app['twig']->render('todo.html', [
+        //     'todo' => $entity,
+        // ]);
 
-        return $app['twig']->render('todo.html', [
-            'todo' => $todo,
-        ]);
+        // Redirecting user to todo list as the /todo/{id} page is not necessary
+        return $app->redirect('/todo');
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
-
+        // Select all todos by logged in user id through Entity Manager
+        $em = $app['db.orm.em'];
+        $entity = $em->getRepository('Entity\Todos')
+            ->findBy(
+                array('user_id'=> $user['id'])
+            );
         return $app['twig']->render('todos.html', [
-            'todos' => $todos,
+            'todos' => $entity,
         ]);
     }
 })
@@ -84,8 +109,16 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     else { // Insert new record into db if validation is passed.
       $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
       $app['db']->executeUpdate($sql);
-
       $app['session']->getFlashBag()->add('success_message', 'A new todo is added successfully.');
+
+      // Insert new record through Entity Manager (unfortunately unable to get this working)
+      // $todos = new Todos();
+      // $todos->setUser_id($user_id);
+      // $todos->setDescription($description);
+      // $todos->setComplete(0);
+      // $em = $app['db.orm.em'];
+      // $em->persist($todos);
+      // $em->flush();
     }
 
     return $app->redirect('/todo');
@@ -94,32 +127,98 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    // Delete a todo by ID through Entity Manager
+    $em = $app['db.orm.em'];
+    $entity = $em->getRepository('Entity\Todos')->find($id);
 
+    // Return 404 if no record found or the record is not for current user
+    if (!$entity || $entity->getUser_id() != $user['id']) {
+        $app->abort(404, 'No entity found for id '.$id);
+    }
+    $em->remove($entity);
+    $em->flush();
+
+    // Set sucess flash message
     $app['session']->getFlashBag()->add('success_message', 'Todo #'.$id.' is deleted successfully.');
 
     return $app->redirect('/todo');
 });
 
-// This will be called by ajax when user clicked the checkbox in to do list
+// This will be called by ajax when user clicked the checkbox in todo list
 $app->post('/todo/updateComplete', function (Request $request) use ($app) {
 
     $id = $request->get('id');
 
-    // Update the complete column in todos table, if it sets to 0, update it to 1 and vice versa.
+    // Update the complete column in todos table by ID, if it sets to 0, update it to 1 and vice versa.
     $sql = "UPDATE todos SET complete = IF(complete = 0, 1, 0) WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
+
+    // Update record through Entity Manager (unfortunately unable to get this working)
+    // $em = $app['db.orm.em'];
+    // $entity = $em->getRepository('Entity\Todos')->find($id);
+    // $newComplete = ($entity->getComplete() == 0 ? 1 : 0);
+    // $entity->setComplete($newComplete);
+    // $em->flush();
 
     return "success";
 });
 
 
+// This will be called by ajax when user clicked the delete button in todo list
+$app->post('/todo/deleteTodo', function (Request $request) use ($app) {
+
+    $id = $request->get('id');
+
+    // Delete a todo by ID throught Entity Manager
+    $em = $app['db.orm.em'];
+    $entity = $em->getRepository('Entity\Todos')->find($id);
+
+    $em->remove($entity);
+    $em->flush();
+
+    return "success";
+});
+
+
+// This will be called by ajax when user clicked the description field in todo list
+$app->post('/todo/updateDescription', function (Request $request) use ($app) {
+
+    $id = $request->get('id');
+    $description = $request->get('description');
+
+    // Update the description column in todos table by ID.
+    $sql = "UPDATE todos SET description = '$description' WHERE id = '$id'";
+    $app['db']->executeUpdate($sql);
+
+    // Update record through Entity Manager (unfortunately unable to get this working)
+    // $em = $app['db.orm.em'];
+    // $entity = $em->getRepository('Entity\Todos')->find($id);
+    // $entity->setDescription($description);
+    // $em->flush();
+
+    return "success";
+});
+
 // Return a todo in JSON format
 $app->match('/todo/{id}/json', function ($id) use ($app) {
 
-    $sql = "SELECT * FROM todos WHERE id = '$id'";
-    $todo = $app['db']->fetchAssoc($sql);
+    // Select a todo by ID through Entity Manager
+    $em = $app['db.orm.em'];
+    $entity = $em->getRepository('Entity\Todos')->find($id);
 
-    return json_encode($todo);
+    if ($entity){
+        // Get data from entity
+        $todo = [
+          'id' => $entity->getId(),
+          'user_id' => $entity->getUser_id(),
+          'description' => $entity->getDescription(),
+          'complete' => $entity->getComplete()
+        ];
+
+        // Return result in json format
+        return json_encode($todo);
+    }
+
+    // return no content if no result found
+    return json_encode(['error' => 'no content']);
 });

@@ -97,3 +97,17 @@ body {
 #todo_table tfoot tr td {
   border-bottom: 1px solid #000;
 }
+
+.ajax_flash {
+  display: none;
+}
+
+.description {
+  border: 0px;
+  background: transparent;
+}
+
+.editMode {
+  border: 1px solid #000;
+  background: #FFF;
+}
