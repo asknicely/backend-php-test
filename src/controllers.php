@@ -83,7 +83,7 @@ $app->get("/todos", function (Request $request) use ($app) {
 
     try {
         $pagerfanta = new \Pagerfanta\Pagerfanta($adapter);
-        $pagerfanta->setMaxPerPage($app["config"]["list"]["number"]);
+        $pagerfanta->setMaxPerPage($app["config"]["list"]["number"]); // Forbidden changing the list count per page from params.
         $pagerfanta->setCurrentPage($page);
     } catch (Exception $e) {
         $app["monolog"]->error(sprintf("Got an exception %s when we fetch the todos pagnation", $e->getMessage()));
@@ -125,7 +125,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         'todo' => $todo,
     ));
 
-})->value('id', null)->before($isLogin);
+})->value('id', null)->before($isLogin)->assert("id", "\d+");
 
 
 //show todos as json
@@ -154,7 +154,7 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
         "id" => $id,
         'todo' => json_encode(array("id" => $todo->getId(), "user_id" => $todo->getAuthor()->getId(), "description" => $todo->getDescription())),
     ));
-})->value('id', null)->before($isLogin);
+})->value('id', null)->before($isLogin)->assert("id", "\d+");
 
 //add todos
 $app->post('/todo/add', function (Request $request) use ($app) {
@@ -198,7 +198,7 @@ $app->post('/todo/delete/{id}', function ($id) use ($app) {
         }
     }
     return $app->redirect('/todos');
-})->before($isLogin);
+})->before($isLogin)->assert("id", "\d+");
 
 // mark todos is done
 $app->post('/todo/done/{id}', function ($id) use ($app) {
@@ -217,5 +217,19 @@ $app->post('/todo/done/{id}', function ($id) use ($app) {
         }
     }
     return $app->redirect('/todos');
-})->before($isLogin);
+})->before($isLogin)->assert("id", "\d+");
 
+/**
+ * handler 404 error, but we didn't got one, so I redirect to the todos list page
+ */
+$app->error(function (\Exception $e, $code) use ($app) {
+    switch ($code) {
+        case 404:
+            $app["session"]->getFlashBag()->add("info", "Page Not Found!");
+            break;
+        default:
+            $app["session"]->getFlashBag()->add("warning", "Something is not right!");
+            break;
+    }
+    return $app->redirect("/todos");
+});

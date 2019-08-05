@@ -95,7 +95,7 @@ class ControllerTest extends BaseTest
         $this->assertContains("2", $crawler->filter(".pagerfanta .active span")->html());
         $this->assertEquals("/todos", $crawler->filter(".pagerfanta .active")->previousAll()->last()->filter("a")->attr("href"));
 
-        /** Case-3 a user with to-dos just a page **/
+        /** Case-3 a user with the numbers of to-dos less than a page capability**/
         $this->mockUser(2, $this->mockFlashBag(array()));
         $crawler = $client->request("GET", "/todos");
         $this->assertTrue($client->getResponse()->isOk());
@@ -258,7 +258,7 @@ class ControllerTest extends BaseTest
         $this->assertEquals(302, $client->getResponse()->getStatusCode());
         $this->assertEquals(1, $crawler->filter('html title:contains("Redirecting to /login")')->count());
 
-        /** Case-2 delete a to-dos not belong to the login user */
+        /** Case-2 delete a to-do not belong to the login user */
         $this->mockUser(2, $this->mockFlashBag(array()));
         $client->request("POST", "/todo/delete/1");
         $this->assertEquals(302, $client->getResponse()->getStatusCode());
@@ -267,7 +267,7 @@ class ControllerTest extends BaseTest
         $t = $this->app["db.orm.em"]->getRepository("Entity\Todo")->find(1);
         $this->assertEquals(1, $t->getId());
 
-        /** Case-3 delete a to-dos  */
+        /** Case-3 delete a to-do */
         $desc = "test for delete";
         $this->mockUser(1, $this->mockFlashBag(array("info" => array("success"))));
         $client->request("POST", "/todo/add", array("description" => $desc));
@@ -284,7 +284,7 @@ class ControllerTest extends BaseTest
 
 
     /**
-     * Test mark to-dos done
+     * Test mark to-do done
      */
     function testDoneToDo()
     {
