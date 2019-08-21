@@ -2,10 +2,13 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+//ORM
+use Src\Model\Users;
+use Src\Model\Todos;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
+    
     $twig->addGlobal('user', $app['session']->get('user'));
-
     return $twig;
 }));
 
@@ -18,12 +21,18 @@ $app->get('/', function () use ($app) {
 
 
 $app->match('/login', function (Request $request) use ($app) {
+
+    //if user's session is avialable
+    if (null !== $user = $app['session']->get('user')) {
+        return $app->redirect('/todo');
+    }
+
     $username = $request->get('username');
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+        //password should not save in session
+        $user = Users::where(['username' => $username, 'password' => $password])->get(['id', 'username'])->first();
 
         if ($user){
             $app['session']->set('user', $user);
@@ -47,15 +56,13 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     }
 
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+        $todo = Todos::find($id);
 
         return $app['twig']->render('todo.html', [
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
+        $todos = Todos::where(['user_id' => $user->id])->get();
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
@@ -70,20 +77,30 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         return $app->redirect('/login');
     }
 
-    $user_id = $user['id'];
     $description = $request->get('description');
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    Todos::create([
+        'user_id' => $user->id,
+        'description' => $description
+        ]);
 
     return $app->redirect('/todo');
 });
 
 
-$app->match('/todo/delete/{id}', function ($id) use ($app) {
+$app->match('/todo/{id}/delete', function ($id) use ($app) {
+    //this action should after login
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+    //recode only can be removed by its owner
+    $targetData = Todos::find($id);
+    if($targetData->user_id != $user->id)
+    {
+        return $app->redirect('/todo');
+    }
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    Todos::destroy($id);
 
     return $app->redirect('/todo');
 });
