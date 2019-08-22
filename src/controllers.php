@@ -220,3 +220,11 @@ $app->match('/todo/{id}/undo', function ($id) use ($app) {
 
     return $app->redirect('/todo');
 });
+
+/**
+ * this is just for test
+ */
+$app->get('/todo/{id}/test', function($id) use ($app){
+    $todo = Todos::find($id);
+    return json_encode($todo);;
+});
