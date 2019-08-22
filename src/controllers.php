@@ -42,7 +42,7 @@ $app->get('/logout', function () use ($app) {
 });
 
 
-$app->get('/todo/{id}', function ($id) use ($app) {
+$app->get('/todo/{id}', function (Request $request, $id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
@@ -55,11 +55,27 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+        $pageSize = 8;
+
+        $countSql = "SELECT COUNT(*) AS `count` FROM `todos` WHERE `user_id` = '${user['id']}'";
+        $count = $app['db']->fetchAssoc($countSql);
+
+        $maxpage = ceil($count['count'] / $pageSize);
+
+        $page = $request->get('page', 1);
+
+        $page = $page < 1 ? 1 : $page;
+        $page = $page > $maxpage ? $maxpage : $page;
+
+        $offset = $pageSize * ($page - 1);
+
+        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT {$pageSize} OFFSET {$offset}";
         $todos = $app['db']->fetchAll($sql);
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
+            'current' => $page,
+            'max' => $maxpage,
         ]);
     }
 })
