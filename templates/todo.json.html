@@ -24,7 +24,7 @@
                 <td class="text-success">{{ todo.status }}</td>
                 {% endif %}
                 <td class="p-0">
-                    <form method="post" class="float-left m-5" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
+                    <form method="post" class="float-left m-5" action="{{ app.request.baseurl }}/todo/{{ todo.id }}/delete" onSubmit="alert('Are you sure to remove?');">
                         <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                     </form>
                     {% if(todo.status == 'processing') %}

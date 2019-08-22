@@ -32,7 +32,7 @@
                 </td>
 
                 <td class="p-0">
-                    <form method="post" class="float-left m-5" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
+                    <form method="post" class="float-left m-5" action="{{ app.request.baseurl }}/todo/{{ todo.id }}/delete" onSubmit="alert('Are you sure to remove?');">
                         <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                     </form>
                     {% if(todo.status == 'processing') %}
@@ -49,7 +49,7 @@
             {% endfor %}
             <tr>
                 <form id="add-todo-form" method="post" action="{{ app.request.baseurl }}/todo/add">
-                    <td colspan="4">
+                    <td colspan="5">
                         <input id="description" type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
                     </td>
                     <td>
@@ -65,6 +65,12 @@
             <strong>An error has occured:</strong> {{ error }}
         </div>
     {% endfor %}
+
+    {% for confirmation in app.session.flashbag.get('confirmation')%}
+    <div class="text-success">
+        {{ confirmation }}
+    </div>
+{% endfor %}
 </div>
 {% endblock %}
 
