@@ -4,6 +4,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Constraints as Assert;
 
+//ORM
+use Src\Model\Users;
+use Src\Model\Todos;
+
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
@@ -23,8 +27,8 @@ $app->match('/login', function (Request $request) use ($app) {
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+        //password should not save in session
+        $user = Users::where(['username' => $username, 'password' => $password])->get(['id', 'username'])->first();
 
         if ($user){
             $app['session']->set('user', $user);
@@ -48,29 +52,25 @@ $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
     }
 
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+        $todo = Todos::find($id);
 
         return $app['twig']->render('todo.html', [
             'todo' => $todo,
         ]);
     } else {
         $pageSize = 8;
+        $count = Todos::where(['user_id' => $user->id])->get()->count();
 
-        $countSql = "SELECT COUNT(*) AS `count` FROM `todos` WHERE `user_id` = '${user['id']}'";
-        $count = $app['db']->fetchAssoc($countSql);
-
-        $maxpage = ceil($count['count'] / $pageSize);
+        $maxpage = ceil($count / $pageSize);
 
         $page = $request->get('page', 1);
-
         $page = $page < 1 ? 1 : $page;
         $page = $page > $maxpage ? $maxpage : $page;
 
         $offset = $pageSize * ($page - 1);
 
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT {$pageSize} OFFSET {$offset}";
-        $todos = $app['db']->fetchAll($sql);
+        $todos = Todos::where(['user_id' => $user->id])->limit($pageSize)->offset($offset)->get();
+
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
@@ -87,12 +87,11 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
         return $app->redirect('/login');
     }
 
-    $sql = "SELECT * FROM todos WHERE id = '$id'";
-    $todo = $app['db']->fetchAssoc($sql);
+    $todo = Todos::find($id);
 
     if(!empty($todo))
     {
-        $todotmp = $todo;
+        $todotmp = $todo->toArray();
         unset($todotmp['status']);
 
         $todoInJson = json_encode($todotmp);
@@ -125,8 +124,10 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     }
     else 
     {
-        $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-        $app['db']->executeUpdate($sql);
+        Todos::create([
+            'user_id' => $user->id,
+            'description' => $description
+            ]);
         $app['session']->getFlashBag()->add('confirmation', 'New TODO added.');
 
     }
@@ -136,11 +137,26 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
 
 $app->match('/todo/{id}/delete', function ($id) use ($app) {
+    //this action should after login
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    $targetData = Todos::find($id);
+    //there is no such a record
+    if(empty($targetData))
+    {
+        return $app->redirect('/todo');
+    }
+    //recode only can be removed by its owner
+    if($targetData->user_id != $user->id)
+    {
+        return $app->redirect('/todo');
+    }
+
+    Todos::destroy($id);
+
     $app['session']->getFlashBag()->add('confirmation', "TODO (id:{$id}) deleted!");
-
 
     return $app->redirect('/todo');
 });
@@ -149,10 +165,28 @@ $app->match('/todo/{id}/delete', function ($id) use ($app) {
  * Complete a toto record
  */
 $app->match('/todo/{id}/complete', function ($id) use ($app) {
+    //this action should after login
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
 
     //add status in ENUM instead of BOOL. So that we can give the record other status, LILE highlight, not start ...
-    $sql = "UPDATE `todos` SET `status` = 'completed' WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    $targetData = Todos::find($id);
+    //there is no such a record
+    if(empty($targetData))
+    {
+        return $app->redirect('/todo');
+    }
+    //recode only can be done by its owner
+    if($targetData->user_id != $user->id)
+    {
+        return $app->redirect('/todo');
+    }
+    
+    $targetData->status = 'completed';
+    $targetData->save();
+    $app['session']->getFlashBag()->add('confirmation', "TODO (id:{$id}) completed!");
+
 
     return $app->redirect('/todo');
 });
@@ -161,9 +195,27 @@ $app->match('/todo/{id}/complete', function ($id) use ($app) {
  * Undo complete action
  */
 $app->match('/todo/{id}/undo', function ($id) use ($app) {
+    //this action should after login
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+    
+    $targetData = Todos::find($id);
+    //there is no such a record
+    if(empty($targetData))
+    {
+        return $app->redirect('/todo');
+    }
+    //recode only can be done by its owner
+    if($targetData->user_id != $user->id)
+    {
+        return $app->redirect('/todo');
+    }
 
-    $sql = "UPDATE `todos` SET `status` = 'processing' WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    $targetData->status = 'processing';
+    $targetData->save();
+    $app['session']->getFlashBag()->add('confirmation', "TODO (id:{$id}) changed to PROCESSING!");
+
 
     return $app->redirect('/todo');
 });
