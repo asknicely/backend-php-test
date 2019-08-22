@@ -24,17 +24,26 @@ $app->get('/', function () use ($app) {
 
 $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
+    $username = strtolower(trim($username));    //no case sensitive
+
     $password = $request->get('password');
+    $password = trim($password);
     $password = hash('sha256', $password);
 
     if ($username) {
         //password should not save in session
-        $user = Users::where(['username' => $username, 'password' => $password])->get(['id', 'username'])->first();
+        $user = Users::where(['username' => $username])->get(['id', 'username', 'password'])->first();
 
-        if ($user){
-            $app['session']->set('user', $user);
-            return $app->redirect('/todo');
+        if($user)
+        {
+            if($user->password == $password)
+            {
+                unset($user['password']);
+                $app['session']->set('user', $user);
+                return $app->redirect('/todo');
+            }
         }
+        $app['session']->getFlashBag()->add('error', 'Username OR Password incorrect');
     }
 
     return $app['twig']->render('login.html', array());
