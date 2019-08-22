@@ -2,6 +2,7 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Validator\Constraints as Assert;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -72,9 +73,19 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
     $user_id = $user['id'];
     $description = $request->get('description');
+    $description = trim($description);      //trim description first
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    //validate description
+    $error = $app['validator']->validate($description, new Assert\NotBlank());
+    if(count($error) > 0)
+    {
+        $app['session']->getFlashBag()->add('error', 'Please add a description.');
+    }
+    else 
+    {
+        $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
+        $app['db']->executeUpdate($sql);
+    }
 
     return $app->redirect('/todo');
 });

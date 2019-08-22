@@ -22,9 +22,9 @@
             </tr>
         {% endfor %}
         <tr>
-            <form method="post" action="{{ app.request.baseurl }}/todo/add">
+            <form id="add-todo-form" method="post" action="{{ app.request.baseurl }}/todo/add">
                 <td colspan="3">
-                    <input type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
+                    <input id="description" type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
                 </td>
                 <td>
                     <button type="submit" class="btn btn-sm btn-primary">Add</button>
@@ -32,5 +32,27 @@
             </form>
         </tr>
     </table>
+    
+    {% for error in app.session.flashbag.get('error')%}
+        <div class="text-danger">
+            <strong>An error has occured:</strong> {{ error }}
+        </div>
+    {% endfor %}
 </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    //Check DESCRIPTION in frontend
+    $('#add-todo-form').submit(function(e) {
+        e.preventDefault();     //stop submit
+        var description = $.trim($('#description').val());  //trim description
+        if(description == '')
+        {
+            alert("Please input some description before you add it!");
+            return;
+        }
+        this.submit()
+    });
+</script>
 {% endblock %}
