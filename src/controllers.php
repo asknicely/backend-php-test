@@ -25,6 +25,7 @@ $app->get('/', function () use ($app) {
 $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
     $password = $request->get('password');
+    $password = hash('sha256', $password);
 
     if ($username) {
         //password should not save in session
