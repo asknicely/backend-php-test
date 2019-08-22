@@ -1,0 +1,1 @@
+ALTER table `todos` ADD `status` ENUM('processing', 'completed') NOT NULL DEFAULT 'processing';

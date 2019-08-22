@@ -4,17 +4,45 @@
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo:</h1>
     <table class="table table-striped">
-        <th>#</th><th>User</th><th>Description</th><th></th>
-        <tr>
-            <td>{{ todo.id }}</td>
-            <td>{{ todo.user_id }}</td>
-            <td>{{ todo.description }}</td>
-            <td>
-                <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
-                    <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
-                </form>
-            </td>
-        </tr>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>User</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ todo.id }}</td>
+                <td>{{ todo.user_id }}</td>
+                <td>
+                    <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
+                        {{ todo.description }}
+                    </a>
+                </td>
+                {% if(todo.status == 'processing') %}
+                <td class="text-danger">{{ todo.status }}</td>
+                {% else %}
+                <td class="text-success">{{ todo.status }}</td>
+                {% endif %}
+                <td class="p-0">
+                    <form method="post" class="float-left m-5" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
+                        <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
+                    </form>
+                    {% if(todo.status == 'processing') %}
+                    <form method="post" class="float-left m-5" action="{{ app.request.baseurl }}/todo/{{ todo.id }}/complete" onSubmit="alert('Are you sure this task has completed?');">
+                        <button type="submit" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-ok glyphicon-white"></span></button>
+                    </form>
+                    {% else %}
+                    <form method="post" class="float-left m-5" action="{{ app.request.baseurl }}/todo/{{ todo.id }}/undo" onSubmit="alert('Are you sure to undo this?');">
+                        <button type="submit" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-repeat glyphicon-white"></span></button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+        </tbody>
     </table>
 </div>
 

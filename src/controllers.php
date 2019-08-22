@@ -98,3 +98,25 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     return $app->redirect('/todo');
 });
+
+/**
+ * Complete a toto record
+ */
+$app->match('/todo/{id}/complete', function ($id) use ($app) {
+
+    $sql = "UPDATE `todos` SET `status` = 'completed' WHERE id = '$id'";
+    $app['db']->executeUpdate($sql);
+
+    return $app->redirect('/todo');
+});
+
+/**
+ * Undo complete action
+ */
+$app->match('/todo/{id}/undo', function ($id) use ($app) {
+
+    $sql = "UPDATE `todos` SET `status` = 'processing' WHERE id = '$id'";
+    $app['db']->executeUpdate($sql);
+
+    return $app->redirect('/todo');
+});

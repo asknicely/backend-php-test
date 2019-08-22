@@ -5,3 +5,16 @@ body {
 .login-form > div {
     margin-top: 10px;
 }
+
+.float-left{
+  float: left !important;
+}
+
+.m-5{
+  margin-left: 5px;
+}
+
+.p-0{
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+}
