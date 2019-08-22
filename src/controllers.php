@@ -65,6 +65,32 @@ $app->get('/todo/{id}', function ($id) use ($app) {
 })
 ->value('id', null);
 
+$app->get('/todo/{id}/json', function ($id) use ($app) {
+
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $sql = "SELECT * FROM todos WHERE id = '$id'";
+    $todo = $app['db']->fetchAssoc($sql);
+
+    if(!empty($todo))
+    {
+        $todotmp = $todo;
+        unset($todotmp['status']);
+
+        $todoInJson = json_encode($todotmp);
+        return $app['twig']->render('todo.json.html', [
+            'todo' => $todo,
+            'json' => $todoInJson,
+        ]);
+    }
+    else 
+    {
+        return $app->redirect('/todo');
+    }
+});
+
 
 $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
@@ -104,6 +130,7 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
  */
 $app->match('/todo/{id}/complete', function ($id) use ($app) {
 
+    //add status in ENUM instead of BOOL. So that we can give the record other status, LILE highlight, not start ...
     $sql = "UPDATE `todos` SET `status` = 'completed' WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
 

@@ -9,6 +9,7 @@
             <th>User</th>
             <th>Description</th>
             <th>Status</th>
+            <th>Json</th>
             <th>Actions</th>
         </thead>
         <tbody>
@@ -26,6 +27,10 @@
                 {% else %}
                 <td class="text-success">{{ todo.status }}</td>
                 {% endif %}
+                <td>
+                    <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}/json" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-search glyphicon-white"></span></a>
+                </td>
+
                 <td class="p-0">
                     <form method="post" class="float-left m-5" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
                         <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
