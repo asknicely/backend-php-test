@@ -67,16 +67,27 @@
                 </td>
             </form>
         </tr>
-        {% for flashMessage in app.session.flashbag.get('empty_description') %}
-        <tr>
-            <td colspan="4" align="center" class="form-message">
-                <div class="alert alert-danger" role="alert">
-                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                    <span class="sr-only">Error:</span>
-                    {{ flashMessage }}
-                </div>
-            </td>
-        </tr>
+        {% for flashMessage in app.session.flashbag.get('unsuccessful_message') %}
+            <tr>
+                <td colspan="4" align="center" class="form-message">
+                    <div class="alert alert-danger" role="alert">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        <span class="sr-only">Error:</span>
+                        {{ flashMessage }}
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        {% for flashMessage in app.session.flashbag.get('success_message') %}
+            <tr>
+                <td colspan="4" align="center" class="form-message">
+                    <div class="alert alert-success" role="alert">
+                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                        <span class="sr-only">Success:</span>
+                        {{ flashMessage }}
+                    </div>
+                </td>
+            </tr>
         {% endfor %}
     </table>
 </div>

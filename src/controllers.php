@@ -95,7 +95,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     if ($id){
 
         // Create statement to select individual item from the Database.
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
+        $sql = "SELECT * FROM todos WHERE id = '$id';";
 
         // Execute above statement to collect single item data.
         $todo = $app['db']->fetchAssoc($sql);
@@ -108,7 +108,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     } else {
 
         // Create statement to select all items for current logged in from the Database.
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' AND item_status != 2;";
 
         // Execute above statement to collect all items.
         $todos = $app['db']->fetchAll($sql);
@@ -190,13 +190,19 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
         // If there is a value, insert the new 'item' into the database.
         $sql                = "INSERT INTO todos (create_date, mod_date, user_id, description, item_status) VALUES ('$current_date_time','$current_date_time','$user_id', '$description',0)";
+
         $app['db']->executeUpdate($sql);
+
+        // If new Todos item has been successfully added to the data, create a message for the user to see it's been added.
+        $app['session']->getFlashBag()->set('success_message', 'You have successfully added a new item to your Todo list!');
+
         return $app->redirect('/todo');
 
     } else {
 
         // If there is no value, redirect user with FlashBag message, asking them to add a description.
-        $app['session']->getFlashBag()->set('empty_description', 'Please add a description..');
+        $app['session']->getFlashBag()->set('unsuccessful_message', 'Please add a description..');
+
         return $app->redirect('/todo');
     }
 
@@ -220,6 +226,9 @@ $app->post('/todo/completed/{id}', function ($id) use ($app) {
 
     // Execute sql command
     $app['db']->executeUpdate($sql);
+
+    // If Todos item has been successfully updated to 'Completed' (1) status, create a message for the user to see it's been updated to Complete.
+    $app['session']->getFlashBag()->set('success_message', 'You have updated the item on your Todo list to Completed.');
 
     // Return the User back to 'Todos' list.
     return $app->redirect('/todo');
@@ -245,16 +254,38 @@ $app->post('/todo/reset/{id}', function ($id) use ($app) {
     // Execute sql command
     $app['db']->executeUpdate($sql);
 
+    // If Todos item has been successfully updated to 'Live' (0) status, create a message for the user to see it's been updated to Live.
+    $app['session']->getFlashBag()->set('success_message', 'You have updated and reset the item on your Todo list.');
+
     // Return the User back to 'Todos' list.
     return $app->redirect('/todo');
 
 });
 
-
+/**
+ * Controller for 'Deleting one of the Todos on the List'.
+ * I don't like deleting data and rather use a status column to either display or not display items.
+ * This allows for better auditing support.
+ */
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
-    $sql = "DELETE FROM todos WHERE id = '$id';";
+    // Confirm if the user is logged in else redirect them to the login page.
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    // Get the current time for create_date and mod_date column.
+    $current_date_time  = date("Y-m-d H:i:s");
+
+    // Create a UPDATE 'Delete status' statement for 'Todos' table
+    $sql = "UPDATE todos SET mod_date = '$current_date_time', item_status = 2 WHERE id = '$id';";
+
+    // Execute the above statement
     $app['db']->executeUpdate($sql);
 
+    // If Todos item has been successfully updated to 'Deleted' (2) status, create a message for the user to see it's been deleted.
+    $app['session']->getFlashBag()->set('success_message', 'You have successfully removed the item from your Todo list!');
+
+    // Redirect the user to their Todos list
     return $app->redirect('/todo');
 });
