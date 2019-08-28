@@ -1,7 +1,15 @@
 body {
-  padding-top: 50px;
+  padding-top:          50px;
 }
 
 .login-form > div {
-    margin-top: 10px;
+    margin-top:         10px;
+}
+.form-message {
+    border-top:         none !important;
+    background-color:   #fff;
+}
+
+table {
+    margin-bottom:      0 !important;
 }

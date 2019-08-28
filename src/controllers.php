@@ -2,6 +2,7 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\Session;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -9,11 +10,16 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     return $twig;
 }));
 
-
 $app->get('/', function () use ($app) {
     return $app['twig']->render('index.html', [
-        'readme' => file_get_contents('README.md'),
+        'readme' => file_get_contents('../README.md'),
     ]);
+});
+
+$app->get('/test', function () use ($app) {
+
+    return $app['twig']->render('test.html');
+
 });
 
 
@@ -64,19 +70,36 @@ $app->get('/todo/{id}', function ($id) use ($app) {
 })
 ->value('id', null);
 
-
+/**
+ * Controller for 'Adding List items' per the user's requrest.
+ * Validation on the 'description' input field occurs.
+ */
 $app->post('/todo/add', function (Request $request) use ($app) {
+
+    // Confirm if the user is logged in else redirect them to the login page.
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
 
-    $user_id = $user['id'];
-    $description = $request->get('description');
+    // Define Usable Variables
+    $user_id        = $user['id'];
+    $description    = trim($request->get('description'));
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    // Validate if the $description variable has a value or is empty
+    if($description != ''){
 
-    return $app->redirect('/todo');
+        // If there is a value, insert the new 'item' into the database.
+        $sql        = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
+        $app['db']->executeUpdate($sql);
+        return $app->redirect('/todo');
+
+    } else {
+
+        // If there is no value, redirect user with FlashBag message, asking them to add a description.
+        $app['session']->getFlashBag()->set('empty_description', 'Please add a description..');
+        return $app->redirect('/todo');
+    }
+
 });
 
 
