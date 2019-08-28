@@ -1,21 +1,77 @@
 {% extends "layout.html" %}
 
+{% block title 'Individual List Item' %}
+
 {% block content %}
-<div class="col-md-4 col-md-offset-4">
+<div class="col-md-6 col-md-offset-3">
     <h1>Todo:</h1>
-    <table class="table table-striped">
-        <th>#</th><th>User</th><th>Description</th><th></th>
-        <tr>
-            <td>{{ todo.id }}</td>
-            <td>{{ todo.user_id }}</td>
-            <td>{{ todo.description }}</td>
-            <td>
-                <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
-                    <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
-                </form>
-            </td>
-        </tr>
-    </table>
+    <a class="mb-5" href="{{ app.request.baseurl }}/todo">
+        <p><i class="glyphicon glyphicon-arrow-left"></i> Full List</p>
+    </a>
+    {% if todo_json is defined %}
+        {% if todo_json != '' %}
+            <table class="table table-striped">
+                <tr>
+                    <td colspan="4" align="center" class="form-message">
+                        <div class="alert alert-danger" role="alert">
+                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                            <span class="sr-only">Error:</span>
+                            This is JSON Format, <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}" >standard view</a> for easier reading.
+                        </div>
+                    </td>
+                </tr>
+                <th>JSON data</th>
+                <tr>
+                    <td align="center">
+                        <span>{{ todo_json }}</span>
+                    </td>
+                </tr>
+            </table>
+        {% endif %}
+    {% else %}
+        <table class="table table-striped">
+            <th>#</th><th>User</th><th>Description</th><th></th>
+            <tr>
+                <td align="center">
+                    {% if todo.item_status == 1 %}
+                        <span class="completed">{{ todo.id }}</span>
+                    {% else %}
+                        <span>{{ todo.id }}</span>
+                    {% endif %}
+                </td>
+                <td align="center">
+                    {% if todo.item_status == 1 %}
+                        <span class="completed">{{ todo.user_id }}</span>
+                    {% else %}
+                        <span>{{ todo.user_id }}</span>
+                    {% endif %}
+                </td>
+                <td align="center">
+                    {% if todo.item_status == 1 %}
+                        <span class="completed">{{ todo.description }}</span>
+                        <span class="label label-default d-block">Completed</span>
+                    {% else %}
+                        <span>{{ todo.description }}</span>
+                    {% endif %}
+                </td>
+                <td align="center">
+                    {% if todo.item_status == 1 %}
+                        <form method="post" action="{{ app.request.baseurl }}/todo/reset/{{ todo.id }}" class="inline-form text-center">
+                            <button type="submit" class="btn btn-xs btn-default" title="Reset Todo Item"><span class="glyphicon glyphicon-refresh"></span></button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{{ app.request.baseurl }}/todo/completed/{{ todo.id }}" class="inline-form text-center">
+                            <button type="submit" class="btn btn-xs btn-success" title="Complete Todo Item"><span class="glyphicon glyphicon-ok glyphicon-white"></span></button>
+                        </form>
+                    {% endif %}
+                        <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}" class="inline-form text-center">
+                            <button type="submit" class="btn btn-xs btn-danger" title="Delete Todo Item"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
+                        </form>
+                        <a href="{{ app.request.baseurl }}/todo/json/{{ todo.id }}" class="btn btn-xs btn-info" title="JSON View"><span class="glyphicon glyphicon-eye-open glyphicon-white"></span></a>
+                </td>
+            </tr>
+        </table>
+    {% endif %}
 </div>
 
 {% endblock %}

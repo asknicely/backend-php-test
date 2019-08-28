@@ -3,7 +3,7 @@
 {% block title 'Full Todo List' %}
 
 {% block content %}
-<div class="col-md-4 col-md-offset-4">
+<div class="col-md-6 col-md-offset-3">
     <h1>Todo List:</h1>
     <table class="table table-striped">
         <th>#</th>
@@ -12,32 +12,33 @@
         <th></th>
         {% for todo in todos %}
             <tr>
-                <td>
+                <td align="center">
                     {% if todo.item_status == 1 %}
                         <span class="completed">{{ todo.id }}</span>
                     {% else %}
                         <span>{{ todo.id }}</span>
                     {% endif %}
                 </td>
-                <td>
+                <td align="center">
                     {% if todo.item_status == 1 %}
                         <span class="completed">{{ todo.user_id }}</span>
                     {% else %}
                         <span>{{ todo.user_id }}</span>
                     {% endif %}
                 </td>
-                <td>
+                <td align="center">
                     {% if todo.item_status == 1 %}
                         <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}" class="completed">
                             <span class="completed">{{ todo.description }}</span>
                         </a>
+                        <span class="label label-default d-block">Completed</span>
                     {% else %}
                         <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
                             <span>{{ todo.description }}</span>
                         </a>
                     {% endif %}
                 </td>
-                <td>
+                <td align="center">
                     {% if todo.item_status == 1 %}
                         <form method="post" action="{{ app.request.baseurl }}/todo/reset/{{ todo.id }}" class="inline-form text-center">
                             <button type="submit" class="btn btn-xs btn-default"><span class="glyphicon glyphicon-refresh"></span></button>
@@ -69,8 +70,10 @@
         {% for flashMessage in app.session.flashbag.get('empty_description') %}
         <tr>
             <td colspan="4" align="center" class="form-message">
-                <div class="btn btn-danger">
-                    <span>{{ flashMessage }}</span>
+                <div class="alert alert-danger" role="alert">
+                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                    <span class="sr-only">Error:</span>
+                    {{ flashMessage }}
                 </div>
             </td>
         </tr>

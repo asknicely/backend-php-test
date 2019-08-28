@@ -1,8 +1,19 @@
 <?php
 
+/**
+ *  Controllers Index:
+ *  Line Number:    Controller Title:
+ *                  User Login
+ *                  User Log Out
+ *                  Users Todos List
+ *                  'Todos' Add
+ *                  'Todos' Completed
+ *                  'Todos' Reset
+ *                  'Todos' Delete
+ */
+
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Session\Session;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -10,58 +21,151 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     return $twig;
 }));
 
+/**
+ * Controller for the home page, passing the 'README.md' file.
+ */
 $app->get('/', function () use ($app) {
-    return $app['twig']->render('index.html', [
-        'readme' => file_get_contents('../README.md'),
-    ]);
+
+    // Render the indecx template page and pass through the README.md file.
+    return $app['twig']->render('index.html', array(
+        'readme' => file_get_contents('../README.md')
+    ));
 });
 
+/**
+ * Controller for 'User Login'..
+ * Serious Security issues with this, there is no password hashing involved and Passwords are Human Readable.
+ * Need to update this controller to involve Password Hashing.
+ */
 $app->match('/login', function (Request $request) use ($app) {
-    $username = $request->get('username');
-    $password = $request->get('password');
 
+    // Set Variables from the the data inputted from the user on the Login Page
+    $username   = $request->get('username');
+    $password   = $request->get('password');
+
+    // Confirm if there is a Username present in order to try log in a user.
     if ($username) {
+
+        // Create an (unsafe) method for selecting the user where Username and Password match.
         $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
+
+        // Collect data from the statement created above.
         $user = $app['db']->fetchAssoc($sql);
 
+        // If there is a user present in the $user variable set a Session variable which will state the current user in the session is logged in.
         if ($user){
+
+            // Set Session variable 'user' with relevant data.
             $app['session']->set('user', $user);
+
+            // Successful login with data population, return the user to their Todos list page.
             return $app->redirect('/todo');
         }
     }
 
+    // If there is no Username variable present, redirect the user to the Login page.
     return $app['twig']->render('login.html', array());
 });
 
 
+/**
+ * Controller for 'Login a User Out' - clearing the Session User variable.
+ */
 $app->get('/logout', function () use ($app) {
+
+    // Force the Session variable 'user' to Null.
     $app['session']->set('user', null);
+
+    // Redirect the user to the home/base directory.
     return $app->redirect('/');
 });
 
-
+/**
+ * Controller for 'Viewing all List items'.
+ * Validation if the List is Single all All items and if is to be viewed in JSON format.
+ */
 $app->get('/todo/{id}', function ($id) use ($app) {
+
+    // Confirm if the user is logged in else redirect them to the login page.
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
 
+    // Confirm if there is a single List item requested.
     if ($id){
+
+        // Create statement to select individual item from the Database.
         $sql = "SELECT * FROM todos WHERE id = '$id'";
+
+        // Execute above statement to collect single item data.
         $todo = $app['db']->fetchAssoc($sql);
 
-        return $app['twig']->render('todo.html', [
+        // Render the template page and pass above data through.
+        return $app['twig']->render('todo.html', array(
             'todo' => $todo,
-        ]);
+        ));
+
     } else {
+
+        // Create statement to select all items for current logged in from the Database.
         $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+
+        // Execute above statement to collect all items.
         $todos = $app['db']->fetchAll($sql);
 
-        return $app['twig']->render('todos.html', [
+        // Render the template page and pass above data through.
+        return $app['twig']->render('todos.html', array(
             'todos' => $todos,
-        ]);
+        ));
     }
 })
-->value('id', null);
+    // Set the passing parameter value by default to Null to allow the route to be called with or without a value there.
+    ->value('id', null);
+
+/**
+ * Controller for 'JSON Item View', view the Todos item in pure JSON format.
+ */
+$app->get('/todo/json/{id}', function ($id) use ($app) {
+
+    // Confirm if the user is logged in else redirect them to the login page.
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    // Confirm if there is a single List item requested.
+    if ($id){
+
+        // Create statement to select individual item from the Database.
+        $sql = "SELECT * FROM todos WHERE id = '$id'";
+
+        // Execute above statement to collect single item data.
+        $todo = $app['db']->fetchAssoc($sql);
+
+        // Convert requested data into JSON format for frontend.
+        $todo_json = json_encode($todo);
+
+        // Render the template page and pass above data through.
+        return $app['twig']->render('todo.html', array(
+            'todo' => $todo,
+            'todo_json' => $todo_json,
+        ));
+
+    } else {
+
+        // Create statement to select all items for current logged in from the Database.
+        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+
+        // Execute above statement to collect all items.
+        $todos = $app['db']->fetchAll($sql);
+
+        // Render the template page and pass above data through.
+        return $app['twig']->render('todos.html', array(
+            'todos' => $todos,
+        ));
+    }
+})
+    // Set the passing parameter value by default to Null to allow the route to be called with or without a value there.
+    ->value('id', null);
 
 /**
  * Controller for 'Adding List items' per the user's requrest.
