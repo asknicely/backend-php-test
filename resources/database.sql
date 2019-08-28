@@ -7,6 +7,9 @@ CREATE TABLE users (
 
 CREATE TABLE todos (
   id INT(11) NOT NULL AUTO_INCREMENT,
+  create_date datetime(0) NULL DEFAULT NULL,
+  mod_date datetime(0) NULL DEFAULT NULL,
+  item_status smallint(1) NULL DEFAULT 0,
   user_id INT(11) NOT NULL,
   description VARCHAR(255),
   PRIMARY KEY (id),

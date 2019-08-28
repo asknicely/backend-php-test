@@ -16,13 +16,6 @@ $app->get('/', function () use ($app) {
     ]);
 });
 
-$app->get('/test', function () use ($app) {
-
-    return $app['twig']->render('test.html');
-
-});
-
-
 $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
     $password = $request->get('password');
@@ -88,8 +81,11 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     // Validate if the $description variable has a value or is empty
     if($description != ''){
 
+        // Get the current time for create_date and mod_date column.
+        $current_date_time  = date("Y-m-d H:i:s");
+
         // If there is a value, insert the new 'item' into the database.
-        $sql        = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
+        $sql                = "INSERT INTO todos (create_date, mod_date, user_id, description, item_status) VALUES ('$current_date_time','$current_date_time','$user_id', '$description',0)";
         $app['db']->executeUpdate($sql);
         return $app->redirect('/todo');
 
@@ -102,10 +98,58 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
 });
 
+/**
+ * Controller for 'Completing one of the Todos on the List'.
+ */
+$app->post('/todo/completed/{id}', function ($id) use ($app) {
+
+    // Confirm if the user is logged in else redirect them to the login page.
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    // Get the current time for mod_date column.
+    $current_date_time  = date("Y-m-d H:i:s");
+
+    // Create and UPDATE statement for 'Todos' table
+    $sql                = "UPDATE todos SET mod_date = '$current_date_time', item_status = 1 WHERE id = '$id';";
+
+    // Execute sql command
+    $app['db']->executeUpdate($sql);
+
+    // Return the User back to 'Todos' list.
+    return $app->redirect('/todo');
+
+});
+
+/**
+ * Controller for 'Resetting one of the Todos on the List'.
+ */
+$app->post('/todo/reset/{id}', function ($id) use ($app) {
+
+    // Confirm if the user is logged in else redirect them to the login page.
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    // Get the current time for mod_date column.
+    $current_date_time  = date("Y-m-d H:i:s");
+
+    // Create and UPDATE statement for 'Todos' table
+    $sql                = "UPDATE todos SET mod_date = '$current_date_time', item_status = 0 WHERE id = '$id';";
+
+    // Execute sql command
+    $app['db']->executeUpdate($sql);
+
+    // Return the User back to 'Todos' list.
+    return $app->redirect('/todo');
+
+});
+
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
+    $sql = "DELETE FROM todos WHERE id = '$id';";
     $app['db']->executeUpdate($sql);
 
     return $app->redirect('/todo');

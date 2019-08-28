@@ -6,18 +6,49 @@
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo List:</h1>
     <table class="table table-striped">
-        <th>#</th><th>User</th><th>Description</th><th></th>
+        <th>#</th>
+        <th>User</th>
+        <th>Description</th>
+        <th></th>
         {% for todo in todos %}
             <tr>
-                <td>{{ todo.id }}</td>
-                <td>{{ todo.user_id }}</td>
                 <td>
-                    <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
-                       {{ todo.description }}
-                    </a>
+                    {% if todo.item_status == 1 %}
+                        <span class="completed">{{ todo.id }}</span>
+                    {% else %}
+                        <span>{{ todo.id }}</span>
+                    {% endif %}
                 </td>
                 <td>
-                    <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}" class="text-center">
+                    {% if todo.item_status == 1 %}
+                        <span class="completed">{{ todo.user_id }}</span>
+                    {% else %}
+                        <span>{{ todo.user_id }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if todo.item_status == 1 %}
+                        <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}" class="completed">
+                            <span class="completed">{{ todo.description }}</span>
+                        </a>
+                    {% else %}
+                        <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
+                            <span>{{ todo.description }}</span>
+                        </a>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if todo.item_status == 1 %}
+                        <form method="post" action="{{ app.request.baseurl }}/todo/reset/{{ todo.id }}" class="inline-form text-center">
+                            <button type="submit" class="btn btn-xs btn-default"><span class="glyphicon glyphicon-refresh"></span></button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{{ app.request.baseurl }}/todo/completed/{{ todo.id }}" class="inline-form text-center">
+                            <button type="submit" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-ok glyphicon-white"></span></button>
+                        </form>
+                    {% endif %}
+
+                    <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}" class="inline-form text-center">
                         <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                     </form>
                 </td>
