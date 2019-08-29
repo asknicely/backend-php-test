@@ -4,7 +4,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 require_once __DIR__.'/../config/constants.php';
-require_once __DIR__.'/utils.php';
+require_once __DIR__.'/Utils.php';
+require_once __DIR__.'/Model.php';
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -25,10 +26,10 @@ $app->match('/login', function (Request $request) use ($app) {
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = ? and password = ?";
-        $user = $app['db']->fetchAssoc($sql, [$username, $password]);
+		$model = new Model($app, "users");
+		$user = $model->findOne(['username'=>$username, 'password'=>$password]);
 
-        if ($user){
+        if ($user) {
             $app['session']->set('user', $user);
             return $app->redirect('/todo');
         }
@@ -52,15 +53,15 @@ $app->get('/todo/{id}', function ($id) use ($app) {
 	$id = intval($id);
 
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+		$model = new Model($app, "todos");
+		$todo = $model->findOne($id);
 
         return $app['twig']->render('todo.html', [
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
+		$model = new Model($app, "todos");
+		$todos = $model->findAll(['user_id'=>$user['id']]);
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
@@ -82,11 +83,13 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 		$app['session']->getFlashBag()->add('notice', 'Description is necessary.');
         return $app->redirect('/todo');
     }
-
-    $sql = "INSERT INTO todos (user_id, description) VALUES (?, ?)";
-    $app['db']->executeUpdate($sql, [$user_id, $description]);
-
-	$app['session']->getFlashBag()->add('success', 'Todo added successfully.');
+	$model = new Model($app, "todos");
+	$cnt = $model->insertOne(['user_id'=>intval($user_id), 'description'=>$description]);
+	if ($cnt === 1) {
+		$app['session']->getFlashBag()->add('success', 'Todo added successfully.');
+	} else {
+		$app['session']->getFlashBag()->add('notice', 'Wopps, something went wrong.');
+	}
     return $app->redirect('/todo');
 });
 
@@ -94,8 +97,11 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
 	$id = intval($id);
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $cnt = $app['db']->executeUpdate($sql);
+
+	$model = new Model($app, "todos");
+	$cnt = $model->deleteOne($id);
+
+
 	if ($cnt === 1) {
 		$app['session']->getFlashBag()->add('success', 'A todo was deleted successfully.');
 	} else {
@@ -114,8 +120,8 @@ $app->match('/todo/markComplete/{id}', function ($id) use ($app) {
 
     $completed = TODO_IS_COMPLETED;
 
-    $sql = "UPDATE todos SET is_completed = {$completed} WHERE id = '{$id}' AND user_id = '{$user_id}'";
-    $app['db']->executeUpdate($sql);
+	$model = new Model($app, "todos");
+	$model->updateAll(['is_completed'=>$completed], ['id'=>$id, 'user_id'=>intval($user_id)]);
 
     return $app->redirect('/todo');
 });
@@ -128,14 +134,14 @@ $app->match('/todo/{id}/json', function ($id) use ($app) {
 
     $user_id = $user['id'];
 
-    $sql  = "SELECT id, user_id, description FROM todos WHERE id = ? AND user_id = ?";
-    $todo = $app['db']->fetchAssoc($sql, [$id, $user_id]);
+	$model = new Model($app, "todos");
+	$todo = $model->findOne(['id'=>$id, 'user_id'=>$user_id]);
 
     $json = '';
     if ($todo) {
         $todo['id'] = intval($todo['id']);
         $todo['user_id'] = intval($todo['user_id']);
-        $json = createJson($todo);
+        $json = Utils::createJson($todo);
     }
     return $json;
 
