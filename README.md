@@ -28,11 +28,26 @@ Credentials:
 
 ### Installation
 **/!\ You need to fork this repository. See [How to submit your work?](#how-to-submit-your-work)**
+
+1. Configure my.cnf file
+[client]
+    default-character-set = utf8mb4
+[mysql]
+    default-character-set = utf8mb4
+[mysqld]
+    character-set-server = utf8mb4
+    collation-server = utf8mb4_unicode_ci
+    init_connect='SET NAMES utf8mb4'
+
+You need to restart mysql server.
+
+2. Run the scripts below
 ```sh
 php composer.phar install
 cp config/config.yml.dist config/config.yml
 mysql -u root <database> < resources/database.sql
 mysql -u root <database> < resources/fixtures.sql
+mysql -u root <database> < resources/patches.sql
 php -S localhost:1337 -t web/ web/index.php
 ```
 You can change the database connection from the file `config/config.yml`.
