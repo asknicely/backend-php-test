@@ -107,21 +107,102 @@ $app->get('/todo/{id}', function ($id) use ($app) {
 
     } else {
 
+        // Create Pagination for the Listings.
+        // Calculate the total items in the database for this user.
+        $total_todo_items_sql   = "SELECT COUNT(*) as 'total_count' FROM todos WHERE user_id = '${user['id']}' AND item_status != 2;";
+
+        // Execute above statement to collect single item data.
+        $total_todo_items       = $app['db']->fetchAssoc($total_todo_items_sql);
+
+        // Define the limit per page
+        $todo_items_limit       = 5;
+
+        // Get total pages there will be
+        $pages                  = ceil($total_todo_items['total_count'] / $todo_items_limit );
+
+        // Set the current page variable
+        $current_page           = 0;
+
+        // Calculate the offset for the query
+        $offset                 = 0;
+
         // Create statement to select all items for current logged in from the Database.
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' AND item_status != 2;";
+        $sql                    = "SELECT * FROM todos WHERE user_id = '${user['id']}' AND item_status != 2 ORDER BY id ASC LIMIT ".$todo_items_limit." OFFSET ".$offset.";";
 
         // Execute above statement to collect all items.
         $todos = $app['db']->fetchAll($sql);
 
         // Render the template page and pass above data through.
         return $app['twig']->render('todos.html', array(
-            'todos' => $todos,
+            'todos'         => $todos,
+            'total_pages'   => $pages,
+            'current_page'  => ( $current_page + 1 )
         ));
     }
 })
     // Set the passing parameter value by default to Null to allow the route to be called with or without a value there.
     ->value('id', null);
 
+/**
+ * Controller for 'JSON Item View', view the Todos item in pure JSON format.
+ */
+$app->get('/todo/page/{page_number}', function ($page_number) use ($app) {
+
+    // Confirm if the user is logged in else redirect them to the login page.
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    // Confirm if there is a single List item requested.
+    if ($page_number){
+
+        // Create Pagination for the Listings.
+        // Calculate the total items in the database for this user.
+        $total_todo_items_sql   = "SELECT COUNT(*) as 'total_count' FROM todos WHERE user_id = '${user['id']}' AND item_status != 2;";
+
+        // Execute above statement to collect single item data.
+        $total_todo_items       = $app['db']->fetchAssoc($total_todo_items_sql);
+
+        // Define the limit per page
+        $todo_items_limit       = 5;
+
+        // Get total pages there will be
+        $pages                  = ceil($total_todo_items['total_count'] / $todo_items_limit );
+
+        // Set the current page variable
+        $current_page           = ($page_number != '')? $page_number : 0 ;
+
+        // Ensure the user always sees content correctly, if the {{ page number }} is manually set to higher number, redirect to Page 1.
+        if($current_page > $pages){
+
+            // Redirect user to Page 1.
+            return $app->redirect('/todo/page/1');
+        }
+
+        // Calculate the offset for the query
+        $offset                 = (($current_page == 0)? $current_page : $current_page - 1)  * $todo_items_limit;
+
+        // Create statement to select all items for current logged in from the Database.
+        $sql                    = "SELECT * FROM todos WHERE user_id = '${user['id']}' AND item_status != 2 ORDER BY id ASC LIMIT ".$todo_items_limit." OFFSET ".$offset.";";
+
+        // Execute above statement to collect all items.
+        $todos = $app['db']->fetchAll($sql);
+
+        // Render the template page and pass above data through.
+        return $app['twig']->render('todos.html', array(
+            'todos'         => $todos,
+            'total_pages'   => $pages,
+            'current_page'  => $current_page
+        ));
+
+    } else {
+
+        // Redirect user to the first page of paginated list.
+        return $app->redirect('/todo/page/1');
+    }
+})
+    // Set the passing parameter value by default to Null to allow the route to be called with or without a value there.
+    ->value('page_number', null);
 /**
  * Controller for 'JSON Item View', view the Todos item in pure JSON format.
  */

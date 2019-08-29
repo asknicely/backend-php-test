@@ -41,20 +41,33 @@
                 <td align="center">
                     {% if todo.item_status == 1 %}
                         <form method="post" action="{{ app.request.baseurl }}/todo/reset/{{ todo.id }}" class="inline-form text-center">
-                            <button type="submit" class="btn btn-xs btn-default"><span class="glyphicon glyphicon-refresh"></span></button>
+                            <button type="submit" class="btn btn-xs btn-default" title="Reset Todo Item"><span class="glyphicon glyphicon-refresh"></span></button>
                         </form>
                     {% else %}
                         <form method="post" action="{{ app.request.baseurl }}/todo/completed/{{ todo.id }}" class="inline-form text-center">
-                            <button type="submit" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-ok glyphicon-white"></span></button>
+                            <button type="submit" class="btn btn-xs btn-success" title="Complete Todo Item"><span class="glyphicon glyphicon-ok glyphicon-white"></span></button>
                         </form>
                     {% endif %}
 
                     <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}" class="inline-form text-center">
-                        <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
+                        <button type="submit" class="btn btn-xs btn-danger" title="Delete Todo Item"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                     </form>
+
+                    <a href="{{ app.request.baseurl }}/todo/json/{{ todo.id }}" class="btn btn-xs btn-info" title="JSON View"><span class="glyphicon glyphicon-eye-open glyphicon-white"></span></a>
                 </td>
             </tr>
         {% endfor %}
+        <tr>
+            <td colspan="4" align="center">
+                {% for i in 1..total_pages %}
+                    {% if i == current_page %}
+                        <span class="btn btn-xs btn-primary">{{ i }}</span>
+                    {% else %}
+                        <a href="{{ app.request.baseurl }}/todo/page/{{ i }}" class="btn btn-xs btn-warning">{{ i }}</a>
+                    {% endif %}
+                {% endfor %}
+            </td>
+        </tr>
         <tr>
             <form id="todo_add" method="post" action="{{ app.request.baseurl }}/todo/add">
                 <td colspan="3">
