@@ -25,8 +25,8 @@ $app->match('/login', function (Request $request) use ($app) {
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+        $sql = "SELECT * FROM users WHERE username = ? and password = ?";
+        $user = $app['db']->fetchAssoc($sql, [$username, $password]);
 
         if ($user){
             $app['session']->set('user', $user);
@@ -48,6 +48,8 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
+
+	$id = intval($id);
 
     if ($id){
         $sql = "SELECT * FROM todos WHERE id = '$id'";
@@ -79,8 +81,8 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         return $app->redirect('/todo');
     }
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    $sql = "INSERT INTO todos (user_id, description) VALUES (?, ?)";
+    $app['db']->executeUpdate($sql, [$user_id, $description]);
 
     return $app->redirect('/todo');
 });
@@ -88,6 +90,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
+	$id = intval($id);
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
 
@@ -99,6 +102,7 @@ $app->match('/todo/markComplete/{id}', function ($id) use ($app) {
         return $app->redirect('/login');
     }
 
+	$id = intval($id);
     $user_id = $user['id'];
 
     $completed = TODO_IS_COMPLETED;
@@ -117,8 +121,9 @@ $app->match('/todo/{id}/json', function ($id) use ($app) {
 
     $user_id = $user['id'];
 
-    $sql  = "SELECT id, user_id, description FROM todos WHERE id = '$id' AND user_id = '$user_id'";
-    $todo = $app['db']->fetchAssoc($sql);
+    $sql  = "SELECT id, user_id, description FROM todos WHERE id = ? AND user_id = ?";
+    $todo = $app['db']->fetchAssoc($sql, [$id, $user_id]);
+
     $json = '';
     if ($todo) {
         $todo['id'] = intval($todo['id']);
