@@ -58,15 +58,17 @@
             </tr>
         {% endfor %}
         <tr>
-            <td colspan="4" align="center">
-                {% for i in 1..total_pages %}
-                    {% if i == current_page %}
-                        <span class="btn btn-xs btn-primary">{{ i }}</span>
-                    {% else %}
-                        <a href="{{ app.request.baseurl }}/todo/page/{{ i }}" class="btn btn-xs btn-warning">{{ i }}</a>
-                    {% endif %}
-                {% endfor %}
-            </td>
+            {% if total_pages != 0 %}
+                <td colspan="4" align="center">
+                    {% for i in 1..total_pages %}
+                        {% if i == current_page %}
+                            <span class="btn btn-xs btn-primary">{{ i }}</span>
+                        {% else %}
+                            <a href="{{ app.request.baseurl }}/todo/page/{{ i }}" class="btn btn-xs btn-warning">{{ i }}</a>
+                        {% endif %}
+                    {% endfor %}
+                </td>
+            {% endif %}
         </tr>
         <tr>
             <form id="todo_add" method="post" action="{{ app.request.baseurl }}/todo/add">

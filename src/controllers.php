@@ -33,33 +33,69 @@ $app->get('/', function () use ($app) {
 });
 
 /**
- * Controller for 'User Login'..
- * Serious Security issues with this, there is no password hashing involved and Passwords are Human Readable.
- * Need to update this controller to involve Password Hashing.
+ * Controller for 'User Login'.
  */
 $app->match('/login', function (Request $request) use ($app) {
 
     // Set Variables from the the data inputted from the user on the Login Page
-    $username   = $request->get('username');
-    $password   = $request->get('password');
+    $username       = $request->get('username');
+    $password       = $request->get('password');
 
     // Confirm if there is a Username present in order to try log in a user.
     if ($username) {
 
         // Create an (unsafe) method for selecting the user where Username and Password match.
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
+        $sql        = "SELECT COUNT(*) as 'total_users' FROM users WHERE username = '$username';";
 
         // Collect data from the statement created above.
-        $user = $app['db']->fetchAssoc($sql);
+        $user_count = $app['db']->fetchAssoc($sql);
 
         // If there is a user present in the $user variable set a Session variable which will state the current user in the session is logged in.
-        if ($user){
+        if ($user_count['total_users'] == 1){
+
+            // Get user's password and store it in a variable
+            $user_password_sql  = "SELECT password FROM users WHERE username = '$username';";
+
+            // Collect data from the statement created above.
+            $user_password      = $app['db']->fetchAssoc($user_password_sql);
+
+            // Check if the password is correct else redirect to login page.
+            if(password_verify($password , $user_password['password'])){
+
+                // Get the users data
+                $sql = "SELECT * FROM users WHERE username = '$username';";
+
+                // Run the query
+                $user = $app['db']->fetchAssoc($sql);
+
+                // Set Session variable 'user' with relevant data.
+                $app['session']->set('user', $user);
+
+                // Successful login with data population, return the user to their Todos list page.
+                return $app->redirect('/todo');
+
+            } else {
+
+                // Set Session variable 'user' with relevant data.
+                $app['session']->set('user', null);
+
+                // If the password is incorrect, redirect user back to Login page with message.
+                $app['session']->getFlashBag()->set('unsuccessful_message', 'Username or Password is incorrect');
+
+                // Redirect the user back to the login page
+                return $app->redirect('/login');
+            }
+
+        } else {
 
             // Set Session variable 'user' with relevant data.
-            $app['session']->set('user', $user);
+            $app['session']->set('user', null);
 
-            // Successful login with data population, return the user to their Todos list page.
-            return $app->redirect('/todo');
+            // If there is no user with that 'username' redirect them to the login page.
+            $app['session']->getFlashBag()->set('unsuccessful_message', 'Username or Password is incorrect');
+
+            // Redirect the user back to the login page
+            return $app->redirect('/login');
         }
     }
 
@@ -95,15 +131,25 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     if ($id){
 
         // Create statement to select individual item from the Database.
-        $sql = "SELECT * FROM todos WHERE id = '$id';";
+        $sql = "SELECT * FROM todos WHERE id = '$id' AND user_id = '${user['id']}';";
 
         // Execute above statement to collect single item data.
         $todo = $app['db']->fetchAssoc($sql);
 
-        // Render the template page and pass above data through.
-        return $app['twig']->render('todo.html', array(
-            'todo' => $todo,
-        ));
+        // Confirm if there is a result for the logged in user
+        if(!empty($todo)){
+
+            // Render the template page and pass above data through.
+            return $app['twig']->render('todo.html', array(
+                'todo' => $todo,
+            ));
+
+        } else {
+
+            // Render the template page and pass above data through.
+            return $app->redirect('/todo');
+
+        }
 
     } else {
 
@@ -136,7 +182,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         return $app['twig']->render('todos.html', array(
             'todos'         => $todos,
             'total_pages'   => $pages,
-            'current_page'  => ( $current_page + 1 )
+            'current_page'  => 1
         ));
     }
 })
@@ -217,32 +263,34 @@ $app->get('/todo/json/{id}', function ($id) use ($app) {
     if ($id){
 
         // Create statement to select individual item from the Database.
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
+        $sql = "SELECT * FROM todos WHERE id = '$id' AND user_id = '${user['id']}';";
 
         // Execute above statement to collect single item data.
         $todo = $app['db']->fetchAssoc($sql);
 
-        // Convert requested data into JSON format for frontend.
-        $todo_json = json_encode($todo);
+        // Confirm if there is a result for the logged in user
+        if(!empty($todo)){
 
-        // Render the template page and pass above data through.
-        return $app['twig']->render('todo.html', array(
-            'todo' => $todo,
-            'todo_json' => $todo_json,
-        ));
+            // Convert requested data into JSON format for frontend.
+            $todo_json = json_encode($todo);
+
+            // Render the template page and pass above data through.
+            return $app['twig']->render('todo.html', array(
+                'todo' => $todo,
+                'todo_json' => $todo_json,
+            ));
+
+        } else {
+
+            // Render the template page and pass above data through.
+            return $app->redirect('/todo');
+
+        }
 
     } else {
 
-        // Create statement to select all items for current logged in from the Database.
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-
-        // Execute above statement to collect all items.
-        $todos = $app['db']->fetchAll($sql);
-
         // Render the template page and pass above data through.
-        return $app['twig']->render('todos.html', array(
-            'todos' => $todos,
-        ));
+        return $app->redirect('/todo');
     }
 })
     // Set the passing parameter value by default to Null to allow the route to be called with or without a value there.
@@ -303,7 +351,7 @@ $app->post('/todo/completed/{id}', function ($id) use ($app) {
     $current_date_time  = date("Y-m-d H:i:s");
 
     // Create and UPDATE statement for 'Todos' table
-    $sql                = "UPDATE todos SET mod_date = '$current_date_time', item_status = 1 WHERE id = '$id';";
+    $sql                = "UPDATE todos SET mod_date = '$current_date_time', item_status = 1 WHERE id = '$id' AND user_id = '${user['id']}';";
 
     // Execute sql command
     $app['db']->executeUpdate($sql);
@@ -330,7 +378,7 @@ $app->post('/todo/reset/{id}', function ($id) use ($app) {
     $current_date_time  = date("Y-m-d H:i:s");
 
     // Create and UPDATE statement for 'Todos' table
-    $sql                = "UPDATE todos SET mod_date = '$current_date_time', item_status = 0 WHERE id = '$id';";
+    $sql                = "UPDATE todos SET mod_date = '$current_date_time', item_status = 0 WHERE id = '$id' AND user_id = '${user['id']}';";
 
     // Execute sql command
     $app['db']->executeUpdate($sql);
@@ -359,7 +407,7 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     $current_date_time  = date("Y-m-d H:i:s");
 
     // Create a UPDATE 'Delete status' statement for 'Todos' table
-    $sql = "UPDATE todos SET mod_date = '$current_date_time', item_status = 2 WHERE id = '$id';";
+    $sql = "UPDATE todos SET mod_date = '$current_date_time', item_status = 2 WHERE id = '$id' AND user_id = '${user['id']}';";
 
     // Execute the above statement
     $app['db']->executeUpdate($sql);
