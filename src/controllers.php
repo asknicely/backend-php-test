@@ -71,19 +71,22 @@ $app->get('/todo/{id}', function ($id) use ($app) {
 
 
 $app->post('/todo/add', function (Request $request) use ($app) {
+
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
     $user_id = $user['id'];
+
     $description = $request->get('description');
     if (empty(trim($description))) {
+		$app['session']->getFlashBag()->add('notice', 'Description is necessary.');
         return $app->redirect('/todo');
     }
 
     $sql = "INSERT INTO todos (user_id, description) VALUES (?, ?)";
     $app['db']->executeUpdate($sql, [$user_id, $description]);
 
+	$app['session']->getFlashBag()->add('success', 'Todo added successfully.');
     return $app->redirect('/todo');
 });
 
@@ -92,8 +95,12 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
 	$id = intval($id);
     $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
-
+    $cnt = $app['db']->executeUpdate($sql);
+	if ($cnt === 1) {
+		$app['session']->getFlashBag()->add('success', 'A todo was deleted successfully.');
+	} else {
+		$app['session']->getFlashBag()->add('notice', 'Woops, something went wrong, please try again.');
+	}
     return $app->redirect('/todo');
 });
 

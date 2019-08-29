@@ -41,5 +41,20 @@
             </form>
         </tr>
     </table>
+    {% for message in app.session.flashbag.get('success') %}
+    <div class="flash-success">
+	    {{ message }}
+    </div>
+    {% endfor %}
+
+    {% for message in app.session.flashbag.get('notice') %}
+    <div class="flash-notice">
+	    {{ message }}
+    </div>
+    {% endfor %}
+
+
 </div>
+
+
 {% endblock %}
