@@ -73,9 +73,20 @@ class Model {
 	}
 
 
-	public function deleteOne($id) {
-		$sql = "DELETE FROM {$this->table_name} WHERE id = ? LIMIT 1";
-		$cnt = $this->app['db']->executeUpdate($sql, [$id]);
+	public function deleteOne($conditions) {
+		$where = [];
+		$values = [];
+		foreach ($conditions as $key=>$val) {
+			if ($where) {
+				$where .= " AND {$key} = ? ";
+			} else {
+				$where = " {$key} = ? ";
+			}
+			$values[] = $val;
+		}
+
+		$sql = "DELETE FROM {$this->table_name} WHERE {$where} LIMIT 1";
+		$cnt = $this->app['db']->executeUpdate($sql, $values);
 		return $cnt;
 	}
 
