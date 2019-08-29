@@ -4,6 +4,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 require_once __DIR__.'/../config/constants.php';
+require_once __DIR__.'/utils.php';
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -100,10 +101,30 @@ $app->match('/todo/markComplete/{id}', function ($id) use ($app) {
 
     $user_id = $user['id'];
 
-	$completed = TODO_IS_COMPLETED;
+    $completed = TODO_IS_COMPLETED;
 
     $sql = "UPDATE todos SET is_completed = {$completed} WHERE id = '{$id}' AND user_id = '{$user_id}'";
     $app['db']->executeUpdate($sql);
 
     return $app->redirect('/todo');
+});
+
+
+$app->match('/todo/{id}/json', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $user_id = $user['id'];
+
+    $sql  = "SELECT id, user_id, description FROM todos WHERE id = '$id' AND user_id = '$user_id'";
+    $todo = $app['db']->fetchAssoc($sql);
+    $json = '';
+    if ($todo) {
+        $todo['id'] = intval($todo['id']);
+        $todo['user_id'] = intval($todo['user_id']);
+        $json = createJson($todo);
+    }
+    return $json;
+
 });
