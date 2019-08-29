@@ -3,6 +3,8 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+require_once __DIR__.'/../config/constants.php';
+
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
@@ -86,6 +88,21 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     $sql = "DELETE FROM todos WHERE id = '$id'";
+    $app['db']->executeUpdate($sql);
+
+    return $app->redirect('/todo');
+});
+
+$app->match('/todo/markComplete/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $user_id = $user['id'];
+
+	$completed = TODO_IS_COMPLETED;
+
+    $sql = "UPDATE todos SET is_completed = {$completed} WHERE id = '{$id}' AND user_id = '{$user_id}'";
     $app['db']->executeUpdate($sql);
 
     return $app->redirect('/todo');

@@ -1,0 +1,3 @@
+<?php
+
+CONST TODO_IS_COMPLETED = 1;
