@@ -18,3 +18,31 @@ body {
     font-size: 14px;
     font-weight: 600;
 }
+
+.pagination {
+    margin-top: 20px;
+}
+
+.pagination > span {
+    color: #6b6bc5;
+    min-width: 40px;
+    max-width: 100px;
+    border: 1px solid #ddd;
+    display: inline-block;
+    text-align: center;
+}
+
+.pagination > span.current {
+        background-color: #337ab7; 
+        border-color: #2e6da4;
+        color: #fff;
+}
+span.current > a {
+        color: #fff !important;
+        background-color: #337ab7; 
+        border-color: #2e6da4;
+}
+
+.pagination a:hover {
+        text-decoration: none; 
+}

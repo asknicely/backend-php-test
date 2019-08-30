@@ -2,29 +2,29 @@
 
 class Utils {
 
-	public static function createJson(array $data) {
+    public static function createJson(array $data) {
 
-		$output = '{';
+        $output = '{';
 
-		$separator = '';
+        $separator = '';
 
-		foreach($data as $key=>$val) {
-			$output .= $separator . $key . ': ';
+        foreach($data as $key=>$val) {
+            $output .= $separator . $key . ': ';
 
-			if(is_int($val)) {
-				$output .= $val;
-			} elseif(is_string($val)) {
-				$output .= '"' . str_replace( '"', '\"', $val) . '"';
-			} elseif(is_bool($val)) {
-				$output .= $val ? 'true' : 'false';
-			} else {
-				$output .= $val;
-			}
-			$separator = ', ';
-		}
+            if(is_int($val)) {
+                $output .= $val;
+            } elseif(is_string($val)) {
+                $output .= '"' . str_replace( '"', '\"', $val) . '"';
+            } elseif(is_bool($val)) {
+                $output .= $val ? 'true' : 'false';
+            } else {
+                $output .= $val;
+            }
+            $separator = ', ';
+        }
 
-		$output .= '}';
+        $output .= '}';
 
-		return $output;
-	}
+        return $output;
+    }
 }

@@ -4,24 +4,24 @@
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo List:</h1>
     <table class="table table-striped">
-	    <th>#</th><th>User</th><th>Description</th><th>Completed</th><th></th>
+        <th>#</th><th>User</th><th>Description</th><th>Completed</th><th></th>
         {% for todo in todos %}
             <tr>
                 <td>{{ todo.id }}</td>
                 <td>{{ todo.user_id }}</td>
                 <td>
-                    <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
+                    <a href="{{ app.request.baseurl }}/detail/{{ todo.id }}">
                        {{ todo.description }}
                     </a>
                 </td>
                 <td>
-		{% if todo.is_completed %}
-		<button disabled type="submit" class="btn btn-xs"><span class="glyphicon glyphicon-ok glyphicon-white"></span></button>
-		{% else %}
+                {% if todo.is_completed %}
+                        <button disabled type="submit" class="btn btn-xs"><span class="glyphicon glyphicon-ok glyphicon-white"></span></button>
+                {% else %}
                     <form method="post" action="{{ app.request.baseurl }}/todo/markComplete/{{ todo.id }}">
                         <button type="submit" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-time glyphicon-white"></span></button>
                     </form>
-		{% endif %}
+                {% endif %}
                 </td>
                 <td>
                     <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
@@ -35,7 +35,7 @@
                 <td colspan="3">
                     <input type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
                 </td>
-                <td>
+                <td colspan="2">
                     <button type="submit" class="btn btn-sm btn-primary">Add</button>
                 </td>
             </form>
@@ -43,18 +43,30 @@
     </table>
     {% for message in app.session.flashbag.get('success') %}
     <div class="flash-success">
-	    {{ message }}
+        {{ message }}
     </div>
     {% endfor %}
 
     {% for message in app.session.flashbag.get('notice') %}
     <div class="flash-notice">
-	    {{ message }}
+        {{ message }}
     </div>
     {% endfor %}
 
+    <div class="pagination">
+            <span><a href="/todo/1">First</a></span>
+            {% if page_no > 1 %}
+                <span class="pagination"><a href="/todo/{{ page_no-1 }}">{{ page_no-1 }}</a></span>
+            {% endif %}
 
+            <span class="current"><a href="/todo/{{ page_no }}">{{ page_no }}</a></span>
+
+            {% if page_no < page_count %}
+                <span><a href="/todo/{{ page_no+1 }}">{{ page_no+1 }}</a></span>
+            {% endif %}
+
+            <span><a href="/todo/{{ page_count }}">Last</a></span>
+    </div>
 </div>
-
 
 {% endblock %}
