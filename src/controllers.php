@@ -156,6 +156,7 @@ $app->get('/todo/{page}', function ($page) use ($app) {
 
         $json = '';
         if ($todo) {
+            unset($todo['is_completed']);
             $todo['id'] = intval($todo['id']);
             $todo['user_id'] = intval($todo['user_id']);
             $json = Utils::createJson($todo);
