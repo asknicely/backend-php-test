@@ -3,6 +3,25 @@
 {% block title 'Welcome World !' %}
 
 {% block content %}
-    <h1>README</h1>
-    <pre class="well">{{ readme }}</pre>
+    <!-- Page Content Container -->
+    <div class="content-container col-10 p-md-5 pt-5 pb-5">
+        <div class="content col-12">
+        <!-- ReadMe Content Section -->
+        <section id="readme">
+            <div id="readme-content" class="col-12">
+                <div class="row justidy-content-center">
+                    <div id="main-header" class="col-12 pb-4">
+                        <h1>README</h1>
+                    </div>
+                    <div id="main-content" class="col-12 pb-3">
+                        <pre><p>{{ readme }}</p></pre>
+                    </div>
+                    <div id="company-logo" class="col-12 text-center pt-4">
+                        <img src="{{ url('homepage') }}img/logos/asknicely-white.png" alt="AskNicely Company Logo">
+                    </div>
+                </div>
+            </div>
+        </section>
+        </div>
+    </div>
 {% endblock %}

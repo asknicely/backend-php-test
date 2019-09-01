@@ -23,7 +23,8 @@
         "symfony/validator": "~2.3",
         "doctrine/dbal": "~2.2",
         "deralex/yaml-config-service-provider": "1.0.x-dev",
-        "ext-json": "*"
+        "ext-json": "*",
+        "twbs/bootstrap": "4.3.1"
     },
     "autoload": {
         "psr-0": { "": "src/" }

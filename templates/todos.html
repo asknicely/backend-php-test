@@ -3,107 +3,151 @@
 {% block title 'Full Todo List' %}
 
 {% block content %}
-<div class="col-md-6 col-md-offset-3">
-    <h1>Todo List:</h1>
-    <table class="table table-striped">
-        <th>#</th>
-        <th>User</th>
-        <th>Description</th>
-        <th></th>
-        {% for todo in todos %}
-            <tr>
-                <td align="center">
-                    {% if todo.item_status == 1 %}
-                        <span class="completed">{{ todo.id }}</span>
-                    {% else %}
-                        <span>{{ todo.id }}</span>
-                    {% endif %}
-                </td>
-                <td align="center">
-                    {% if todo.item_status == 1 %}
-                        <span class="completed">{{ todo.user_id }}</span>
-                    {% else %}
-                        <span>{{ todo.user_id }}</span>
-                    {% endif %}
-                </td>
-                <td align="center">
-                    {% if todo.item_status == 1 %}
-                        <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}" class="completed">
-                            <span class="completed">{{ todo.description }}</span>
-                        </a>
-                        <span class="label label-default d-block">Completed</span>
-                    {% else %}
-                        <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
-                            <span>{{ todo.description }}</span>
-                        </a>
-                    {% endif %}
-                </td>
-                <td align="center">
-                    {% if todo.item_status == 1 %}
-                        <form method="post" action="{{ app.request.baseurl }}/todo/reset/{{ todo.id }}" class="inline-form text-center">
-                            <button type="submit" class="btn btn-xs btn-default" title="Reset Todo Item"><span class="glyphicon glyphicon-refresh"></span></button>
+    <!-- Page Content Container -->
+    <div class="content-container col-lg-10 col-md-12 p-md-5 pt-5 pb-5">
+        <div class="content col-12">
+            <!-- User's Todos Full List Container -->
+            <section id="users-todos-full-list">
+                <!-- Page Main Header -->
+                <div id="main-header" class="col-12 pb-4">
+                    <h1>Todo List:</h1>
+                </div>
+                <!-- List Header Section -->
+                <div id="list-headings" class="col-12 p-4">
+                    <div class="row justify-content-center">
+                        <div class="col-1 text-center">
+                            <span>#</span>
+                        </div>
+                        <div class="col-1 text-center">
+                            <span>User</span>
+                        </div>
+                        <div class="col-md-6 col-8 text-center">
+                            <span>Description</span>
+                        </div>
+                        <div class="col-md-4 d-none d-md-block text-center">
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Each Listings Sections -->
+                <div id="list-todos" class="col-12">
+                    <div class="row justify-content-center">
+                        {% for todo in todos %}
+                        <!-- Individual Row Listing -->
+                        <div class="todo-list-item-row col-12 p-3">
+                            <div class="row justify-content-center">
+                                <div class="col-1 text-center">
+                                    {% if todo.item_status == 1 %}
+                                    <span class="completed">{{ todo.id }}</span>
+                                    {% else %}
+                                    <span>{{ todo.id }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-1 col-2 text-center">
+                                    {% if todo.item_status == 1 %}
+                                    <span class="completed">{{ todo.user_id }}</span>
+                                    {% else %}
+                                    <span>{{ todo.user_id }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 col-8 text-center">
+                                    {% if todo.item_status == 1 %}
+                                    <a href="{{ url('homepage') }}todo/{{ todo.id }}" class="completed">
+                                        <span class="completed">{{ todo.description }}</span>
+                                        <i class="badge badge-dark ml-2 text-uppercase">Complete</i>
+                                    </a>
+                                    {% else %}
+                                    <a href="{{ url('homepage') }}todo/{{ todo.id }}">
+                                        <span>{{ todo.description }}</span>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                <div class="todo-list-item-action-button col-md-4 col-12 mt-md-0 mt-4 text-center">
+                                    {% if todo.item_status == 1 %}
+                                    <form method="post" action="{{ url('homepage') }}todo/reset/{{ todo.id }}" class="inline-form text-center d-inline-block">
+                                        <button type="submit" class="btn btn-xs btn-dark" title="Reset Todo Item"><i class="fas fa-redo"></i></button>
+                                    </form>
+                                    {% else %}
+                                    <form method="post" action="{{ url('homepage') }}todo/completed/{{ todo.id }}" class="inline-form text-center d-inline-block">
+                                        <button type="submit" class="btn btn-xs btn-dark" title="Complete Todo Item"><i class="fas fa-check"></i></button>
+                                    </form>
+                                    {% endif %}
+                                    <form method="post" action="{{ url('homepage') }}todo/delete/{{ todo.id }}" class="inline-form text-center d-inline-block">
+                                        <button type="submit" class="btn btn-xs btn-dark" title="Delete Todo Item"><i class="fas fa-times"></i></button>
+                                    </form>
+                                    <a href="{{ url('homepage') }}todo/json/{{ todo.id }}" class="btn btn-xs btn-dark d-inline-block" title="JSON View"><i class="fas fa-code"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% if total_pages != 0 %}
+                    <!-- Listings Pagination Section -->
+                    <div id="list-todos-pagination" class="col-12 mt-5">
+                        <div class="row justify-content-center">
+                            {% for i in 1..total_pages %}
+                                {% if i == current_page %}
+                                    <span class="btn btn-xs btn-secondary">{{ i }}</span>
+                                {% else %}
+                                    <a href="{{ url('homepage') }}todo/page/{{ i }}" class="btn btn-xs btn-dark"><span>{{ i }}</span></a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                {% for flashMessage in app.session.flashbag.get('unsuccessful_message') %}
+                    <!-- Page Unsuccessful Page Message -->
+                    <div id="page-error-message" class="col-12 mt-5 mb-5 animated bounce delay-1s">
+                        <div class="row justify-content-center">
+                            <div class="alert alert-secondary text-center" role="alert">
+                                <i class="fas fa-times mr-2"></i>
+                                {{ flashMessage }}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                {% for flashMessage in app.session.flashbag.get('success_message') %}
+                    <!-- Page Successful Page Message -->
+                    <div id="page-succes-message" class="col-12 mt-5 mb-5 animated bounce delay-1s">
+                        <div class="row justify-content-center">
+                            <div class="alert alert-secondary text-center" role="alert">
+                                <i class="fas fa-check mr-2"></i>
+                                {{ flashMessage }}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                <!-- Adding Additional Todos list items Form -->
+                <div id="page-additional-form" class="col-12 mt-5 mb-5">
+                    <div class="row justify-content-center">
+                        <!-- Todos list items Form -->
+                        <form id="todo_add" class="form-inline col-12 text-center" method="post" action="{{ url('homepage') }}todo/add">
+                            <div class="col-md-10 col-12">
+                                <div class="row justify-content-center">
+                                    <!-- Todos Item Description Input -->
+                                    <div class="input-group w-100">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text"><i class="fas fa-plus"></i></div>
+                                        </div>
+                                        <input type="textbox" class="form-control" id="description" name="description" placeholder="Description...." required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 col-12 mt-md-0 mt-4">
+                                <div class="row justify-content-center">
+                                    <!-- Submit Button -->
+                                    <button type="submit" class="btn btn-dark">Add</button>
+                                </div>
+                            </div>
                         </form>
-                    {% else %}
-                        <form method="post" action="{{ app.request.baseurl }}/todo/completed/{{ todo.id }}" class="inline-form text-center">
-                            <button type="submit" class="btn btn-xs btn-success" title="Complete Todo Item"><span class="glyphicon glyphicon-ok glyphicon-white"></span></button>
-                        </form>
-                    {% endif %}
-
-                    <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}" class="inline-form text-center">
-                        <button type="submit" class="btn btn-xs btn-danger" title="Delete Todo Item"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
-                    </form>
-
-                    <a href="{{ app.request.baseurl }}/todo/json/{{ todo.id }}" class="btn btn-xs btn-info" title="JSON View"><span class="glyphicon glyphicon-eye-open glyphicon-white"></span></a>
-                </td>
-            </tr>
-        {% endfor %}
-        <tr>
-            {% if total_pages != 0 %}
-                <td colspan="4" align="center">
-                    {% for i in 1..total_pages %}
-                        {% if i == current_page %}
-                            <span class="btn btn-xs btn-primary">{{ i }}</span>
-                        {% else %}
-                            <a href="{{ app.request.baseurl }}/todo/page/{{ i }}" class="btn btn-xs btn-warning">{{ i }}</a>
-                        {% endif %}
-                    {% endfor %}
-                </td>
-            {% endif %}
-        </tr>
-        <tr>
-            <form id="todo_add" method="post" action="{{ app.request.baseurl }}/todo/add">
-                <td colspan="3">
-                    <div class="form-group">
-                        <input type="textbox" name="description" class="small-6 small-center form-control" placeholder="Description..." required>
                     </div>
-                </td>
-                <td class="text-center">
-                    <button type="submit" class="btn btn-sm btn-primary">Add</button>
-                </td>
-            </form>
-        </tr>
-        {% for flashMessage in app.session.flashbag.get('unsuccessful_message') %}
-            <tr>
-                <td colspan="4" align="center" class="form-message">
-                    <div class="alert alert-danger" role="alert">
-                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                        <span class="sr-only">Error:</span>
-                        {{ flashMessage }}
-                    </div>
-                </td>
-            </tr>
-        {% endfor %}
-        {% for flashMessage in app.session.flashbag.get('success_message') %}
-            <tr>
-                <td colspan="4" align="center" class="form-message">
-                    <div class="alert alert-success" role="alert">
-                        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                        <span class="sr-only">Success:</span>
-                        {{ flashMessage }}
-                    </div>
-                </td>
-            </tr>
-        {% endfor %}
-    </table>
-</div>
+                </div>
+                <!-- AskNicely Company Logo -->
+                <div id="company-logo" class="col-12 text-center pt-4">
+                    <img src="{{ url('homepage') }}img/logos/asknicely-white.png" alt="AskNicely Company Logo">
+                </div>
+            </section>
+        </div>
+    </div>
 {% endblock %}

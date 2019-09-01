@@ -15,6 +15,8 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+$app->register(new Silex\Provider\UrlGeneratorServiceProvider());
+
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
@@ -30,7 +32,8 @@ $app->get('/', function () use ($app) {
     return $app['twig']->render('index.html', array(
         'readme' => file_get_contents('../README.md')
     ));
-});
+})
+    ->bind('homepage');
 
 /**
  * Controller for 'User Login'.
@@ -38,35 +41,35 @@ $app->get('/', function () use ($app) {
 $app->match('/login', function (Request $request) use ($app) {
 
     // Set Variables from the the data inputted from the user on the Login Page
-    $username       = $request->get('username');
-    $password       = $request->get('password');
+    $username       = trim($request->get('username'));
+    $password       = trim($request->get('password'));
 
     // Confirm if there is a Username present in order to try log in a user.
-    if ($username) {
+    if (!empty($username)) {
 
         // Create an (unsafe) method for selecting the user where Username and Password match.
-        $sql        = "SELECT COUNT(*) as 'total_users' FROM users WHERE username = '$username';";
+        $sql        = "SELECT COUNT(*) as 'total_users' FROM users WHERE username = ?;";
 
         // Collect data from the statement created above.
-        $user_count = $app['db']->fetchAssoc($sql);
+        $user_count = $app['db']->fetchAssoc($sql,array($username));
 
         // If there is a user present in the $user variable set a Session variable which will state the current user in the session is logged in.
         if ($user_count['total_users'] == 1){
 
             // Get user's password and store it in a variable
-            $user_password_sql  = "SELECT password FROM users WHERE username = '$username';";
+            $user_password_sql  = "SELECT password FROM users WHERE username = ?;";
 
             // Collect data from the statement created above.
-            $user_password      = $app['db']->fetchAssoc($user_password_sql);
+            $user_password      = $app['db']->fetchAssoc($user_password_sql,array($username));
 
             // Check if the password is correct else redirect to login page.
             if(password_verify($password , $user_password['password'])){
 
                 // Get the users data
-                $sql = "SELECT * FROM users WHERE username = '$username';";
+                $sql = "SELECT * FROM users WHERE username = ?;";
 
                 // Run the query
-                $user = $app['db']->fetchAssoc($sql);
+                $user = $app['db']->fetchAssoc($sql,array($username));
 
                 // Set Session variable 'user' with relevant data.
                 $app['session']->set('user', $user);
@@ -113,7 +116,7 @@ $app->get('/logout', function () use ($app) {
     $app['session']->set('user', null);
 
     // Redirect the user to the home/base directory.
-    return $app->redirect('/');
+    return $app->redirect('/login');
 });
 
 /**

@@ -3,35 +3,59 @@
 {% block title 'User Login' %}
 
 {% block content %}
-    <div class="col-md-4 col-md-offset-4">
-        <h1>Login</h1>
-        <form class="form-horizontal login-form" method="POST" action="/login">
-            <div class="input-group">
-                <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
-                <input type="text" class="form-control" name="username" placeholder="Username">
-            </div>
-
-            <div class="input-group">
-                <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
-                <input type="password" class="form-control" name="password" placeholder="Password">
-            </div>
-            <div class="form-group">
-                <div class="col-sm-12 controls">
-                    <button type="submit" class="btn btn-primary pull-right"><i class="glyphicon glyphicon-log-in"></i> login</button>
+<!-- Page Content Container -->
+    <div class="content-container col-xl-5 col-lg-6 col-md-8 col-12 p-md-5 pt-5 pb-5">
+        <div class="content col-12">
+            <!-- User Login Form Section -->
+            <section id="user-login-form">
+                <!-- Page Main Header -->
+                <div id="main-header" class="col-12 pb-4">
+                    <h1>Login</h1>
                 </div>
-            </div>
-            {% for flashMessage in app.session.flashbag.get('unsuccessful_message') %}
-                <div class="form-group">
-                    <div class="col-sm-12 controls">
-                        <div class="alert alert-danger" role="alert">
-                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                            <span class="sr-only">Error:</span>
-                            {{ flashMessage }}
+                <!-- User Login Form -->
+                <form id="login-form" class="form-horizontal" method="POST" action="{{ url('homepage') }}login">
+                    <!-- Username Input Field -->
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <div class="input-group mb-2 mr-sm-2">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text"><i class="fas fa-user"></i></div>
+                            </div>
+                            <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
                         </div>
                     </div>
+                    <!-- Password Input Field -->
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-group mb-2 mr-sm-2">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text"><i class="fas fa-key"></i></div>
+                            </div>
+                            <input type="password" class="form-control" name="password" id="password" placeholder="Password" required>
+                        </div>
+                    </div>
+                    {% for flashMessage in app.session.flashbag.get('unsuccessful_message') %}
+                    <!-- Error Message Alert -->
+                        <div class="form-group pt-4 animated bounce delay-1s">
+                            <div class="col-sm-12 controls">
+                                <div class="alert alert-secondary text-center" role="alert">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    <span class="sr-only">Error:</span>
+                                    {{ flashMessage }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <!-- Form Submission Button -->
+                    <div class="form-group text-center pt-4">
+                        <button type="submit" class="btn btn-dark">Submit</button>
+                    </div>
+                </form>
+                <!-- AskNicely Company Logo -->
+                <div id="company-logo" class="col-12 text-center pt-4">
+                    <img src="{{ url('homepage') }}img/logos/asknicely-white.png" alt="AskNicely Company Logo">
                 </div>
-            {% endfor %}
-
-        </form>
+            </section>
+        </div>
     </div>
 {% endblock %}

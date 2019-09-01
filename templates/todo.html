@@ -3,82 +3,122 @@
 {% block title 'Individual List Item' %}
 
 {% block content %}
-<div class="col-md-6 col-md-offset-3">
-    <h1>Todo:</h1>
-    <a class="mb-5" href="{{ app.request.baseurl }}/todo">
-        <p><i class="glyphicon glyphicon-arrow-left"></i> Full List</p>
-    </a>
-    {% if todo_json is defined %}
-        {% if todo_json != '' %}
-            <table class="table table-striped">
-                <th colspan="2"><span>JSON data</span></th>
-                <tr>
-                    <td align="center" width="70%">
-                        <span>{{ todo_json }}</span>
-                    </td>
-                    <td align="center" width="30%">
-                        {% if todo.item_status == 1 %}
-                        <form method="post" action="{{ app.request.baseurl }}/todo/reset/{{ todo.id }}" class="inline-form text-center">
-                            <button type="submit" class="btn btn-xs btn-default" title="Reset Todo Item"><span class="glyphicon glyphicon-refresh"></span></button>
-                        </form>
+    <!-- Page Content Container -->
+    <div class="content-container col-lg-10 col-md-12 p-md-5 pt-5 pb-5">
+        <div class="content col-12">
+            <!-- Individual Todos Item Content -->
+            <section id="users-todos-individual-item">
+                <!-- Page Main Header and Back Link -->
+                <div id="main-header" class="col-12 pb-4">
+                    <h1 class="d-inline-block align-middle">Individual Todo Item:</h1>
+                    <a class="float-right btn btn-dark d-block" href="{{ url('homepage') }}todo" title="Return back to Main Listings page">
+                        <i class="fas fa-angle-left mr-2"></i><span> Full List</span>
+                    </a>
+                </div>
+                <!-- Item Header Section -->
+                <div id="list-headings" class="col-12 p-4 mt-5">
+                    <div class="row justify-content-center">
+                        {% if todo_json is defined %}
+                            <div class="col-md-8 col-12 text-center">
+                                <span>JSON Data</span>
+                            </div>
                         {% else %}
-                        <form method="post" action="{{ app.request.baseurl }}/todo/completed/{{ todo.id }}" class="inline-form text-center">
-                            <button type="submit" class="btn btn-xs btn-success" title="Complete Todo Item"><span class="glyphicon glyphicon-ok glyphicon-white"></span></button>
-                        </form>
+                            <div class="col-1 text-center">
+                                <span>#</span>
+                            </div>
+                            <div class="col-md-1 col-2 text-center">
+                                <span>User</span>
+                            </div>
+                            <div class="col-md-6 col-8 text-center">
+                                <span>Description</span>
+                            </div>
                         {% endif %}
-
-                        <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}" class="inline-form text-center">
-                            <button type="submit" class="btn btn-xs btn-danger" title="Delete Todo Item"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
-                        </form>
-                        <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}" class="btn btn-xs btn-info" title="HTML View"><span class="glyphicon glyphicon-eye-close glyphicon-white"></span></a>
-                    </td>
-                </tr>
-            </table>
-        {% endif %}
-    {% else %}
-        <table class="table table-striped">
-            <th>#</th><th>User</th><th>Description</th><th></th>
-            <tr>
-                <td align="center">
-                    {% if todo.item_status == 1 %}
-                        <span class="completed">{{ todo.id }}</span>
-                    {% else %}
-                        <span>{{ todo.id }}</span>
-                    {% endif %}
-                </td>
-                <td align="center">
-                    {% if todo.item_status == 1 %}
-                        <span class="completed">{{ todo.user_id }}</span>
-                    {% else %}
-                        <span>{{ todo.user_id }}</span>
-                    {% endif %}
-                </td>
-                <td align="center">
-                    {% if todo.item_status == 1 %}
-                        <span class="completed">{{ todo.description }}</span>
-                        <span class="label label-default d-block">Completed</span>
-                    {% else %}
-                        <span>{{ todo.description }}</span>
-                    {% endif %}
-                </td>
-                <td align="center">
-                    {% if todo.item_status == 1 %}
-                        <form method="post" action="{{ app.request.baseurl }}/todo/reset/{{ todo.id }}" class="inline-form text-center">
-                            <button type="submit" class="btn btn-xs btn-default" title="Reset Todo Item"><span class="glyphicon glyphicon-refresh"></span></button>
-                        </form>
-                    {% else %}
-                        <form method="post" action="{{ app.request.baseurl }}/todo/completed/{{ todo.id }}" class="inline-form text-center">
-                            <button type="submit" class="btn btn-xs btn-success" title="Complete Todo Item"><span class="glyphicon glyphicon-ok glyphicon-white"></span></button>
-                        </form>
-                    {% endif %}
-                        <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}" class="inline-form text-center">
-                            <button type="submit" class="btn btn-xs btn-danger" title="Delete Todo Item"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
-                        </form>
-                        <a href="{{ app.request.baseurl }}/todo/json/{{ todo.id }}" class="btn btn-xs btn-info" title="JSON View"><span class="glyphicon glyphicon-eye-open glyphicon-white"></span></a>
-                </td>
-            </tr>
-        </table>
-    {% endif %}
-</div>
-
+                        <div class="col-md-4 d-none d-md-block text-center">
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Item Information Sections -->
+                <div id="list-todos" class="col-12 mb-5">
+                    <div class="row justify-content-center">
+                        <div class="todo-list-item-row col-12 p-3">
+                            <div class="row justify-content-center">
+                                {% if todo_json is defined %}
+                                    {% if todo_json != '' %}
+                                        <!-- JSON Based Display -->
+                                        <div class="col-md-8 col-12 text-center">
+                                            {% if todo.item_status == 1 %}
+                                                <pre class="completed"><code>{{ todo_json }}</code></pre>
+                                                <i class="badge badge-dark ml-2 text-uppercase">Complete</i>
+                                            {% else %}
+                                                <pre><code>{{ todo_json }}</code></pre>
+                                            {% endif %}
+                                        </div>
+                                        <div class="todo-list-item-action-button col-md-4 col-12 mt-md-0 mt-4 text-center">
+                                            {% if todo.item_status == 1 %}
+                                            <form method="post" action="{{ url('homepage') }}todo/reset/{{ todo.id }}" class="inline-form text-center d-inline-block">
+                                                <button type="submit" class="btn btn-xs btn-dark" title="Reset Todo Item"><i class="fas fa-redo"></i></button>
+                                            </form>
+                                            {% else %}
+                                            <form method="post" action="{{ url('homepage') }}todo/completed/{{ todo.id }}" class="inline-form text-center d-inline-block">
+                                                <button type="submit" class="btn btn-xs btn-dark" title="Complete Todo Item"><i class="fas fa-check"></i></button>
+                                            </form>
+                                            {% endif %}
+                                            <form method="post" action="{{ url('homepage') }}todo/delete/{{ todo.id }}" class="inline-form text-center d-inline-block">
+                                                <button type="submit" class="btn btn-xs btn-dark" title="Delete Todo Item"><i class="fas fa-times"></i></button>
+                                            </form>
+                                            <a href="{{ url('homepage') }}todo/{{ todo.id }}" class="btn btn-xs btn-dark d-inline-block" title="JSON View"><i class="fas fa-code"></i></a>
+                                        </div>
+                                    {% endif %}
+                                {% else %}
+                                    <!-- Standard Information Display -->
+                                    <div class="col-1 text-center">
+                                        {% if todo.item_status == 1 %}
+                                        <span class="completed">{{ todo.id }}</span>
+                                        {% else %}
+                                        <span>{{ todo.id }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-1 col-2 text-center">
+                                        {% if todo.item_status == 1 %}
+                                        <span class="completed">{{ todo.user_id }}</span>
+                                        {% else %}
+                                        <span>{{ todo.user_id }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 col-8 text-center">
+                                        {% if todo.item_status == 1 %}
+                                            <span class="completed">{{ todo.description }}</span>
+                                            <i class="badge badge-dark ml-2 text-uppercase">Complete</i>
+                                        {% else %}
+                                            <span>{{ todo.description }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="todo-list-item-action-button col-md-4 col-12 text-center mt-md-0 mt-4">
+                                        {% if todo.item_status == 1 %}
+                                        <form method="post" action="{{ url('homepage') }}todo/reset/{{ todo.id }}" class="inline-form text-center d-inline-block">
+                                            <button type="submit" class="btn btn-xs btn-dark" title="Reset Todo Item"><i class="fas fa-redo"></i></button>
+                                        </form>
+                                        {% else %}
+                                        <form method="post" action="{{ url('homepage') }}todo/completed/{{ todo.id }}" class="inline-form text-center d-inline-block">
+                                            <button type="submit" class="btn btn-xs btn-dark" title="Complete Todo Item"><i class="fas fa-check"></i></button>
+                                        </form>
+                                        {% endif %}
+                                        <form method="post" action="{{ url('homepage') }}todo/delete/{{ todo.id }}" class="inline-form text-center d-inline-block">
+                                            <button type="submit" class="btn btn-xs btn-dark" title="Delete Todo Item"><i class="fas fa-times"></i></button>
+                                        </form>
+                                        <a href="{{ url('homepage') }}todo/json/{{ todo.id }}" class="btn btn-xs btn-dark d-inline-block" title="JSON View"><i class="fas fa-code"></i></a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- AskNicely Company Logo -->
+                <div id="company-logo" class="col-12 text-center pt-4">
+                    <img src="{{ url('homepage') }}img/logos/asknicely-white.png" alt="AskNicely Company Logo">
+                </div>
+            </section>
+        </div>
+    </div>
 {% endblock %}
