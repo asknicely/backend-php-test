@@ -1,17 +1,5 @@
 <?php
 
-/**
- *  Controllers Index:
- *  Line Number:    Controller Title:
- *                  User Login
- *                  User Log Out
- *                  Users Todos List
- *                  'Todos' Add
- *                  'Todos' Completed
- *                  'Todos' Reset
- *                  'Todos' Delete
- */
-
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
