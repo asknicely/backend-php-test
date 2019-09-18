@@ -22,6 +22,7 @@
                     <form method="post" action="{{ app.request.baseurl }}/todo/changeCompleteStatus/{{ todo.id }}">
                         <input
                                 type="checkbox"
+                                name="is_completed"
                                 value="is_completed"
                                 onChange="this.form.submit()"
                                 {% if todo.is_completed %}
