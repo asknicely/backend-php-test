@@ -84,6 +84,22 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     return $app->redirect('/todo');
 });
 
+$app->post('/todo/changeCompleteStatus/{id}', function (Request $request) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $user_id = $user['id'];
+    $id = $request->get('id');
+
+    $is_completed = isset($_POST['is_completed']) ? 1 : 0;
+
+    $sql = "UPDATE todos SET is_completed = {$is_completed} WHERE id = '{$id}' AND user_id = '{$user_id}'";
+    $app['db']->executeUpdate($sql);
+
+    return $app->redirect('/todo');
+});
+
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
