@@ -1,5 +1,7 @@
 <?php
 
+require __DIR__.'/controllers/api_controller.php';
+
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -38,6 +40,14 @@ $app->match('/login', function (Request $request) use ($app) {
 $app->get('/logout', function () use ($app) {
     $app['session']->set('user', null);
     return $app->redirect('/');
+});
+
+$app->get('/react-todos', function () use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    return $app['twig']->render('react-todos.html', array());
 });
 
 $app->get('/todos/{page}', function ($page) use ($app) {

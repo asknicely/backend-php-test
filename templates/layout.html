@@ -8,6 +8,11 @@
 
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ app.request.basepath }}/css/main.css" rel="stylesheet" type="text/css" />
+
+    <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
   </head>
   <body>
 
@@ -18,7 +23,8 @@
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li><a href="/todos">Todo list</a></li>
+            <li><a href="/todos">Todo list (template render)</a></li>
+            <li><a href="/react-todos">Todo list (React render)</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             {% if user %}
