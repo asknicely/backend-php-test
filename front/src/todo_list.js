@@ -1,5 +1,7 @@
 // import React from 'react';
 
+// import TodoItem from "./todo_item";
+
 const ID = "todos_list";
 
 class TodoList extends React.Component {
@@ -7,21 +9,57 @@ class TodoList extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            todos: []
+            todos: [],
+            toast: null,
         };
     }
 
     componentDidMount() {
-        fetch("/api/todos").then((data) => data.json()).then((data) => {
-            console.log(data);
+        getTodos().then((todos) => {
             this.setState({
-                todos: data
+                todos: todos
             })
         }).catch((err) => {
-            console.log(err);
-        })
+            this.displayToast("Error while fetching todos");
+        });
     }
 
+    deleteTodo(id) {
+        deleteTodo(id).then((data) => data.json()).then((data) => {
+            // Remove this todo from local state
+            this.setState({
+                todos: this.state.todos.filter(item => item.id !== id)
+            });
+
+            this.displayToast("Todo deleted");
+
+        }).catch((err) => {
+            this.displayToast("Error while removing todo");
+        });
+    }
+
+    displayToast(message) {
+        this.setState({
+            toast: message,
+        });
+
+        setTimeout(() => {
+            this.setState({
+                toast: null,
+            });
+        }, 3000);
+    }
+
+    _renderToast() {
+        if (!this.state.toast) {
+            return false;
+        }
+        return (
+            <div className="alert alert-warning" role="alert">
+                {this.state.toast}
+            </div>
+        );
+    }
 
     render() {
         return (
@@ -32,42 +70,18 @@ class TodoList extends React.Component {
                     <th>User</th>
                     <th>Description</th>
                     <th>Is Done</th>
+                    <th>Delete</th>
 
-                    <th></th>
 
                     {
                         this.state.todos.map((item) => {
-                            const {
-                                id,
-                                description,
-                                user_id,
-                                is_completed,
-                            } = item;
                             return (
-                                <tr key={id}>
-                                    <td>{id}</td>
-                                    <td>{user_id}</td>
-                                    <td>
-                                        <a href={`/todo/${id}`}>
-                                            {description}
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="checkbox"
-                                            onChange={() => {
-
-                                            }}
-                                            checked={is_completed == 1}
-                                        />
-                                    </td>
-                                    <td>
-
-                                        <button type="submit" className="btn btn-xs btn-danger"><span
-                                            className="glyphicon glyphicon-remove glyphicon-white"></span></button>
-
-                                    </td>
-                                </tr>
+                                <TodoItem
+                                    item={item}
+                                    onDelete={(id) => {
+                                        this.deleteTodo(id);
+                                    }}
+                                />
                             );
                         })
                     }
@@ -75,6 +89,7 @@ class TodoList extends React.Component {
                     </tbody>
                 </table>
 
+                {this._renderToast()}
 
             </div>
 

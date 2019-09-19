@@ -8,6 +8,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 // import React from 'react';
 
+// import TodoItem from "./todo_item";
+
 var ID = "todos_list";
 
 var TodoList = function (_React$Component) {
@@ -19,7 +21,8 @@ var TodoList = function (_React$Component) {
         var _this = _possibleConstructorReturn(this, (TodoList.__proto__ || Object.getPrototypeOf(TodoList)).call(this, props));
 
         _this.state = {
-            todos: []
+            todos: [],
+            toast: null
         };
         return _this;
     }
@@ -29,20 +32,76 @@ var TodoList = function (_React$Component) {
         value: function componentDidMount() {
             var _this2 = this;
 
-            fetch("/api/todos").then(function (data) {
-                return data.json();
-            }).then(function (data) {
-                console.log(data);
+            getTodos().then(function (todos) {
                 _this2.setState({
-                    todos: data
+                    todos: todos
                 });
             }).catch(function (err) {
-                console.log(err);
+                _this2.displayToast("Error while fetching todos");
             });
+        }
+    }, {
+        key: "deleteTodo",
+        value: function (_deleteTodo) {
+            function deleteTodo(_x) {
+                return _deleteTodo.apply(this, arguments);
+            }
+
+            deleteTodo.toString = function () {
+                return _deleteTodo.toString();
+            };
+
+            return deleteTodo;
+        }(function (id) {
+            var _this3 = this;
+
+            deleteTodo(id).then(function (data) {
+                return data.json();
+            }).then(function (data) {
+                // Remove this todo from local state
+                _this3.setState({
+                    todos: _this3.state.todos.filter(function (item) {
+                        return item.id !== id;
+                    })
+                });
+
+                _this3.displayToast("Todo deleted");
+            }).catch(function (err) {
+                _this3.displayToast("Error while removing todo");
+            });
+        })
+    }, {
+        key: "displayToast",
+        value: function displayToast(message) {
+            var _this4 = this;
+
+            this.setState({
+                toast: message
+            });
+
+            setTimeout(function () {
+                _this4.setState({
+                    toast: null
+                });
+            }, 3000);
+        }
+    }, {
+        key: "_renderToast",
+        value: function _renderToast() {
+            if (!this.state.toast) {
+                return false;
+            }
+            return React.createElement(
+                "div",
+                { className: "alert alert-warning", role: "alert" },
+                this.state.toast
+            );
         }
     }, {
         key: "render",
         value: function render() {
+            var _this5 = this;
+
             return React.createElement(
                 "div",
                 null,
@@ -72,58 +131,22 @@ var TodoList = function (_React$Component) {
                             null,
                             "Is Done"
                         ),
-                        React.createElement("th", null),
+                        React.createElement(
+                            "th",
+                            null,
+                            "Delete"
+                        ),
                         this.state.todos.map(function (item) {
-                            var id = item.id,
-                                description = item.description,
-                                user_id = item.user_id,
-                                is_completed = item.is_completed;
-
-                            return React.createElement(
-                                "tr",
-                                { key: id },
-                                React.createElement(
-                                    "td",
-                                    null,
-                                    id
-                                ),
-                                React.createElement(
-                                    "td",
-                                    null,
-                                    user_id
-                                ),
-                                React.createElement(
-                                    "td",
-                                    null,
-                                    React.createElement(
-                                        "a",
-                                        { href: "/todo/" + id },
-                                        description
-                                    )
-                                ),
-                                React.createElement(
-                                    "td",
-                                    null,
-                                    React.createElement("input", {
-                                        type: "checkbox",
-                                        onChange: function onChange() {},
-                                        checked: is_completed == 1
-                                    })
-                                ),
-                                React.createElement(
-                                    "td",
-                                    null,
-                                    React.createElement(
-                                        "button",
-                                        { type: "submit", className: "btn btn-xs btn-danger" },
-                                        React.createElement("span", {
-                                            className: "glyphicon glyphicon-remove glyphicon-white" })
-                                    )
-                                )
-                            );
+                            return React.createElement(TodoItem, {
+                                item: item,
+                                onDelete: function onDelete(id) {
+                                    _this5.deleteTodo(id);
+                                }
+                            });
                         })
                     )
-                )
+                ),
+                this._renderToast()
             );
         }
     }]);
