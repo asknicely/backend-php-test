@@ -1,8 +1,6 @@
 // import React from 'react';
 
-// import TodoItem from "./todo_item";
-
-const ID = "todos_list";
+const DOM_ID = "todos_list";
 
 class TodoList extends React.Component {
 
@@ -15,6 +13,10 @@ class TodoList extends React.Component {
     }
 
     componentDidMount() {
+        this.getAllTodos();
+    }
+
+    getAllTodos() {
         getTodos().then((todos) => {
             this.setState({
                 todos: todos
@@ -89,6 +91,20 @@ class TodoList extends React.Component {
                     </tbody>
                 </table>
 
+                <TodoAdd
+                    onAdd={(text) => {
+                        createNewTodo(text).then((data) => {
+                            this.displayToast(data.status);
+                            this.getAllTodos();
+                        }).catch((err) => {
+                            this.displayToast("Error creating a new todo");
+                        })
+                    }}
+                    onInvalidInput={() => {
+                        this.displayToast("Can't create empty todo");
+                    }}
+                />
+
                 {this._renderToast()}
 
             </div>
@@ -97,5 +113,5 @@ class TodoList extends React.Component {
     }
 }
 
-let domContainer = document.querySelector('#' + ID);
+let domContainer = document.querySelector('#' + DOM_ID);
 ReactDOM.render(<TodoList/>, domContainer);

@@ -8,9 +8,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 // import React from 'react';
 
-// import TodoItem from "./todo_item";
-
-var ID = "todos_list";
+var DOM_ID = "todos_list";
 
 var TodoList = function (_React$Component) {
     _inherits(TodoList, _React$Component);
@@ -30,6 +28,11 @@ var TodoList = function (_React$Component) {
     _createClass(TodoList, [{
         key: "componentDidMount",
         value: function componentDidMount() {
+            this.getAllTodos();
+        }
+    }, {
+        key: "getAllTodos",
+        value: function getAllTodos() {
             var _this2 = this;
 
             getTodos().then(function (todos) {
@@ -146,6 +149,19 @@ var TodoList = function (_React$Component) {
                         })
                     )
                 ),
+                React.createElement(TodoAdd, {
+                    onAdd: function onAdd(text) {
+                        createNewTodo(text).then(function (data) {
+                            _this5.displayToast(data.status);
+                            _this5.getAllTodos();
+                        }).catch(function (err) {
+                            _this5.displayToast("Error creating a new todo");
+                        });
+                    },
+                    onInvalidInput: function onInvalidInput() {
+                        _this5.displayToast("Can't create empty todo");
+                    }
+                }),
                 this._renderToast()
             );
         }
@@ -154,5 +170,5 @@ var TodoList = function (_React$Component) {
     return TodoList;
 }(React.Component);
 
-var domContainer = document.querySelector('#' + ID);
+var domContainer = document.querySelector('#' + DOM_ID);
 ReactDOM.render(React.createElement(TodoList, null), domContainer);

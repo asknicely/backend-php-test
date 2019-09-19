@@ -22,3 +22,18 @@ function changeTodoStatus(id, is_completed): Promise {
         })
     });
 }
+
+function createNewTodo(text): Promise {
+    return new Promise(((resolve, reject) => {
+        fetch(`/api/todo/add`, {
+            method: 'POST',
+            body: JSON.stringify({
+                description: text
+            })
+        }).then((data) => data.json()).then((data) => {
+            resolve(data);
+        }).catch((err) => {
+            reject(err);
+        });
+    }))
+}

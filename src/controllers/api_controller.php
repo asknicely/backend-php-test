@@ -55,3 +55,31 @@ $app->post('/api/todo/delete/{id}', function (Request $request) use ($app) {
         'status' => 'ok'
     ]);
 });
+
+$app->post('/api/todo/add', function (Request $request) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->json([
+            'status' => 'Unauthorized'
+        ], 401);
+    }
+
+    $user_id = $user['id'];
+
+    $data = json_decode($request->getContent(), true);
+
+    $description = $data['description'];
+
+    // Validate the input, trim to make sure no empty spaces are present
+    if (trim($description) == "") {
+        return $app->json([
+            'status' => "Can't create empty todo"
+        ], 400);
+    } else {
+        $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
+        $app['db']->query($sql);
+    }
+
+    return $app->json([
+        'status' => "Added new todo"
+    ]);
+});
