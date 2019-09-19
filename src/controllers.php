@@ -3,7 +3,7 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-$app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
+$app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
     return $twig;
@@ -25,7 +25,7 @@ $app->match('/login', function (Request $request) use ($app) {
         $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
         $user = $app['db']->fetchAssoc($sql);
 
-        if ($user){
+        if ($user) {
             $app['session']->set('user', $user);
             return $app->redirect('/todo');
         }
@@ -40,6 +40,34 @@ $app->get('/logout', function () use ($app) {
     return $app->redirect('/');
 });
 
+$app->get('/todos/{page}', function ($page) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $items_per_page = 5;
+    $page = (int)$page;
+
+    // Make sure min page is 1
+    $page = $page <= 0 ? 1 : $page;
+
+    $items_offset = $items_per_page * ($page - 1);
+
+    $user_id = $user['id'];
+
+    $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT $items_per_page OFFSET $items_offset";
+    $todos = $app['db']->fetchAll($sql);
+
+    $pages_available = $app['db']->fetchArray("SELECT CEILING(COUNT(*) / $items_per_page) FROM todos WHERE user_id = '${user['id']}'")[0];
+
+    return $app['twig']->render('todos.html', [
+        'todos'           => $todos,
+        'pages_available' => $pages_available,
+        'page'            => $page,
+    ]);
+
+})->value('page', 1);
+
 
 $app->get('/todo/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
@@ -48,23 +76,14 @@ $app->get('/todo/{id}', function ($id) use ($app) {
 
     $user_id = $user['id'];
 
-    if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id' AND user_id = '$user_id'";
-        $todo = $app['db']->fetchAssoc($sql);
+    $sql = "SELECT * FROM todos WHERE id = '$id' AND user_id = '$user_id'";
+    $todo = $app['db']->fetchAssoc($sql);
 
-        return $app['twig']->render('todo.html', [
-            'todo' => $todo,
-        ]);
-    } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
-
-        return $app['twig']->render('todos.html', [
-            'todos' => $todos,
-        ]);
-    }
+    return $app['twig']->render('todo.html', [
+        'todo' => $todo,
+    ]);
 })
-->value('id', null);
+    ->value('id', null);
 
 $app->get('/todo/{id}/json', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
@@ -76,7 +95,7 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
     $sql = "SELECT * FROM todos WHERE id = '$id' AND user_id = '$user_id'";
     $todo = $app['db']->fetchAssoc($sql);
 
-    if (!$todo){
+    if (!$todo) {
         return $app->json([
             'status' => 'Not Found'
         ], 404);
@@ -99,11 +118,11 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         $app['session']->getFlashBag()->set('todo_error', 'Please input a description to create a todo ;)');
     } else {
         $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-        $app['db']->executeUpdate($sql);
+        $app['db']->query($sql);
         $app['session']->getFlashBag()->set('todo_add', 'Added new todo');
     }
 
-    return $app->redirect('/todo');
+    return $app->redirect('/todos');
 });
 
 $app->post('/todo/changeCompleteStatus/{id}', function (Request $request) use ($app) {
@@ -119,7 +138,7 @@ $app->post('/todo/changeCompleteStatus/{id}', function (Request $request) use ($
     $sql = "UPDATE todos SET is_completed = {$is_completed} WHERE id = '{$id}' AND user_id = '{$user_id}'";
     $app['db']->executeUpdate($sql);
 
-    return $app->redirect('/todo');
+    return $app->redirect('/todo/' . $id);
 });
 
 
@@ -130,5 +149,5 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     $app['session']->getFlashBag()->set('todo_delete', 'Todo deleted');
 
-    return $app->redirect('/todo');
+    return $app->redirect('/todos');
 });

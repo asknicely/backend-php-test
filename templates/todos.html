@@ -71,5 +71,22 @@
         </div>
     {% endfor %}
 
+    <!--Pagination-->
+    <div>
+        <span>Page: {{page}} / {{pages_available}}</span>
+        <br/>
+        {% if page != 1 %}
+        <a type="button" class="btn btn-light" href="{{ app.request.baseurl }}/todos/{{page-1}}">← Previous</a>
+        {% endif %}
+
+        {% if page != pages_available %}
+        <a type="button" class="btn btn-light" href="{{ app.request.baseurl }}/todos/{{page+1}}">Next →</a>
+        {% endif %}
+
+        <br/>
+        <a type="button" class="btn btn-primary" href="{{ app.request.baseurl }}/todos">First page</a>
+        <a type="button" class="btn btn-primary" href="{{ app.request.baseurl }}/todos/{{pages_available}}">Last page</a>
+    </div>
+
 </div>
 {% endblock %}
