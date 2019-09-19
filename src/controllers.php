@@ -27,7 +27,7 @@ $app->match('/login', function (Request $request) use ($app) {
 
         if ($user) {
             $app['session']->set('user', $user);
-            return $app->redirect('/todo');
+            return $app->redirect('/todos');
         }
     }
 
