@@ -1,6 +1,6 @@
 <?php
 
-require __DIR__.'/controllers/api_controller.php';
+require __DIR__ . '/controllers/api_controller.php';
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -71,9 +71,9 @@ $app->get('/todos/{page}', function ($page) use ($app) {
     $pages_available = $app['db']->fetchArray("SELECT CEILING(COUNT(*) / $items_per_page) FROM todos WHERE user_id = '${user['id']}'")[0];
 
     return $app['twig']->render('todos.html', [
-        'todos'           => $todos,
+        'todos' => $todos,
         'pages_available' => $pages_available,
-        'page'            => $page,
+        'page' => $page,
     ]);
 
 })->value('page', 1);
@@ -124,7 +124,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $description = $request->get('description');
 
     // Validate the input, trim to make sure no empty spaces are present
-    if (trim($description) == "") {
+    if (!TodoValidator::isTodoInputValid($description)) {
         $app['session']->getFlashBag()->set('todo_error', 'Please input a description to create a todo ;)');
     } else {
         $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";

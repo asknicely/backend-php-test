@@ -70,7 +70,7 @@ $app->post('/api/todo/add', function (Request $request) use ($app) {
     $description = $data['description'];
 
     // Validate the input, trim to make sure no empty spaces are present
-    if (trim($description) == "") {
+    if (!TodoValidator::isTodoInputValid($description)) {
         return $app->json([
             'status' => "Can't create empty todo"
         ], 400);
