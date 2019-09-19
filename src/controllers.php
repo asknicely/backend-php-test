@@ -143,8 +143,13 @@ $app->post('/todo/changeCompleteStatus/{id}', function (Request $request) use ($
 
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
+    $user_id = $user['id'];
+
+    $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '$user_id'";
     $app['db']->executeUpdate($sql);
 
     $app['session']->getFlashBag()->set('todo_delete', 'Todo deleted');
