@@ -65,6 +65,29 @@ $app->get('/todo/{id}', function ($id) use ($app) {
 })
 ->value('id', null);
 
+$app->get('/todo/{id}/json', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    if (!$id) {
+        $error = ['message' => 'Missing ID'];
+
+        return $app->json($error, 400);
+    }
+
+    $sql = "SELECT * FROM todos WHERE id = '$id'";
+    $todo = $app['db']->fetchAssoc($sql);
+
+    if (!$todo) {
+        $error = ['message' => 'No todo was found.'];
+
+        return $app->json($error, 404);
+    }
+
+    return $app->json($todo);
+});
+
 $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
