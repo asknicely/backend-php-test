@@ -41,8 +41,7 @@ $app->get('/logout', function () use ($app) {
     return $app->redirect('/');
 });
 
-
-$app->get('/todo/{id}', function ($id) use ($app) {
+$app->get('/todo/{id}', function (Request $request, $id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
@@ -51,19 +50,41 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         $sql = "SELECT * FROM todos WHERE id = '$id'";
         $todo = $app['db']->fetchAssoc($sql);
 
+        if (!$todo) {
+            return $app->redirect('/todo');
+        }
+
         return $app['twig']->render('todo.html', [
             'todo' => $todo,
         ]);
-    } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
-
-        return $app['twig']->render('todos.html', [
-            'todos' => $todos,
-        ]);
     }
+
+    $sql = "SELECT COUNT(*) FROM todos WHERE user_id = '${user['id']}'";
+    $total_todos = $app['db']->fetchColumn($sql);
+
+    $limit = $request->get('limit');
+    $total_pages = ceil($total_todos / $limit);
+
+    $current_page = $request->get('page');
+
+    if ($current_page > $total_pages) {
+        return $app->redirect('/todo');
+    }
+
+    $offset = ($current_page - 1) * $limit;
+
+    $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT ${limit} OFFSET ${offset}";
+    $todos = $app['db']->fetchAll($sql);
+
+    return $app['twig']->render('todos.html', [
+        'todos' => $todos,
+        'total_pages' => $total_pages,
+        'current_page' => $current_page,
+    ]);
 })
-->value('id', null);
+->value('id', null)
+->value('limit', 3)
+->value('page', 1);
 
 $app->get('/todo/{id}/json', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
@@ -99,13 +120,9 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $errors = $app['validator']->validate($description, new Assert\NotBlank());
 
     if (count($errors) > 0) {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
+        $app['session']->getFlashBag()->add('error', 'Please add a description');
 
-        return $app['twig']->render('todos.html', [
-            'todos' => $todos,
-            'errors' => $errors,
-        ]);
+        return $app->redirect('/todo');
     }
 
     $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
