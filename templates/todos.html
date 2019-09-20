@@ -2,6 +2,15 @@
 
 {% block content %}
 <div class="col-md-4 col-md-offset-4">
+    {% for message in app.session.getFlashBag.get('success') %}
+    <div class="alert alert-success alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <strong>Success!</strong>
+        {{ message }}
+    </div>
+    {% endfor %}
     <h1>Todo List:</h1>
     <table class="table table-striped">
         <th>#</th>
@@ -43,7 +52,7 @@
         {% endfor %}
         {% if errors is defined %}
         <tr>
-            <td colspan="4">
+            <td colspan="5">
                 <div class="alert alert-warning" role="alert">
                     Please add a description
                 </div>
