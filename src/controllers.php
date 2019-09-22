@@ -3,6 +3,8 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Constraints as Assert;
+use ORM\User;
+use ORM\Todo;
 
 $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -23,8 +25,7 @@ $app->match('/login', function (Request $request) use ($app) {
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+        $user = (new User($app['db']))->getByNameAndPassword($username, $password);
 
         if ($user) {
             $app['session']->set('user', $user);
@@ -47,8 +48,7 @@ $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
     }
 
     if ($id) {
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+        $todo = (new Todo($app['db']))->getById($id);
 
         if (!$todo) {
             return $app->redirect('/todo');
@@ -59,28 +59,29 @@ $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
         ]);
     }
 
-    $sql = "SELECT COUNT(*) FROM todos WHERE user_id = '${user['id']}'";
-    $total_todos = $app['db']->fetchColumn($sql);
+    $total_todos = (new Todo($app['db']))->countByUserId($user['id']);
 
     $limit = $request->get('limit');
     $total_pages = ceil($total_todos / $limit);
 
     $current_page = $request->get('page');
 
-    if ($current_page > $total_pages) {
+    if ($current_page > $total_pages || $current_page < 0) {
         return $app->redirect('/todo');
     }
 
     $offset = ($current_page - 1) * $limit;
 
-    $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT ${limit} OFFSET ${offset}";
-    $todos = $app['db']->fetchAll($sql);
+    $todos = (new Todo($app['db']))->getAllByUserIdPaginated($user['id'], $limit, $offset);
 
     return $app['twig']->render('todos.html', [
         'todos' => $todos,
         'total_pages' => $total_pages,
         'current_page' => $current_page,
     ]);
+})
+->convert('limit', function ($limit) {
+    return (int) $limit;
 })
 ->value('id', null)
 ->value('limit', 3)
@@ -97,8 +98,7 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
         return $app->json($error, 400);
     }
 
-    $sql = "SELECT * FROM todos WHERE id = '$id'";
-    $todo = $app['db']->fetchAssoc($sql);
+    $todo = (new Todo($app['db']))->getById($id);
 
     if (!$todo) {
         $error = ['message' => 'No todo was found.'];
@@ -125,8 +125,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         return $app->redirect('/todo');
     }
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    (new Todo($app['db']))->create($user_id, $description);
 
     $app['session']->getFlashBag()->add('success', 'New todo was created successfully');
 
@@ -138,17 +137,17 @@ $app->patch("/todo/{id}", function (Request $request, $id) use ($app) {
         return $app->redirect('/login');
     }
 
-    $is_completed = $request->get("is_completed") ? 1 : 0;
-
-    $sql = "UPDATE todos SET is_completed = '$is_completed' WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    (new Todo($app['db']))->update($id, $user['id'], $request->get("is_completed") ? 1 : 0);
 
     return $app->redirect('/todo');
 });
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    (new Todo($app['db']))->destroyById($id, $user['id']);
 
     $app['session']->getFlashBag()->add('success', 'Todo was deleted successfully');
     return $app->redirect('/todo');
