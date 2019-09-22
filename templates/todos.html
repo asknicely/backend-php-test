@@ -33,7 +33,7 @@
             <td>{{ todo.user_id }}</td>
             <td>
                 <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
-                    {{ todo.description }}
+                    {{ todo.description|e }}
                 </a>
             </td>
             <td>
