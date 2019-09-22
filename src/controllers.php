@@ -5,6 +5,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Constraints as Assert;
 use ORM\User;
 use ORM\Todo;
+use Silex\Application;
 
 $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -42,10 +43,18 @@ $app->get('/logout', function () use ($app) {
     return $app->redirect('/');
 });
 
-$app->get('/todo/{id}', function (Request $request, $id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
+$todo = $app['controllers_factory'];
+
+$check_authentification = function (Request $request, Application $app) {
+    if (null === $app['session']->get('user')) {
         return $app->redirect('/login');
     }
+};
+
+$todo->before($check_authentification);
+
+$todo->get('/{id}', function (Request $request, $id) use ($app) {
+    $user = $app['session']->get('user');
 
     if ($id) {
         $todo = (new Todo($app['db']))->getById($id);
@@ -88,10 +97,8 @@ $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
 ->value('limit', 3)
 ->value('page', 1);
 
-$app->get('/todo/{id}/json', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
+$todo->get('/{id}/json', function ($id) use ($app) {
+    $user = $app['session']->get('user');
 
     if (!$id) {
         $error = ['message' => 'Missing ID'];
@@ -110,12 +117,8 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
     return $app->json($todo);
 });
 
-$app->post('/todo/add', function (Request $request) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-
-    $user_id = $user['id'];
+$todo->post('/add', function (Request $request) use ($app) {
+    $user_id = $app['session']->get('user')['id'];
     $description = $request->get('description');
 
     $errors = $app['validator']->validate($description, new Assert\NotBlank());
@@ -133,23 +136,21 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     return $app->redirect('/todo');
 });
 
-$app->patch("/todo/{id}", function (Request $request, $id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
+$todo->patch("/{id}", function (Request $request, $id) use ($app) {
+    $user = $app['session']->get('user');
 
     (new Todo($app['db']))->update($id, $user['id'], $request->get("is_completed") ? 1 : 0);
 
     return $app->redirect('/todo');
 });
 
-$app->match('/todo/delete/{id}', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
+$todo->match('/delete/{id}', function ($id) use ($app) {
+    $user = $app['session']->get('user');
 
     (new Todo($app['db']))->destroyById($id, $user['id']);
 
     $app['session']->getFlashBag()->add('success', 'Todo was deleted successfully');
     return $app->redirect('/todo');
 });
+
+$app->mount('/todo', $todo);
