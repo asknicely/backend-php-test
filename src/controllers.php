@@ -50,7 +50,8 @@ $app->get('/todo/{id}', function (Request $request, $id) use ($app) {
     if ($id) {
         $todo = (new Todo($app['db']))->getById($id);
 
-        if (!$todo) {
+        // Make sure users can only access their own todos
+        if (!$todo || $todo['user_id'] != $user['id']) {
             return $app->redirect('/todo');
         }
 
@@ -100,7 +101,7 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
 
     $todo = (new Todo($app['db']))->getById($id);
 
-    if (!$todo) {
+    if (!$todo || $todo['user_id'] != $user['id']) {
         $error = ['message' => 'No todo was found.'];
 
         return $app->json($error, 404);
