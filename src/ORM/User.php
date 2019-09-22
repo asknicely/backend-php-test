@@ -17,10 +17,9 @@ class User
             return null;
         }
 
-        $sql = "SELECT * FROM users WHERE username = :username and password = :password";
-        return $this->db->fetchAssoc($sql, [
-            "username" => $name,
-            "password" => $password
-        ]);
+        $sql = "SELECT * FROM users WHERE username = :username";
+        $user = $this->db->fetchAssoc($sql, ["username" => $name]);
+
+        return (password_verify($password, $user['password']) ? $user : null);
     }
 }
