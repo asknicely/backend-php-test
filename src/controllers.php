@@ -11,8 +11,9 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
 
 
 $app->get('/', function () use ($app) {
+    $actual_link = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]".dirname("$_SERVER[REQUEST_URI]") . "/README.md";
     return $app['twig']->render('index.html', [
-        'readme' => file_get_contents('README.md'),
+        'readme' => file_get_contents($actual_link),
     ]);
 });
 
@@ -27,7 +28,7 @@ $app->match('/login', function (Request $request) use ($app) {
 
         if ($user){
             $app['session']->set('user', $user);
-            return $app->redirect('/todo');
+            return $app->redirect('todo');
         }
     }
 
@@ -76,7 +77,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
     $app['db']->executeUpdate($sql);
 
-    return $app->redirect('/todo');
+    return $app->redirect('todo');
 });
 
 
