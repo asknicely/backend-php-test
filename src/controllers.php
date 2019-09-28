@@ -77,14 +77,36 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
     $app['db']->executeUpdate($sql);
 
-    return $app->redirect('todo');
+    return $app->redirect('../todo');
 });
 
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
 
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
 
-    return $app->redirect('/todo');
+    return $app->redirect('../../todo');
+});
+
+$app->match('/todo/complete/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $movetodo = "INSERT INTO completed(user_id, description)
+                SELECT 
+                   user_id, description 
+                FROM 
+                   todos
+                WHERE id = '$id'";
+    $app['db']->executeUpdate($movetodo);
+
+    $sql = "DELETE FROM todos WHERE id = '$id'";
+    $app['db']->executeUpdate($sql);
+
+    return $app->redirect('../../todo');
 });
