@@ -39,19 +39,6 @@
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-
-    <script type="text/javascript">
-      var currentUrl = document.URL,
-          lastPart = currentUrl.substr(currentUrl.lastIndexOf('/') + 1),
-          target = document.getElementById("todo-list");
-          switch(lastPart) {
-            case 'json':
-              target.setAttribute('href', '../../todo')
-              break;
-            case 'todo':
-              target.setAttribute('href', '#')
-              break;
-          }
-    </script>
+    <script src="{{ app.request.basepath }}/js/custom.js"></script>
   </body>
 </html>

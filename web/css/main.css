@@ -5,3 +5,35 @@ body {
 .login-form > div {
     margin-top: 10px;
 }
+
+.todo-delete{
+	border: solid 1px;
+    border-radius: 5px;
+    position: absolute;
+    top: 60px;
+    height: 10%;
+    left: 80%;
+    background: red;
+    color: #fff;
+}
+
+.todo-complete{
+	border: solid 1px;
+    border-radius: 5px;
+    position: absolute;
+    top: 60px;
+    height: 10%;
+    left: 80%;
+    background: #04a209;
+    color: #fff;
+}
+
+.todo-added{
+	border: solid 1px;
+    border-radius: 5px;
+    top: 60px;
+    height: 50px;
+    left: 80%;
+    background: #04a209;
+    color: #fff;
+}

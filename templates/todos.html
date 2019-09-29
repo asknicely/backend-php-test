@@ -2,9 +2,9 @@
 
 {% block content %}
 <div class="col-md-4 col-md-offset-4">
-    <h1>Todo List:</h1>
+    <h1 class="todoheader">Todo List:</h1>
     {% for alert in app.session.flashbag.get('warning') %}
-        <div class="error-message">
+        <div class="error-message todo-added">
           <div class="alert"><strong>{{ alert }}</strong></div>
         </div>
     {% endfor %}
@@ -20,20 +20,16 @@
                     </a>
                 </td>
                 <td>
-                    <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
-                        <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
-                    </form>
+                    <button class="btn btn-xs btn-danger remove-todo" target-todo="{{ todo.id }}"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                 </td>
                 <td>
-                    <form method="post" action="{{ app.request.baseurl }}/todo/complete/{{ todo.id }}">
-                        <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-ok glyphicon-white"></span></button>
-                    </form>
+                    <button class="btn btn-xs btn-danger tag-complete" target-todo="{{ todo.id }}"><span class="glyphicon glyphicon-ok glyphicon-white"></span></button>
                 </td>
             </tr>
         {% endfor %}
         <tr>
             <form method="post" action="todo/add">
-                <td colspan="3">
+                <td colspan="4">
                     <input type="textbox" name="description" class="small-6 small-center" placeholder="Description..." required>
                 </td>
                 <td>
