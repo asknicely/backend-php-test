@@ -14,7 +14,11 @@
         <tr>
             <td>{{ todo.id }}</td>
             <td>{{ todo.user_id }}</td>
-            <td>{{ todo.description }}</td>
+            <td>
+                <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}/json">
+                   {{ todo.description }}
+                </a>
+            </td>
             <td>{{ jsonformat }}</td>
             <td>
                 <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
