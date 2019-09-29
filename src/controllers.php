@@ -2,6 +2,7 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\Session;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -55,6 +56,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo, 'jsonformat' => $jsontodo,
         ]);
     } else {
+
         $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
         $todos = $app['db']->fetchAll($sql);
         return $app['twig']->render('todos.html', [
@@ -76,6 +78,8 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
     $app['db']->executeUpdate($sql);
 
+    $app['session']->getFlashBag()->add('warning', 'Todo Added Successfully.');
+
     return $app->redirect('../todo');
 });
 
@@ -87,6 +91,8 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
+
+    $app['session']->getFlashBag()->add('warning', 'Todo Deleted Successfully.');
 
     return $app->redirect('../../todo');
 });
@@ -106,6 +112,8 @@ $app->match('/todo/complete/{id}', function ($id) use ($app) {
 
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
+
+    $app['session']->getFlashBag()->add('warning', 'Todo Completed Successfully.');
 
     return $app->redirect('../../todo');
 });

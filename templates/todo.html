@@ -2,10 +2,13 @@
 
 {% block content %}
 
-
-
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo:</h1>
+    {% for alert in app.session.flashbag.get('warning') %}
+        <div class="error-message">
+          <div class="alert"><strong>{{ alert }}</strong></div>
+        </div>
+    {% endfor %}
     <table class="table table-striped">
         <th>#</th><th>User</th><th>Description</th><th>JSON</th><th></th><th></th>
         <tr>
