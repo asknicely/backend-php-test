@@ -1,7 +1,14 @@
-body {
-  padding-top: 50px;
-}
+body { padding-top: 50px; }
 
-.login-form > div {
-    margin-top: 10px;
-}
+.login-form > div { margin-top: 10px; }
+
+.description-column { width: 340px; }
+
+.iscomplete-column { text-align: left; }
+.iscomplete-column span { font-size:22px; }
+
+.iscomplete-column .glyphicon { cursor: pointer; }
+
+.iscomplete-column .glyphicon-check { color: #810052; }
+.iscomplete-column .glyphicon-check.success { color: #107a26; }
+.iscomplete-column .glyphicon-unchecked { color: #666; }

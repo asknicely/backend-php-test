@@ -17,6 +17,7 @@ $app->get('/', function () use ($app) {
     ]);
 });
 
+
 /**
  * Login action
  */
@@ -85,6 +86,36 @@ $app->get('/todo/{id}/{json_flag}', function ($id, $json_flag) use ($app) {
     }
 })
 ->value('id', null)->value('json_flag', null);
+
+
+/**
+ *  Toggle the isComplete flag of a todo
+ */
+$app->post('/todo/{id}/toggle_complete', function ($id) use ($app) {
+    $response = ['status' => 'error', 'is_complete' => 0];
+    if ((null === $user = $app['session']->get('user')) || empty($id)) {
+        return json_encode($response);
+    }
+
+    // pull the todo
+    $sql = "SELECT * FROM todos WHERE id = ?";
+    $todo = $app['db']->fetchAssoc($sql, [$id]);
+    if ($todo) {
+
+        // toggle the current 'is_complete' flag
+        $is_complete = ($todo['is_complete'] == 1 ? 0 : 1);
+
+        // update the todo with the new flag
+        $sql = "UPDATE todos SET is_complete = ? WHERE id = ?";
+        $app['db']->executeUpdate($sql, [$is_complete, $id]);
+
+        $response['status'] = 'success';
+        $response['is_complete'] = $is_complete;
+    }
+
+    return json_encode($response);
+})
+->value('id', null);
 
 
 /**

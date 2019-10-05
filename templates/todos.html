@@ -5,13 +5,14 @@
     <h1>Todo List:</h1>
     <table class="table table-striped">
 		<tr>
-			<th>#</th><th>User</th><th>Description</th><th></th>
+			<th>#</th><th>User</th><th>Description</th><th>Done?</th><th></th>
 		</tr>
         {% for todo in todos %}
             <tr>
                 <td>{{ todo.id }}</td>
                 <td>{{ todo.user_id }}</td>
-                <td><a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">{{ todo.description }}</a></td>
+                <td class="description-column"><a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">{{ todo.description }}</a></td>
+                <td class="iscomplete-column"><span class="glyphicon glyphicon-{% if todo.is_complete == 0 %}unchecked{% else %}check success{% endif %}" onclick="isCompleteCheckBoxAction(this, {{ todo.id }});"></span></td>
                 <td>
                     <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
                         <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
@@ -21,7 +22,7 @@
         {% endfor %}
         <tr>
             <form method="post" action="{{ app.request.baseurl }}/todo/add">
-                <td colspan="3">
+                <td colspan="4">
                     <input type="textbox" name="description" class="small-6 small-center" placeholder="Description..." required="required">
 					{% if error_message %}
 					<p class="error-message" data-delay="5">{{ error_message | raw }}</p>
@@ -32,4 +33,37 @@
         </tr>
     </table>
 </div>
+{% endblock %}
+
+
+{% block scriptContent %}
+
+    /**
+    *   Toggle the status of a particular todo
+    */
+    function isCompleteCheckBoxAction(box, id) {
+        $(box).removeClass("glyphicon-unchecked glyphicon-check success").addClass("glyphicon-check");
+        $.post("{{ app.request.baseurl }}/todo/" + id + "/toggle_complete", function(data){
+            var d = eval( "(" + data + ")" );
+
+            // just to give it a little time for the user to register the 'processing' state of the is_complete flag
+            setTimeout(function() {
+                $(box).removeClass("glyphicon-unchecked glyphicon-check success").addClass("glyphicon" + (d.is_complete == 1 ? "-check success" : "-unchecked" ));
+            }, 500);
+        });
+    }
+
+    $(function(){
+
+        /**
+        *   Display the error message for [delay] seconds then roll it up.
+        */
+        if ($('.error-message')) {
+            var delay = (parseInt($('.error-message').data('delay')) || 4) * 1000;
+            setTimeout(function() {
+                $('.error-message').slideUp(2000);
+            }, delay);
+            $('[name="description"]').focus();
+        }
+    });
 {% endblock %}
