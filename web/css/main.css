@@ -12,3 +12,5 @@ body { padding-top: 50px; }
 .iscomplete-column .glyphicon-check { color: #810052; }
 .iscomplete-column .glyphicon-check.success { color: #107a26; }
 .iscomplete-column .glyphicon-unchecked { color: #666; }
+
+.alert { margin-bottom: 0; margin: 10px; };

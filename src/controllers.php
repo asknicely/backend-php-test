@@ -56,10 +56,6 @@ $app->get('/todo/{id}/{json_flag}', function ($id, $json_flag) use ($app) {
         return $app->redirect('/login');
     }
 
-	// grab any error messages from session
-	$error_message = $app['session']->get('error_message') ?: '';
-	$app['session']->set('error_message', null);
-
 	// if a non empty id has been supplied then load and display the todo
     if ($id){
         $sql = "SELECT * FROM todos WHERE id = ?";
@@ -72,7 +68,6 @@ $app->get('/todo/{id}/{json_flag}', function ($id, $json_flag) use ($app) {
 		else {
 			return $app['twig']->render('todo.html', [
 				'todo' => $todo,
-				'error_message' => $error_message,
 			]);
 		}
     } else {		
@@ -81,7 +76,6 @@ $app->get('/todo/{id}/{json_flag}', function ($id, $json_flag) use ($app) {
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
-			'error_message' => $error_message,
         ]);
     }
 })
@@ -130,11 +124,13 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $description = $request->get('description');
 	
 	if (empty(trim($description))) {
-		$app['session']->set('error_message', 'Please enter a description');
+        $app['request']->getSession()->getFlashBag()->add('error', "<b>Error</b>: Don't forget to add a description");
 	}
 	else {
 		$sql = "INSERT INTO todos (user_id, description) VALUES (?, ?)";
 		$app['db']->executeUpdate($sql, [$user_id, $description]);
+
+        $app['request']->getSession()->getFlashBag()->add('success', "<b>Success</b>: Your new Todo was saved successfully");
 	}
 
     return $app->redirect('/todo');
@@ -147,6 +143,8 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
     $sql = "DELETE FROM todos WHERE id = ?";
     $app['db']->executeUpdate($sql, [$id]);
+
+    $app['request']->getSession()->getFlashBag()->add('success', "<b>Success</b>: Todo removed successfully");
 
     return $app->redirect('/todo');
 });

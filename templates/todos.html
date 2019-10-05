@@ -1,6 +1,23 @@
 {% extends "layout.html" %}
 
 {% block content %}
+
+{% if app.session.flashBag.has('success') %}
+<div class="alert alert-success">
+    {% for msg in app.session.flashBag.get('success') %}
+    {{ msg | raw }}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if app.session.flashBag.has('error') %}
+<div class="alert alert-danger">
+    {% for msg in app.session.flashBag.get('error') %}
+    {{ msg | raw }}
+    {% endfor %}
+</div>
+{% endif %}
+
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo List:</h1>
     <table class="table table-striped">
@@ -24,9 +41,6 @@
             <form method="post" action="{{ app.request.baseurl }}/todo/add">
                 <td colspan="4">
                     <input type="textbox" name="description" class="small-6 small-center" placeholder="Description..." required="required">
-					{% if error_message %}
-					<p class="error-message" data-delay="5">{{ error_message | raw }}</p>
-					{% endif %}
                 </td>
                 <td><button type="submit" class="btn btn-sm btn-primary">Add</button></td>
             </form>
@@ -56,14 +70,12 @@
     $(function(){
 
         /**
-        *   Display the error message for [delay] seconds then roll it up.
+        *   Remove any alerts after 4 seconds.
         */
-        if ($('.error-message')) {
-            var delay = (parseInt($('.error-message').data('delay')) || 4) * 1000;
+        if ($('.alert')) {
             setTimeout(function() {
-                $('.error-message').slideUp(2000);
-            }, delay);
-            $('[name="description"]').focus();
+                $('.alert').animate({height: 0, padding: 0, opacity: 0}, 2000);
+            }, 4000);
         }
     });
 {% endblock %}
