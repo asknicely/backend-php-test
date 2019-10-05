@@ -4,11 +4,12 @@
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo:</h1>
     <table class="table table-striped">
-        <th>#</th><th>User</th><th>Description</th><th></th>
+        <th>#</th><th>User</th><th>Description</th><th>Done?</th><th></th>
         <tr>
             <td>{{ todo.id }}</td>
             <td>{{ todo.user_id }}</td>
             <td>{{ todo.description }}</td>
+            <td class="iscomplete-column"><span class="glyphicon glyphicon-{% if todo.is_complete == 0 %}unchecked{% else %}check success{% endif %}" onclick="isCompleteCheckBoxAction(this, {{ todo.id }});"></span></td>
             <td>
                 <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
                     <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
@@ -18,4 +19,22 @@
     </table>
 </div>
 
+{% endblock %}
+
+{% block scriptContent %}
+
+    /**
+    *   Toggle the status of a particular todo
+    */
+    function isCompleteCheckBoxAction(box, id) {
+        $(box).removeClass("glyphicon-unchecked glyphicon-check success").addClass("glyphicon-check");
+        $.post("{{ app.request.baseurl }}/todo/" + id + "/toggle_complete", function(data){
+            var d = eval( "(" + data + ")" );
+
+            // just to give it a little time for the user to register the 'processing' state of the is_complete flag
+            setTimeout(function() {
+                $(box).removeClass("glyphicon-unchecked glyphicon-check success").addClass("glyphicon" + (d.is_complete == 1 ? "-check success" : "-unchecked" ));
+            }, 500);
+        });
+    }
 {% endblock %}
