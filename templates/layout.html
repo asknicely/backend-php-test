@@ -39,5 +39,19 @@
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	
+	<script type="text/javascript">
+		{{pageScripts | raw}}
+		
+		$(function(){
+			if ($('.error-message')) {
+				var delay = (parseInt($('.error-message').data('delay')) || 4) * 1000;
+				setTimeout(function() {
+					$('.error-message').slideUp(2000);
+				}, delay);
+				$('[name="description"]').focus();
+			}
+		});
+	</script>
   </body>
 </html>

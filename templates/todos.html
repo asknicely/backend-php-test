@@ -4,16 +4,14 @@
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo List:</h1>
     <table class="table table-striped">
-        <th>#</th><th>User</th><th>Description</th><th></th>
+		<tr>
+			<th>#</th><th>User</th><th>Description</th><th></th>
+		</tr>
         {% for todo in todos %}
             <tr>
                 <td>{{ todo.id }}</td>
                 <td>{{ todo.user_id }}</td>
-                <td>
-                    <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
-                       {{ todo.description }}
-                    </a>
-                </td>
+                <td><a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">{{ todo.description }}</a></td>
                 <td>
                     <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
                         <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
@@ -24,11 +22,12 @@
         <tr>
             <form method="post" action="{{ app.request.baseurl }}/todo/add">
                 <td colspan="3">
-                    <input type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
+                    <input type="textbox" name="description" class="small-6 small-center" placeholder="Description..." required="required">
+					{% if error_message %}
+					<p class="error-message" data-delay="5">{{ error_message | raw }}</p>
+					{% endif %}
                 </td>
-                <td>
-                    <button type="submit" class="btn btn-sm btn-primary">Add</button>
-                </td>
+                <td><button type="submit" class="btn btn-sm btn-primary">Add</button></td>
             </form>
         </tr>
     </table>
