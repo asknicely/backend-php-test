@@ -5,6 +5,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
+    $twig->addGlobal('pages', []);
     $twig->addGlobal('pageScripts', '');
 
     return $twig;
@@ -60,6 +61,9 @@ $app->get('/todo/{id}/{json_flag}', function ($id, $json_flag) use ($app) {
     if ($id){
         $sql = "SELECT * FROM todos WHERE id = ?";
         $todo = $app['db']->fetchAssoc($sql, [$id]);
+        if (false == $todo) {
+            return $app->redirect('/todos');
+        }
 
 		// if the 'json_flag' was set, then return the page content as an encoded json string
 		if ($json_flag) {
@@ -70,16 +74,54 @@ $app->get('/todo/{id}/{json_flag}', function ($id, $json_flag) use ($app) {
 				'todo' => $todo,
 			]);
 		}
-    } else {		
-        $sql = "SELECT * FROM todos WHERE user_id = ?";
-        $todos = $app['db']->fetchAll($sql, [$user['id']]);
-
-        return $app['twig']->render('todos.html', [
-            'todos' => $todos,
-        ]);
+    }
+    else {
+        return $app->redirect('/todos');
     }
 })
 ->value('id', null)->value('json_flag', null);
+
+
+/**
+ * Todos list with pagination
+ */
+$app->get('/todos/{number}', function ($number) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    // set a records per page limit of 5 just to demonstrate the pagination task
+    $resultsPerPage = 5;
+
+    // find how many todos there are, to help with pagination
+    $sql = "SELECT COUNT(id) AS cnt FROM todos WHERE user_id = ?";
+    $row = $app['db']->fetchAssoc($sql, [$user['id']]);
+
+    $pageCount = ceil($row['cnt'] / $resultsPerPage);
+    for ($i = 0; $i < $pageCount; $i++) {
+        if ($i == $number)
+            $pages[] = 'current';
+        else if ($i == 0)
+            $pages[] = 'first';
+        else if ($i == $pageCount)
+            $pages[] = 'last';
+        else if ($i < $number)
+            $pages[] = 'previous';
+        else if ($i > $number)
+            $pages[] = 'next';
+    }
+    $currentPage = $number;
+
+    //
+    $sql = "SELECT * FROM todos WHERE user_id = ? LIMIT " . ($currentPage * $resultsPerPage) . ", " . $resultsPerPage;
+    $todos = $app['db']->fetchAll($sql, [$user['id']]);
+    return $app['twig']->render('todos.html', [
+        'todos' => $todos,
+        'pages' => $pages
+    ]);
+})
+->value('number', 0);
+
 
 
 /**

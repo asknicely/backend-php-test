@@ -21,9 +21,7 @@
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo List:</h1>
     <table class="table table-striped">
-		<tr>
-			<th>#</th><th>User</th><th>Description</th><th>Done?</th><th></th>
-		</tr>
+		<tr><th>#</th><th>User</th><th>Description</th><th>Done?</th><th></th></tr>
         {% for todo in todos %}
             <tr>
                 <td>{{ todo.id }}</td>
@@ -46,6 +44,25 @@
             </form>
         </tr>
     </table>
+
+    {% if pages|length > 1 %}
+    <ul class="pagination">
+        {% for number, position in pages %}
+            {% set displayNumber = number + 1 %}
+            {% if position == 'first' %}
+                <li><a href="/todos/{{ number }}">&laquo;</a></li>
+            {% elseif position == 'less' or position == 'more' %}
+                <li><span>&hellip;</span></li>
+            {% elseif position == 'previous' or position == 'next' %}
+                <li><a href="/todos/{{ number }}">{{ displayNumber }}</a></li>
+            {% elseif position == 'current' %}
+                <li><span><b>{{ displayNumber }}</b></span></li>
+            {% elseif position == 'last' %}
+                <li><a href="/todos/{{ number }}">&raquo;</a></li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+    {% endif %}
 </div>
 {% endblock %}
 

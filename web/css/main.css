@@ -13,4 +13,29 @@ body { padding-top: 50px; }
 .iscomplete-column .glyphicon-check.success { color: #107a26; }
 .iscomplete-column .glyphicon-unchecked { color: #666; }
 
+
+/**
+ * Alert styles
+ */
 .alert { margin-bottom: 0; margin: 10px; };
+
+
+/**
+ *  Pagination styles
+ */
+.pagination {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.pagination li {
+    background-color: #DDD;
+}
+
+.pagination > li > a,
+.pagination > li > span {
+    float: none;
+    padding: 6px 8px;
+    border-radius: 4px;
+}
