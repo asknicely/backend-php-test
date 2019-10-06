@@ -39,3 +39,29 @@ body { padding-top: 50px; }
     padding: 6px 8px;
     border-radius: 4px;
 }
+
+.input-row { display: none; }
+
+
+
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+tr:not(.input-row){
+    opacity: 0;
+    animation-name: fadeIn;
+    animation-duration: 1s;
+    animation-iteration-count: 1;
+    animation-fill-mode: forwards;
+}
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

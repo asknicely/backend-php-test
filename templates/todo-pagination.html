@@ -1,0 +1,20 @@
+{% if pages|length > 1 %}
+<tr class="pagination-row"><td colspan="5">
+<ul class="pagination">
+    {% for number, position in pages %}
+        {% set displayNumber = number + 1 %}
+        {% if position == 'first' %}
+            <li><a href="/todos/{{ number }}">&laquo;</a></li>
+        {% elseif position == 'less' or position == 'more' %}
+            <li><span>&hellip;</span></li>
+        {% elseif position == 'previous' or position == 'next' %}
+            <li><a href="/todos/{{ number }}">{{ displayNumber }}</a></li>
+        {% elseif position == 'current' %}
+            <li><span><b>{{ displayNumber }}</b></span></li>
+        {% elseif position == 'last' %}
+            <li><a href="/todos/{{ number }}">&raquo;</a></li>
+        {% endif %}
+    {% endfor %}
+</ul>
+</td></tr>
+{% endif %}

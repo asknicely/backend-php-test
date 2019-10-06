@@ -2,6 +2,7 @@
 
 {% block content %}
 
+<div class="alerts">
 {% if app.session.flashBag.has('success') %}
 <div class="alert alert-success">
     {% for msg in app.session.flashBag.get('success') %}
@@ -17,25 +18,21 @@
     {% endfor %}
 </div>
 {% endif %}
+</div>
 
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo List:</h1>
-    <table class="table table-striped">
-		<tr><th>#</th><th>User</th><th>Description</th><th>Done?</th><th></th></tr>
-        {% for todo in todos %}
-            <tr>
-                <td>{{ todo.id }}</td>
-                <td>{{ todo.user_id }}</td>
-                <td class="description-column"><a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">{{ todo.description }}</a></td>
-                <td class="iscomplete-column"><span class="glyphicon glyphicon-{% if todo.is_complete == 0 %}unchecked{% else %}check success{% endif %}" onclick="isCompleteCheckBoxAction(this, {{ todo.id }});"></span></td>
-                <td>
-                    <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
-                        <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
-                    </form>
-                </td>
-            </tr>
-        {% endfor %}
-        <tr>
+    <table class="table table-striped todos-list">
+		<tr class="header-row">
+            <th>#</th>
+            <th>User</th>
+            <th>Description</th>
+            <th title="Is this todo complete?"><u>?</u></th>
+            <th>&nbsp;</th>
+        </tr>
+        <tr class="loading-row"><td colspan="5">Loading...</td></tr>
+
+        <tr class="input-row">
             <form method="post" action="{{ app.request.baseurl }}/todo/add">
                 <td colspan="4">
                     <input type="textbox" name="description" class="small-6 small-center" placeholder="Description..." required="required">
@@ -45,29 +42,66 @@
         </tr>
     </table>
 
-    {% if pages|length > 1 %}
-    <ul class="pagination">
-        {% for number, position in pages %}
-            {% set displayNumber = number + 1 %}
-            {% if position == 'first' %}
-                <li><a href="/todos/{{ number }}">&laquo;</a></li>
-            {% elseif position == 'less' or position == 'more' %}
-                <li><span>&hellip;</span></li>
-            {% elseif position == 'previous' or position == 'next' %}
-                <li><a href="/todos/{{ number }}">{{ displayNumber }}</a></li>
-            {% elseif position == 'current' %}
-                <li><span><b>{{ displayNumber }}</b></span></li>
-            {% elseif position == 'last' %}
-                <li><a href="/todos/{{ number }}">&raquo;</a></li>
-            {% endif %}
-        {% endfor %}
-    </ul>
-    {% endif %}
+
 </div>
 {% endblock %}
 
 
 {% block scriptContent %}
+
+    // on every refresh/load run the following
+    $(function(){
+        closeAlerts();
+        reloadTable();
+    });
+
+    function reloadTable() {
+        /**
+        *   Load the todos Ajax'ically then of course the pagination on success.
+        */
+        $('.content-row').remove();
+        $('.pagination-row').remove();
+
+        var page = {{currentPage}};
+        $.get("{{ app.request.baseurl }}/todos/" + page + "/todos", function(data){
+            var data = eval("(" + data + ")");
+            if (data.status == "success" && data.html.length > 0) {
+                $('.loading-row').remove();
+                for (var i = 0; i < data.html.length; i++) {
+                    $('.input-row').before(data.html[i]);
+                }
+
+                $.get("{{ app.request.baseurl }}/todos/" + page + "/pagination", function(paginationData){
+                    var paginationData = eval("(" + paginationData + ")");
+                    if (paginationData.status == "success" && paginationData.html != '') {
+                        $('.input-row').after(paginationData.html);
+                    }
+
+                    // tweak the animation delay to cause a stepped effect
+                    $("tr:not(:first-child)").each(function (index ) {
+                        $(this).css('animation-delay', index * 0.1 +'s');
+                    });
+
+                    // insure that the input bar is visible, otherwise we are not letting the user add a new one.
+                    $('.input-row').css('display', 'table-row');
+                });
+            }
+        });
+    }
+
+    var closeAlertsTimeout = false;
+    function closeAlerts() {
+        /**
+        *   Remove any alerts after 4 seconds.
+        */
+        clearTimeout(closeAlertsTimeout);
+
+        if ($('.alert')) {
+            closeAlertsTimeout = setTimeout(function() {
+                $('.alert').animate({height: 0, padding: 0, opacity: 0}, 2000);
+            }, 4000);
+        }
+    }
 
     /**
     *   Toggle the status of a particular todo
@@ -84,15 +118,25 @@
         });
     }
 
-    $(function(){
+    /**
+    * Delete
+    */
+    function deleteTodo(id) {
+        $.post("{{ app.request.baseurl }}/todo/delete/" + id, function(data) {
+            var data = eval("(" + data + ")");
+            if (data.status == "success") {
+                addAlert('success', '<b>Success</b>: Todo deleted successfully');
+                reloadTable();
+            }
+            else {
+                addAlert('error', '<b>Oops</b>: Unable to delete this todo at this time, please try again later. toodles.');
+            }
+        });
+    }
 
-        /**
-        *   Remove any alerts after 4 seconds.
-        */
-        if ($('.alert')) {
-            setTimeout(function() {
-                $('.alert').animate({height: 0, padding: 0, opacity: 0}, 2000);
-            }, 4000);
-        }
-    });
+    function addAlert(type, content) {
+        var alertClass = type == 'success' ? 'alert-success' : 'alert-danger';
+        $('.alerts').append($('<div class="alert ' + alertClass + '">' + content + '</div>'));
+        closeAlerts();
+    }
 {% endblock %}

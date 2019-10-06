@@ -59,8 +59,8 @@ $app->get('/todo/{id}/{json_flag}', function ($id, $json_flag) use ($app) {
 
 	// if a non empty id has been supplied then load and display the todo
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = ?";
-        $todo = $app['db']->fetchAssoc($sql, [$id]);
+        $sql = "SELECT * FROM todos WHERE id = ? AND user_id = ?";
+        $todo = $app['db']->fetchAssoc($sql, [$id, $user['id']]);
         if (false == $todo) {
             return $app->redirect('/todos');
         }
@@ -85,7 +85,7 @@ $app->get('/todo/{id}/{json_flag}', function ($id, $json_flag) use ($app) {
 /**
  * Todos list with pagination
  */
-$app->get('/todos/{number}', function ($number) use ($app) {
+$app->get('/todos/{number}/{get_content_flag}', function ($number, $get_content_flag) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
@@ -112,15 +112,32 @@ $app->get('/todos/{number}', function ($number) use ($app) {
     }
     $currentPage = $number;
 
-    //
-    $sql = "SELECT * FROM todos WHERE user_id = ? LIMIT " . ($currentPage * $resultsPerPage) . ", " . $resultsPerPage;
-    $todos = $app['db']->fetchAll($sql, [$user['id']]);
-    return $app['twig']->render('todos.html', [
-        'todos' => $todos,
-        'pages' => $pages
-    ]);
+    if (false === $get_content_flag) {
+        // render the todos page
+        return $app['twig']->render('todos.html', ['currentPage' => $currentPage]);
+    }
+    else if ('pagination' == $get_content_flag) {
+        $content = $app['twig']->render('todo-pagination.html', [
+            'pages' => $pages,
+        ]);
+        return json_encode(['html' => $content, 'status' => 'success']);
+    }
+    else if ('todos' == $get_content_flag) {
+        //
+        $sql = "SELECT * FROM todos WHERE user_id = ? LIMIT " . ($currentPage * $resultsPerPage) . ", " . $resultsPerPage;
+        $todos = $app['db']->fetchAll($sql, [$user['id']]);
+
+        $content = [];
+        foreach ($todos as $todo) {
+            $content[] = $app['twig']->render('todo-row.html', [
+                'pages' => $pages,
+                'todo' => $todo,
+            ]);
+        }
+        return json_encode(['html' => $content, 'status' => 'success']);
+    }
 })
-->value('number', 0);
+->value('number', 0)->value('get_content_flag', false);
 
 
 
@@ -134,8 +151,8 @@ $app->post('/todo/{id}/toggle_complete', function ($id) use ($app) {
     }
 
     // pull the todo
-    $sql = "SELECT * FROM todos WHERE id = ?";
-    $todo = $app['db']->fetchAssoc($sql, [$id]);
+    $sql = "SELECT * FROM todos WHERE id = ? AND user_id = ?";
+    $todo = $app['db']->fetchAssoc($sql, [$id, $user['id']]);
     if ($todo) {
 
         // toggle the current 'is_complete' flag
@@ -182,11 +199,25 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 /**
  * Todo deletion action
  */
-$app->match('/todo/delete/{id}', function ($id) use ($app) {
+$app->post('/todo/delete/{id}', function ($id) use ($app) {
+
+    // test if the user is logged in
+    if (null === $user = $app['session']->get('user')) {
+        return json_encode(['status' => 'error']);
+    }
+
+    // check if the current user owns this todo
+    $sql = "SELECT * FROM todos WHERE id = ? AND user_id = ?";
+    $todo = $app['db']->fetchAssoc($sql, [$id, $user['id']]);
+    if (!$todo) {
+        // either the todo doesn't exist, or the current user doesn't own it, either way, a general answer can normally stop people from phishing
+        // for active ids etc.
+        return json_encode(['status' => 'error']);
+    }
+
+    // all good, now lets delete.
     $sql = "DELETE FROM todos WHERE id = ?";
     $app['db']->executeUpdate($sql, [$id]);
 
-    $app['request']->getSession()->getFlashBag()->add('success', "<b>Success</b>: Todo removed successfully");
-
-    return $app->redirect('/todo');
+    return json_encode(['status' => 'success', 'id' => $id]);
 });

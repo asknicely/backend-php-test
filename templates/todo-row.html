@@ -1,0 +1,13 @@
+<tr id="todo{{ todo.id }}" class="content-row">
+    <td>{{ todo.id }}</td>
+    <td>{{ todo.user_id }}</td>
+    <td class="description-column"><a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">{{ todo.description }}</a></td>
+    <td class="iscomplete-column"><span class="glyphicon glyphicon-{% if todo.is_complete == 0 %}unchecked{% else %}check success{% endif %}" onclick="isCompleteCheckBoxAction(this, {{ todo.id }});"></span></td>
+    <td>
+        <!--<form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">-->
+        <button type="button" class="btn btn-xs btn-danger" onclick="deleteTodo({{todo.id}});">
+            <span class="glyphicon glyphicon-remove glyphicon-white"></span>
+        </button>
+        <!--</form>-->
+    </td>
+</tr>
