@@ -36,6 +36,8 @@
                     </form>
                 </td>
             </tr>
+
+
         {% endfor %}
         <tr>
             <form method="post" action="{{ app.request.baseurl }}/todo/add">
@@ -47,6 +49,17 @@
                 </td>
             </form>
         </tr>
+
+        {% if paginator is defined and paginator.PageCount > 1 %}
+        <tr>
+            <td colspan="3">
+
+                {{ paginator.prePageOutput|raw }}
+
+                {{ paginator.nextPageOutput|raw }}
+            </td>
+        </tr>
+        {% endif %}
     </table>
 </div>
 {% endblock %}

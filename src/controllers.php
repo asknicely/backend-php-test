@@ -42,7 +42,7 @@ $app->get('/logout', function () use ($app) {
 });
 
 // get a single todo or list todos
-$app->get('/todo/{id}/{type}', function ($id, $type) use ($app) {
+$app->get('/todo/{id}/{type}', function (Request $request, $id, $type) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
@@ -58,15 +58,39 @@ $app->get('/todo/{id}/{type}', function ($id, $type) use ($app) {
                 'description' => $todo['description']
             ]);
         }
+
         return $app['twig']->render('todo.html', [
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = ?";
-        $todos = $app['db']->fetchAll($sql, [$user['id']]);
+
+        $page = $request->query->get('page');
+        if (!isset($page)) {
+            $page = 1;
+        }
+
+        $perPage = (int) $app['config']['paginator']['per_page'];
+        $offset = ($page - 1) * $perPage;
+
+        $sql = "SELECT COUNT(*) FROM todos WHERE user_id = ?";
+        $count = $app['db']->fetchColumn($sql,[$user['id']]);
+
+        $sql = "SELECT * FROM todos WHERE user_id = ? LIMIT ?, ?";
+        $stmt = $app['db']->prepare($sql);
+        $stmt->bindValue(1, (int) $user['id'], \Doctrine\DBAL\ParameterType::INTEGER);
+        $stmt->bindValue(2, (int) $offset, \Doctrine\DBAL\ParameterType::INTEGER);
+        $stmt->bindValue(3, $perPage, \Doctrine\DBAL\ParameterType::INTEGER);
+        $stmt->execute();
+
+        $todos = $stmt->fetchAll();
+
+        $url = $request->getBaseUrl();
+
+        $paginator = new \Utils\Paginator($count, $page, $perPage, $url);
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
+            'paginator' => $paginator
         ]);
     }
 })
