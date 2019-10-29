@@ -69,7 +69,7 @@ $app->get('/todo/{id}/{type}', function (Request $request, $id, $type) use ($app
             $page = 1;
         }
 
-        $perPage = (int) $app['config']['paginator']['per_page'];
+        $perPage = (int) ($app['config']['paginator']['per_page'] ?? 2);
         $offset = ($page - 1) * $perPage;
 
         $sql = "SELECT COUNT(*) FROM todos WHERE user_id = ?";
