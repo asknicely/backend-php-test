@@ -41,7 +41,7 @@ $app->get('/logout', function () use ($app) {
     return $app->redirect('/');
 });
 
-
+// get a single todo or list todos
 $app->get('/todo/{id}/{type}', function ($id, $type) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
@@ -74,6 +74,7 @@ $app->get('/todo/{id}/{type}', function ($id, $type) use ($app) {
     ->value('type', 'html');
 
 
+// add a todo
 $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
@@ -88,19 +89,32 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     if (count($errors) == 0) {
         $sql = "INSERT INTO todos (user_id, description) VALUES (?, ?)";
         $app['db']->executeUpdate($sql, [$user_id, $description]);
+
+        $app['session']->getFlashBag()->add('success', 'Added a todo successfully.');
+    } else {
+        $app['session']->getFlashBag()->add('error', 'Please type description.');
     }
 
     return $app->redirect('/todo');
 });
 
-
+// delete a todo
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
 
-    $sql = "DELETE FROM todos WHERE id = ? AND user_id = ?";
-    $app['db']->executeUpdate($sql, [$id, $user['id']]);
+    $sql = "SELECT * FROM todos WHERE id = ? AND user_id = ?";
+    $todo = $app['db']->fetchAssoc($sql, [$id, $user['id']]);
+
+    if ($todo) {
+        $sql = "DELETE FROM todos WHERE id = ? AND user_id = ?";
+        $app['db']->executeUpdate($sql, [$id, $user['id']]);
+        $app['session']->getFlashBag()->add('success', 'Deleted a todo successfully.');
+    } else {
+        $app['session']->getFlashBag()->add('error', 'Could not find such todo.');
+    }
+
 
     return $app->redirect('/todo');
 });
@@ -112,8 +126,8 @@ $app->match('/todo/complete/{id}', function ($id) use ($app) {
         return $app->redirect('/login');
     }
 
-    $sql = "SELECT * FROM todos WHERE id = ?";
-    $todo = $app['db']->fetchAssoc($sql, [$id]);
+    $sql = "SELECT * FROM todos WHERE id = ? AND user_id = ?";
+    $todo = $app['db']->fetchAssoc($sql, [$id, $user['id']]);
 
     if ($todo) {
         $sql = "UPDATE todos SET completed_at = ? WHERE id = ? AND user_id = ?";
