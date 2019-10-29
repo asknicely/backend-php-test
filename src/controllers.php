@@ -2,6 +2,7 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Validator\Constraints as Assert;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -22,8 +23,8 @@ $app->match('/login', function (Request $request) use ($app) {
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+        $sql = "SELECT * FROM users WHERE username = ? and password = ?";
+        $user = $app['db']->fetchAssoc($sql,[$username, $password]);
 
         if ($user){
             $app['session']->set('user', $user);
@@ -73,8 +74,13 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $user_id = $user['id'];
     $description = $request->get('description');
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    // validate description
+    $errors = $app['validator']->validate($description, new Assert\NotBlank());
+
+    if (count($errors) == 0) {
+        $sql = "INSERT INTO todos (user_id, description) VALUES (?, ?)";
+        $app['db']->executeUpdate($sql,[$user_id, $description]);
+    }
 
     return $app->redirect('/todo');
 });
