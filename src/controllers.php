@@ -134,13 +134,15 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     if ($todo) {
         $sql = "DELETE FROM todos WHERE id = ? AND user_id = ?";
         $app['db']->executeUpdate($sql, [$id, $user['id']]);
-        $app['session']->getFlashBag()->add('success', 'Deleted a todo successfully.');
+        return $app->json([
+            'message' => "Deleted a todo successfully."
+        ],200);
     } else {
-        $app['session']->getFlashBag()->add('error', 'Could not find such todo.');
+        return $app->json([
+            'message' => "Could not find such todo."
+        ], 404);
     }
 
-
-    return $app->redirect('/todo');
 });
 
 // complete a todo
@@ -161,7 +163,14 @@ $app->match('/todo/complete/{id}', function ($id) use ($app) {
                 $id,
                 $user['id']
             ]);
+        return $app->json([
+            'message' => "Completed a todo successfully."
+        ],200);
+
+    } else {
+        return $app->json([
+            'message' => "Could not find such todo."
+        ], 404);
     }
 
-    return $app->redirect('/todo');
 });
