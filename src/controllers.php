@@ -3,6 +3,14 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+$authMiddleware = function (Request $request, $app) {
+    $user = $app['session']->get('user');
+    if (empty($user)) {
+        return $app->redirect('/login');
+    }
+};
+
+
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
@@ -38,23 +46,23 @@ $app->match('/login', function (Request $request) use ($app) {
 $app->get('/logout', function () use ($app) {
     $app['session']->set('user', null);
     return $app->redirect('/');
-});
+})
+->before($authMiddleware);
 
 
-$app->get('/todo/{id}', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
+$app->get('/todo/{id}', function (?int $id) use ($app) {
+    $user    = $app['session']->get('user');
+    $user_id = $user['id'];
 
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
+        $sql = "SELECT * FROM todos WHERE id = '$id' AND user_id = '$user_id'";
         $todo = $app['db']->fetchAssoc($sql);
 
         return $app['twig']->render('todo.html', [
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+        $sql = "SELECT * FROM todos WHERE user_id = '$user_id'";
         $todos = $app['db']->fetchAll($sql);
 
         return $app['twig']->render('todos.html', [
@@ -62,28 +70,28 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         ]);
     }
 })
-->value('id', null);
+->value('id', null)
+->before($authMiddleware);
 
 
 $app->post('/todo/add', function (Request $request) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-
-    $user_id = $user['id'];
+    $user        = $app['session']->get('user');
+    $user_id     = $user['id'];
     $description = $request->get('description');
 
     $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
     $app['db']->executeUpdate($sql);
 
     return $app->redirect('/todo');
-});
+})->before($authMiddleware);
 
 
-$app->match('/todo/delete/{id}', function ($id) use ($app) {
+$app->match('/todo/delete/{id}', function (int $id) use ($app) {
+    $user    = $app['session']->get('user');
+    $user_id = $user['id'];
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
+    $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '$user_id'";
     $app['db']->executeUpdate($sql);
 
     return $app->redirect('/todo');
-});
+})->before($authMiddleware);
