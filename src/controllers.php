@@ -3,12 +3,55 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+// auth check
 $authMiddleware = function (Request $request, $app) {
     $user = $app['session']->get('user');
     if (empty($user)) {
         return $app->redirect('/login');
     }
 };
+
+// api endpoints
+
+// get todos
+$app->get('/api/v1/todo', function () use ($app) {
+    $user    = $app['session']->get('user');
+    $user_id = $user['id'];
+
+        $sql = "SELECT todos.*, users.username  FROM todos INNER JOIN users ON todos.user_id = users.id WHERE user_id = '$user_id'";
+        $todos = $app['db']->fetchAll($sql);
+
+        return $app->json($todos, Response::HTTP_OK);
+})
+->before($authMiddleware);
+
+// add a todo
+$app->post('/api/v1/todo/add', function (Request $request) use ($app) {
+    if (0 === strpos($request->headers->get('Content-Type'), 'application/json')) {
+        $data        = json_decode($request->getContent(), true);
+        $description = $data['description'] ?? null;
+        $user        = $app['session']->get('user');
+        $user_id     = $user['id'];
+        $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
+        $app['db']->executeUpdate($sql);
+
+        return $app->json([], Response::HTTP_OK);
+    }
+
+    return $app->json([], Response::HTTP_BAD_REQUEST);
+})
+->before($authMiddleware);
+
+// delete a todo
+$app->delete('/api/v1/todo/{id}', function (int $id) use ($app) {
+    $user    = $app['session']->get('user');
+    $user_id = $user['id'];
+
+    $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '$user_id'";
+    $app['db']->executeUpdate($sql);
+
+    return $app->json([], Response::HTTP_OK);
+})->before($authMiddleware);
 
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
@@ -72,26 +115,3 @@ $app->get('/todo/{id}', function (?int $id) use ($app) {
 })
 ->value('id', null)
 ->before($authMiddleware);
-
-
-$app->post('/todo/add', function (Request $request) use ($app) {
-    $user        = $app['session']->get('user');
-    $user_id     = $user['id'];
-    $description = $request->get('description');
-
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
-
-    return $app->redirect('/todo');
-})->before($authMiddleware);
-
-
-$app->match('/todo/delete/{id}', function (int $id) use ($app) {
-    $user    = $app['session']->get('user');
-    $user_id = $user['id'];
-
-    $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '$user_id'";
-    $app['db']->executeUpdate($sql);
-
-    return $app->redirect('/todo');
-})->before($authMiddleware);
