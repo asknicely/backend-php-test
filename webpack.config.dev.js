@@ -9,6 +9,7 @@ module.exports = {
   mode: 'development',
   watch: true,
   entry: [
+    './templates/js/todo.js',
     './templates/js/todos.js',
   ],
 

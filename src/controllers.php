@@ -18,10 +18,26 @@ $app->get('/api/v1/todo', function () use ($app) {
     $user    = $app['session']->get('user');
     $user_id = $user['id'];
 
-        $sql = "SELECT todos.*, users.username  FROM todos INNER JOIN users ON todos.user_id = users.id WHERE user_id = '$user_id'";
+        $sql = "SELECT todos.*, users.username FROM todos 
+            INNER JOIN users ON todos.user_id = users.id 
+            WHERE user_id = '$user_id'";
         $todos = $app['db']->fetchAll($sql);
 
         return $app->json($todos, Response::HTTP_OK);
+})
+->before($authMiddleware);
+
+// get a s cpecific
+$app->get('/api/v1/todo/{id}', function (int $id) use ($app) {
+    $user    = $app['session']->get('user');
+    $user_id = $user['id'];
+
+    $sql = "SELECT todos.*, users.username FROM todos 
+        INNER JOIN users ON todos.user_id = users.id 
+        WHERE todos.id='$id'AND user_id = '$user_id'";
+    $todo = $app['db']->fetchAssoc($sql);
+
+    return $app->json($todo, Response::HTTP_OK);
 })
 ->before($authMiddleware);
 
