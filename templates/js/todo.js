@@ -6,8 +6,9 @@ const options = { name: 'lodash' }
 
 Vue.use(VueLodash, options)
 
-
-new Vue({
-    el: 'todo',
-    render: h => h(Todo)
-});
+if (document.getElementById('todo')) {
+    new Vue({
+        el: '#todo',
+        render: h => h(Todo)
+    });
+}
