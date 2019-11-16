@@ -36,7 +36,7 @@
     </div>
 </template>
 <script>
-    import axios from "axios";
+    import api from '../api/todo';
 
     export default {
         computed: {
@@ -46,23 +46,24 @@
         },
         methods: {
             deleteTodo(id) {
-                axios.delete("/api/v1/todo/" + id).then(response => {
+                api.delete(id).then(response => {
                     this.loadTodos();
                 });
             },
             addTodo() {
-                axios.post("/api/v1/todo/add", {
+                const data = {
                     description: this.description,
-                }).then(response => {
+                };
+
+                api.store(data).then(response => {
                     this.description = '';
                     this.loadTodos();
                 });
             },
             loadTodos() {
-                axios.get("/api/v1/todo")
-                    .then(response => {
-                        this.todos = response.data
-                    });
+                api.all().then(response => {
+                    this.todos = response.data
+                });
             }
         },
 

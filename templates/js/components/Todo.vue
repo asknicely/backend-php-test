@@ -24,7 +24,7 @@
     </div>
 </template>
 <script>
-    import axios from "axios";
+    import api from '../api/todo';
 
     export default {
         computed: {
@@ -34,15 +34,14 @@
         },
         methods: {
             deleteTodo(id) {
-                axios.delete("/api/v1/todo/" + id).then(response => {
+                api.delete(id).then(response => {
                     window.location.href = "/todo";
                 });
             },
-            loadTodos() {
-                axios.get("/api/v1/todo/" + this.id)
-                    .then(response => {
-                        this.todo = response.data
-                    });
+            loadData() {
+                api.show(this.id).then(response => {
+                    this.todo = response.data
+                });
             },
             getIdfromUrl() {
                 return window.location.pathname.split('/')[2];
@@ -60,7 +59,7 @@
         mounted() {
             this.id = this.getIdfromUrl()
             if (this.id > 0) {
-                this.loadTodos();
+                this.loadData();
             }
         },
     }
