@@ -2,6 +2,9 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Controllers\PostController;
+use Controllers\Api\TodoController;
+use Doctrine\DBAL\Connection;
 
 // auth check
 $authMiddleware = function (Request $request, $app) {
@@ -11,62 +14,37 @@ $authMiddleware = function (Request $request, $app) {
     }
 };
 
-// api endpoints
+/**
+ * API endpoints
+ */
 
 // get todos
-$app->get('/api/v1/todo', function () use ($app) {
-    $user    = $app['session']->get('user');
-    $user_id = $user['id'];
+$app->get('/api/v1/todo', function() use ($app) {
+    $controller = new TodoController($app['db'], $app['session']);
+    return $controller->index();
+})->before($authMiddleware);
 
-        $sql = "SELECT todos.*, users.username FROM todos 
-            INNER JOIN users ON todos.user_id = users.id 
-            WHERE user_id = '$user_id'";
-        $todos = $app['db']->fetchAll($sql);
 
-        return $app->json($todos, Response::HTTP_OK);
-})
-->before($authMiddleware);
-
-// get a s cpecific
+// get a specific todo
 $app->get('/api/v1/todo/{id}', function (int $id) use ($app) {
-    $user    = $app['session']->get('user');
-    $user_id = $user['id'];
-
-    $sql = "SELECT todos.*, users.username FROM todos 
-        INNER JOIN users ON todos.user_id = users.id 
-        WHERE todos.id='$id'AND user_id = '$user_id'";
-    $todo = $app['db']->fetchAssoc($sql);
-
-    return $app->json($todo, Response::HTTP_OK);
+    $controller = new TodoController($app['db'], $app['session']);
+    return $controller->show($id);
 })
 ->before($authMiddleware);
+
 
 // add a todo
 $app->post('/api/v1/todo/add', function (Request $request) use ($app) {
-    if (0 === strpos($request->headers->get('Content-Type'), 'application/json')) {
-        $data        = json_decode($request->getContent(), true);
-        $description = $data['description'] ?? null;
-        $user        = $app['session']->get('user');
-        $user_id     = $user['id'];
-        $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-        $app['db']->executeUpdate($sql);
-
-        return $app->json([], Response::HTTP_OK);
-    }
-
-    return $app->json([], Response::HTTP_BAD_REQUEST);
+    $controller = new TodoController($app['db'], $app['session']);
+    return $controller->store($request);
 })
 ->before($authMiddleware);
 
+
 // delete a todo
 $app->delete('/api/v1/todo/{id}', function (int $id) use ($app) {
-    $user    = $app['session']->get('user');
-    $user_id = $user['id'];
-
-    $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '$user_id'";
-    $app['db']->executeUpdate($sql);
-
-    return $app->json([], Response::HTTP_OK);
+    $controller = new TodoController($app['db'], $app['session']);
+    return $controller->delete($id);
 })->before($authMiddleware);
 
 
@@ -76,6 +54,9 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     return $twig;
 }));
 
+/**
+ * Pages
+ */
 
 $app->get('/', function () use ($app) {
     return $app['twig']->render('index.html', [
