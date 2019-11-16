@@ -28,7 +28,7 @@
                         <input v-model="description" placeholder="Description..." class="small-6 small-center">
                     </td>
                     <td>
-                        <button v-on:click="addTodo()" class="btn btn-sm btn-primary">Add</button>
+                        <button v-on:click="addTodo()" :disabled="isDescriptionEmpty" class="btn btn-sm btn-primary">Add</button>
                     </td>
                 </tr>
             </tbody>
@@ -39,6 +39,11 @@
     import axios from "axios";
 
     export default {
+        computed: {
+            isDescriptionEmpty() {
+                return _.isEmpty(this.description);
+            }
+        },
         methods: {
             deleteTodo(id) {
                 axios.delete("/api/v1/todo/" + id).then(response => {
