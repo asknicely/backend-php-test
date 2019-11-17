@@ -33,6 +33,7 @@ php composer.phar install
 cp config/config.yml.dist config/config.yml
 mysql -u root <database> < resources/database.sql
 mysql -u root <database> < resources/fixtures.sql
+mysql -u root <database> < resources/migration_add_completed_column.sql
 php -S localhost:1337 -t web/ web/index.php
 ```
 You can change the database connection from the file `config/config.yml`.
