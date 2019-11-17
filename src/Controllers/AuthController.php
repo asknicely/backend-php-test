@@ -48,13 +48,17 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $username = $request->get('username');
-        $password = $request->get('password');
+        $password = password_hash(md5($request->get('password')), PASSWORD_BCRYPT);
 
         if (!empty($username) && !empty($password)) {
-            $sql = "SELECT * FROM users WHERE username = '{$username}' and password = '{$password}'";
+            $sql = "SELECT * FROM users WHERE username = '{$username}'";
             $user = $this->getConnection()->fetchAssoc($sql);
 
-            if ($user) {
+            if (empty($user)) {
+                return $this->app->redirect('/login');
+            }
+
+            if (password_verify($user['password'], $password)) {
                 $this->getSession()->set('user', $user);
                 return $this->app->redirect('/todo');
             }
