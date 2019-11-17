@@ -70,9 +70,10 @@ class TodoController extends Controller
             return new JsonResponse([], Response::HTTP_BAD_REQUEST);
         }
 
-        $description = $data['description'];
+        $description = htmlspecialchars($data['description'], ENT_QUOTES);
         $userId      = $this->getUserId();
         $sql         = "INSERT INTO todos (user_id, description) VALUES ({$userId}, '{$description}')";
+
         $this->getConnection()->executeUpdate($sql);
 
         return new JsonResponse([], Response::HTTP_OK);
