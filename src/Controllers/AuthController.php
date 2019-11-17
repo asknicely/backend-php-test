@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
  * @todo get rid of plain mysql queries
  * @todo create a repository
  * @todo validate request data in custom Request objects
+ * @todo move all the login from the controller
  */
 class AuthController extends Controller
 {
@@ -53,7 +54,9 @@ class AuthController extends Controller
         $username = $request->get('username');
         $password = password_hash(md5($request->get('password')), PASSWORD_BCRYPT);
 
+        // @todo validation should be done in a custom request class
         if (!empty($username) && !empty($password)) {
+            // @todo all queries should be done in a repository
             $sql = "SELECT * FROM users WHERE username = '{$username}'";
             $user = $this->getConnection()->fetchAssoc($sql);
 

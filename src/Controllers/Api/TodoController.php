@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
  * @todo get rid of plain mysql queries
  * @todo create a repository
  * @todo validate request data in custom Request objects
+ * @todo move all the login from the controller
  */
 class TodoController extends Controller
 {
@@ -25,6 +26,7 @@ class TodoController extends Controller
     {
         $userId = $this->getUserId();
 
+        // @todo all queries should be done in a repository
         $sql = "SELECT todos.*, users.username FROM todos 
             INNER JOIN users ON todos.user_id = users.id 
             WHERE user_id = {$userId}";
@@ -44,6 +46,7 @@ class TodoController extends Controller
     {
         $userId = $this->getUserId();
 
+        // @todo all queries should be done in a repository
         $sql = "SELECT todos.*, users.username FROM todos 
             INNER JOIN users ON todos.user_id = users.id 
             WHERE todos.id='$id'AND user_id = '$userId'";
@@ -61,6 +64,7 @@ class TodoController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // @todo validation should be done in a custom request class
         if (!$this->isJsonRequest($request)) {
             return new JsonResponse([], Response::HTTP_BAD_REQUEST);
         }
@@ -70,6 +74,7 @@ class TodoController extends Controller
             return new JsonResponse([], Response::HTTP_BAD_REQUEST);
         }
 
+        // @todo all queries should be done in a repository
         $description = htmlspecialchars($data['description'], ENT_QUOTES);
         $userId      = $this->getUserId();
         $sql         = "INSERT INTO todos (user_id, description) VALUES ({$userId}, '{$description}')";
@@ -88,6 +93,7 @@ class TodoController extends Controller
      */
     public function update(int $id, Request $request): JsonResponse
     {
+        // @todo validation should be done in a custom request class
         if (!$this->isJsonRequest($request)) {
             return new JsonResponse([], Response::HTTP_BAD_REQUEST);
         }
@@ -100,6 +106,7 @@ class TodoController extends Controller
         $completed = (int) $data['completed'];
         $userId    = $this->getUserId();
 
+        // @todo all queries should be done in a repository
         $sql = "UPDATE todos SET completed={$completed} WHERE id={$id} AND user_id={$userId}";
         $this->getConnection()->executeUpdate($sql);
 
@@ -117,6 +124,7 @@ class TodoController extends Controller
     {
         $userId = $this->getUserId();
 
+        // @todo all queries should be done in a repository
         $sql = "DELETE FROM todos WHERE id = {$id} AND user_id = '{$userId}'";
         $this->getConnection()->executeUpdate($sql);
 

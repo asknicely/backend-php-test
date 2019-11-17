@@ -14,6 +14,7 @@ use Twig\Environment;
  * @package Controllers
  * @todo get rid of plain mysql queries
  * @todo create a repository
+ * @todo move all the login from the controller
  */
 class TodoController extends Controller
 {
@@ -52,6 +53,7 @@ class TodoController extends Controller
     {
         $userId = $this->getUserId();
 
+        // @todo all queries should be done in a repository
         $sql = "SELECT todos.*, users.username FROM todos 
             INNER JOIN users ON todos.user_id = users.id 
             WHERE todos.id={$id} AND user_id = {$userId}";
