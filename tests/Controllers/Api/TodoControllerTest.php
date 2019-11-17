@@ -28,6 +28,6 @@ class TodoControllerTest extends TestCase
         $result = $controller->delete(1);
 
         $this->assertInstanceOf(JsonResponse::class, $result);
-        $this->assertEquals(Response::HTTP_OK, $result->getStatusCode());
+        $this->assertEquals(Response::HTTP_NO_CONTENT, $result->getStatusCode());
     }
 }

@@ -36,7 +36,7 @@ class TodoController extends Controller
     }
 
     /**
-     * Get a specific todo with
+     * Get a specific todo
      *
      * @param integer $id
      *
