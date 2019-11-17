@@ -5,26 +5,20 @@
             <tbody>
                 <tr>
                     <th>#</th>
+                    <th>Completed</th>
                     <th>User</th>
                     <th>Description</th>
                     <th></th>
                 </tr>
-                <tr v-for="todo in todos">
-                    <td># {{ todo.id }}</td>
-                    <td>{{ todo.username }}</td>
-                    <td>
-                        <a :href="'/todo/' + todo.id">
-                            {{ todo.description }}
-                        </a>
-                    </td>
-                    <td>
-                        <button v-on:click="deleteTodo(todo.id)" class="btn btn-xs btn-danger">
-                            <span class="glyphicon glyphicon-remove glyphicon-white"></span>
-                        </button>
-                    </td>
-                </tr>
+                <todo-row
+                    v-for="todo in todos"
+                    :todo="todo"
+                    :key="todo.id"
+                    @deleted="loadTodos"
+                    @updated="loadTodos"
+                />
                 <tr>
-                    <td colspan="3">
+                    <td colspan="4">
                         <input v-model="description" placeholder="Description..." class="small-6 small-center">
                     </td>
                     <td>
@@ -36,20 +30,23 @@
     </div>
 </template>
 <script>
+    import TodoRow from './TodoRow.vue';
     import api from '../api/todo';
     import { isEmpty } from 'lodash';
 
     export default {
+        components: {
+            TodoRow,
+        },
         computed: {
             isDescriptionEmpty() {
                 return isEmpty(this.description);
             }
         },
         methods: {
-            deleteTodo(id) {
-                api.delete(id).then(response => {
-                    this.loadTodos();
-                });
+            isCompleted(value) {
+                console.log(value);
+                return false;
             },
             addTodo() {
                 const data = {

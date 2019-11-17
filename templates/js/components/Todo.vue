@@ -5,20 +5,17 @@
             <tbody>
                 <tr>
                     <th>#</th>
+                    <th>Completed</th>
                     <th>User</th>
                     <th>Description</th>
                     <th></th>
                 </tr>
-                <tr>
-                    <td># {{ todo.id }}</td>
-                    <td>{{ todo.username }}</td>
-                    <td>{{ todo.description }}</td>
-                    <td>
-                        <button v-on:click="deleteTodo(todo.id)" class="btn btn-xs btn-danger">
-                            <span class="glyphicon glyphicon-remove glyphicon-white"></span>
-                        </button>
-                    </td>
-                </tr>
+                <todo-row
+                    v-if="isLoaded"
+                    :todo="todo"
+                    @deleted="deleted"
+                    @updated="loadData"
+                />
             </tbody>
         </table>
         <div>
@@ -29,18 +26,20 @@
 <script>
     import api from '../api/todo';
     import { isEmpty } from 'lodash';
+    import TodoRow from './TodoRow.vue';
 
     export default {
+        components: {
+            TodoRow,
+        },
         computed: {
             isLoaded() {
                 return !isEmpty(this.todo);
             },
         },
         methods: {
-            deleteTodo(id) {
-                api.delete(id).then(response => {
-                    window.location.href = "/todo";
-                });
+            deleted(id) {
+                window.location.href = "/todo";
             },
             loadData() {
                 api.show(this.id).then(response => {
