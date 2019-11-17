@@ -14,7 +14,7 @@ use Twig\Environment;
  * @package Controllers
  * @todo get rid of plain mysql queries
  * @todo create a repository
- * @todo move all the login from the controller
+ * @todo move all the logic from the controller
  */
 class TodoController extends Controller
 {

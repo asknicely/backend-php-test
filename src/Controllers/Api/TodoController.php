@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
  * @todo get rid of plain mysql queries
  * @todo create a repository
  * @todo validate request data in custom Request objects
- * @todo move all the login from the controller
+ * @todo move all the logic from the controller
  */
 class TodoController extends Controller
 {
