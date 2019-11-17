@@ -36,7 +36,9 @@ class TodoController extends Controller
      */
     public function show(int $id): string
     {
-        return $this->getTwig()->render('todo.html');
+        return $this->getTwig()->render('todo.html', [
+            'id' => $id
+        ]);
     }
 
     /**

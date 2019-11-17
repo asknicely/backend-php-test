@@ -33,6 +33,12 @@
     Vue.use(VueToast);
 
     export default {
+        props: {
+            id: {
+                type: Number,
+                required: true
+            },
+        },
         components: {
             TodoRow,
         },
@@ -56,24 +62,17 @@
                     Vue.$toast.error('Unable to load the data');
                 });
             },
-            getIdfromUrl() {
-                return window.location.pathname.split('/')[2];
-            },
         },
 
         data() {
             return {
-                id: null,
                 todo: null,
                 description: '',
             }
         },
 
         mounted() {
-            this.id = this.getIdfromUrl();
-            if (this.id > 0) {
-                this.loadData();
-            }
+            this.loadData();
         },
     }
 </script>
