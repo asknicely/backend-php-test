@@ -21,6 +21,9 @@
                 </tr>
             </tbody>
         </table>
+        <div>
+            <a href="/todo" class="btn btn-sm btn-primary">Go back</a>
+        </div>
     </div>
 </template>
 <script>
