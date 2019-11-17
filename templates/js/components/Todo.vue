@@ -25,11 +25,12 @@
 </template>
 <script>
     import api from '../api/todo';
+    import { isEmpty } from 'lodash';
 
     export default {
         computed: {
             isLoaded() {
-                return !_.isEmpty(this.todo);
+                return !isEmpty(this.todo);
             },
         },
         methods: {
@@ -57,7 +58,7 @@
         },
 
         mounted() {
-            this.id = this.getIdfromUrl()
+            this.id = this.getIdfromUrl();
             if (this.id > 0) {
                 this.loadData();
             }

@@ -37,11 +37,12 @@
 </template>
 <script>
     import api from '../api/todo';
+    import { isEmpty } from 'lodash';
 
     export default {
         computed: {
             isDescriptionEmpty() {
-                return _.isEmpty(this.description);
+                return isEmpty(this.description);
             }
         },
         methods: {

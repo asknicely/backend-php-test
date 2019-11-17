@@ -17,52 +17,40 @@ $authMiddleware = function (Request $request, $app) {
 /**
  * API endpoints
  */
+$app['todos.controller'] = function() use ($app) {
+    return new TodoController($app['db'], $app['session']);
+};
 
 // get todos
-$app->get('/api/v1/todo', function() use ($app) {
-    $controller = new TodoController($app['db'], $app['session']);
-    return $controller->index();
-})->before($authMiddleware);
-
+$app->get('/api/v1/todo', "todos.controller:index")
+    ->before($authMiddleware);
 
 // get a specific todo
-$app->get('/api/v1/todo/{id}', function (int $id) use ($app) {
-    $controller = new TodoController($app['db'], $app['session']);
-    return $controller->show($id);
-})
-->before($authMiddleware);
-
-
-// add a todo
-$app->post('/api/v1/todo/add', function (Request $request) use ($app) {
-    $controller = new TodoController($app['db'], $app['session']);
-    return $controller->store($request);
-})
-->before($authMiddleware);
-
+$app->get('/api/v1/todo/{id}', "todos.controller:show")
+    ->before($authMiddleware);
 
 // delete a todo
-$app->delete('/api/v1/todo/{id}', function (int $id) use ($app) {
-    $controller = new TodoController($app['db'], $app['session']);
-    return $controller->delete($id);
-})->before($authMiddleware);
+$app->delete('/api/v1/todo/{id}', "todos.controller:delete")
+    ->before($authMiddleware);
 
+// add a todo
+$app->post('/api/v1/todo/add', "todos.controller:store")
+    ->before($authMiddleware);
+
+/**
+ * Pages
+ */
+$app->get('/', function () use ($app) {
+    return $app['twig']->render('index.html', [
+        'readme' => file_get_contents('README.md'),
+    ]);
+});
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
     return $twig;
 }));
-
-/**
- * Pages
- */
-
-$app->get('/', function () use ($app) {
-    return $app['twig']->render('index.html', [
-        'readme' => file_get_contents('README.md'),
-    ]);
-});
 
 
 $app->match('/login', function (Request $request) use ($app) {
@@ -95,19 +83,9 @@ $app->get('/todo/{id}', function (?int $id) use ($app) {
     $user_id = $user['id'];
 
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id' AND user_id = '$user_id'";
-        $todo = $app['db']->fetchAssoc($sql);
-
-        return $app['twig']->render('todo.html', [
-            'todo' => $todo,
-        ]);
+        return $app['twig']->render('todo.html');
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '$user_id'";
-        $todos = $app['db']->fetchAll($sql);
-
-        return $app['twig']->render('todos.html', [
-            'todos' => $todos,
-        ]);
+        return $app['twig']->render('todos.html');
     }
 })
 ->value('id', null)
