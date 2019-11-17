@@ -18,7 +18,11 @@
                 </tr>
 </template>
 <script>
+    import Vue from 'vue';
+    import VueToast from 'vue-toast-notification';
+    import 'vue-toast-notification/dist/index.css';
     import api from '../api/todo';
+    Vue.use(VueToast);
 
     export default {
         props: {
@@ -39,6 +43,8 @@
 
                     api.update(this.todo.id, data).then(response => {
                         this.$emit('updated')
+                    }).catch(response => {
+                        Vue.$toast.error('Unable to update a todo');
                     });
                 },
             },
@@ -47,6 +53,8 @@
             deleteTodo(id) {
                 api.delete(id).then(response => {
                     this.$emit('deleted')
+                }).catch(response => {
+                        Vue.$toast.error('Unable to delete a todo');
                 });
             },
         }

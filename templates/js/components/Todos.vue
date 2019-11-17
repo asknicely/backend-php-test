@@ -14,8 +14,8 @@
                     v-for="todo in todos"
                     :todo="todo"
                     :key="todo.id"
-                    @deleted="loadTodos"
-                    @updated="loadTodos"
+                    @deleted="deleted"
+                    @updated="updated"
                 />
                 <tr>
                     <td colspan="4">
@@ -30,9 +30,13 @@
     </div>
 </template>
 <script>
+    import Vue from 'vue';
+    import VueToast from 'vue-toast-notification';
+    import 'vue-toast-notification/dist/index.css';
     import TodoRow from './TodoRow.vue';
     import api from '../api/todo';
     import { isEmpty } from 'lodash';
+    Vue.use(VueToast);
 
     export default {
         components: {
@@ -45,7 +49,6 @@
         },
         methods: {
             isCompleted(value) {
-                console.log(value);
                 return false;
             },
             addTodo() {
@@ -56,11 +59,24 @@
                 api.store(data).then(response => {
                     this.description = '';
                     this.loadTodos();
+
+                    Vue.$toast.open('A todo has been added');
+                }).catch(response => {
+                    Vue.$toast.error('Unable to save a todo');
                 });
+            },
+            deleted() {
+                this.loadTodos();
+                Vue.$toast.open('A todo has been deleted');
+            },
+            updated() {
+                Vue.$toast.open('A todo has been updated');
             },
             loadTodos() {
                 api.all().then(response => {
                     this.todos = response.data
+                }).catch(response => {
+                    Vue.$toast.error('Unable to load the list of todos');
                 });
             }
         },

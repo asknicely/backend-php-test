@@ -14,7 +14,7 @@
                     v-if="isLoaded"
                     :todo="todo"
                     @deleted="deleted"
-                    @updated="loadData"
+                    @updated="updated"
                 />
             </tbody>
         </table>
@@ -24,9 +24,13 @@
     </div>
 </template>
 <script>
+    import Vue from 'vue';
+    import VueToast from 'vue-toast-notification';
+    import 'vue-toast-notification/dist/index.css';
     import api from '../api/todo';
     import { isEmpty } from 'lodash';
     import TodoRow from './TodoRow.vue';
+    Vue.use(VueToast);
 
     export default {
         components: {
@@ -38,12 +42,18 @@
             },
         },
         methods: {
-            deleted(id) {
+            deleted() {
+                Vue.$toast.open('A todo has been deleted');
                 window.location.href = "/todo";
+            },
+            updated() {
+                Vue.$toast.open('A todo has been updated');
             },
             loadData() {
                 api.show(this.id).then(response => {
                     this.todo = response.data
+                }).catch(response => {
+                    Vue.$toast.error('Unable to load the data');
                 });
             },
             getIdfromUrl() {
