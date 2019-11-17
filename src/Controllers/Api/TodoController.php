@@ -78,10 +78,10 @@ class TodoController extends Controller
         $description = htmlspecialchars($data['description'], ENT_QUOTES);
         $userId      = $this->getUserId();
         $sql         = "INSERT INTO todos (user_id, description) VALUES ({$userId}, '{$description}')";
+        $result      = $this->getConnection()->executeUpdate($sql);
+        $status      = $result ? Response::HTTP_CREATED : Response::HTTP_INTERNAL_SERVER_ERROR;
 
-        $this->getConnection()->executeUpdate($sql);
-
-        return new JsonResponse([], Response::HTTP_OK);
+        return new JsonResponse([], $status);
     }
 
     /**
@@ -107,10 +107,11 @@ class TodoController extends Controller
         $userId    = $this->getUserId();
 
         // @todo all queries should be done in a repository
-        $sql = "UPDATE todos SET completed={$completed} WHERE id={$id} AND user_id={$userId}";
-        $this->getConnection()->executeUpdate($sql);
+        $sql    = "UPDATE todos SET completed={$completed} WHERE id={$id} AND user_id={$userId}";
+        $result =$this->getConnection()->executeUpdate($sql);
+        $status = $result ? Response::HTTP_NO_CONTENT : Response::HTTP_INTERNAL_SERVER_ERROR;
 
-        return new JsonResponse([], Response::HTTP_OK);
+        return new JsonResponse([], $status);
     }
 
     /**
@@ -125,9 +126,10 @@ class TodoController extends Controller
         $userId = $this->getUserId();
 
         // @todo all queries should be done in a repository
-        $sql = "DELETE FROM todos WHERE id = {$id} AND user_id = '{$userId}'";
-        $this->getConnection()->executeUpdate($sql);
+        $sql    = "DELETE FROM todos WHERE id = {$id} AND user_id = '{$userId}'";
+        $result = $this->getConnection()->executeUpdate($sql);
+        $status = $result ? Response::HTTP_NO_CONTENT : Response::HTTP_INTERNAL_SERVER_ERROR;
 
-        return new JsonResponse([], Response::HTTP_OK);
+        return new JsonResponse([], $status);
     }
 }
