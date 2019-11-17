@@ -3,7 +3,8 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Controllers\PostController;
-use Controllers\Api\TodoController;
+use Controllers\Api\TodoController as ApiTodoController;
+use Controllers\TodoController;
 use Doctrine\DBAL\Connection;
 
 // auth check
@@ -17,24 +18,24 @@ $authMiddleware = function (Request $request, $app) {
 /**
  * API endpoints
  */
-$app['todos.controller'] = function() use ($app) {
-    return new TodoController($app['db'], $app['session']);
+$app['todos.api.controller'] = function() use ($app) {
+    return new ApiTodoController($app['db'], $app['session']);
 };
 
 // get todos
-$app->get('/api/v1/todo', "todos.controller:index")
+$app->get('/api/v1/todo', "todos.api.controller:index")
     ->before($authMiddleware);
 
 // get a specific todo
-$app->get('/api/v1/todo/{id}', "todos.controller:show")
+$app->get('/api/v1/todo/{id}', "todos.api.controller:show")
     ->before($authMiddleware);
 
 // delete a todo
-$app->delete('/api/v1/todo/{id}', "todos.controller:delete")
+$app->delete('/api/v1/todo/{id}', "todos.api.controller:delete")
     ->before($authMiddleware);
 
 // add a todo
-$app->post('/api/v1/todo/add', "todos.controller:store")
+$app->post('/api/v1/todo/add', "todos.api.controller:store")
     ->before($authMiddleware);
 
 /**
@@ -90,3 +91,11 @@ $app->get('/todo/{id}', function (?int $id) use ($app) {
 })
 ->value('id', null)
 ->before($authMiddleware);
+
+$app['todos.controller'] = function() use ($app) {
+    return new TodoController($app['db'], $app['session']);
+};
+
+// get a specific todo (json)
+$app->get('/todo/{id}/json', "todos.controller:showJson")
+    ->before($authMiddleware);

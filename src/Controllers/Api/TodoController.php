@@ -1,6 +1,7 @@
 <?php
 namespace Controllers\Api;
 
+use Controllers\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
