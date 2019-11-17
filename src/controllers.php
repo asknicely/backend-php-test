@@ -39,6 +39,10 @@ $app->delete('/api/v1/todo/{id}', "todos.api.controller:delete")
 $app->post('/api/v1/todo/add', "todos.api.controller:store")
     ->before($authMiddleware);
 
+// update
+$app->patch('/api/v1/todo/{id}', "todos.api.controller:update")
+    ->before($authMiddleware);
+
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));

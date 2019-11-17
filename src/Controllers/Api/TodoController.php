@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
  * @todo return proper error/success messages
  * @todo get rid of plain mysql queries
  * @todo create a repository
+ * @todo validate request data in custom Request objects
  */
 class TodoController extends Controller
 {
@@ -72,6 +73,33 @@ class TodoController extends Controller
         $description = $data['description'];
         $userId      = $this->getUserId();
         $sql         = "INSERT INTO todos (user_id, description) VALUES ({$userId}, '{$description}')";
+        $this->getConnection()->executeUpdate($sql);
+
+        return new JsonResponse([], Response::HTTP_OK);
+    }
+
+    /**
+     * Update
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function update(int $id, Request $request): JsonResponse
+    {
+        if (!$this->isJsonRequest($request)) {
+            return new JsonResponse([], Response::HTTP_BAD_REQUEST);
+        }
+
+        $data = $this->getRequestContent($request);
+        if (!isset($data['completed'])) {
+            return new JsonResponse([], Response::HTTP_BAD_REQUEST);
+        }
+
+        $completed = (int) $data['completed'];
+        $userId    = $this->getUserId();
+
+        $sql = "UPDATE todos SET completed={$completed} WHERE id={$id} AND user_id={$userId}";
         $this->getConnection()->executeUpdate($sql);
 
         return new JsonResponse([], Response::HTTP_OK);
