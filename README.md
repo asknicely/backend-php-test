@@ -22,7 +22,7 @@ Credentials:
 ![Todos](/web/img/todos.png?raw=true "Todos")
 
 ### Requirements
-* php 5.3+
+* php 7.2
 * mysql
 * A github account
 

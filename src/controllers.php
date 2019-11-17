@@ -58,7 +58,7 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
  // homepage
 $app->get('/', function () use ($app) {
     return $app['twig']->render('index.html', [
-        'readme' => file_get_contents('README.md'),
+        'readme' => file_get_contents('../README.md'),
     ]);
 });
 
