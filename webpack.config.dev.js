@@ -8,10 +8,10 @@ const path = require('path');
 module.exports = {
   mode: 'development',
   watch: true,
-  entry: [
-    './templates/js/todo.js',
-    './templates/js/todos.js',
-  ],
+  entry: {
+    todo: './templates/js/todo.js',
+    todos: './templates/js/todos.js',
+  },
 
   devServer: {
     hot: true,
@@ -22,7 +22,7 @@ module.exports = {
 
   output: {
     path: path.resolve(__dirname, "web/js"),
-    filename: "app.js",
+    filename: "[name].js",
     publicPath: "/assets/",
   },
   module: {
