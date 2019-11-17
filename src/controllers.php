@@ -3,11 +3,12 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Controllers\PostController;
+use Controllers\AuthController;
 use Controllers\Api\TodoController as ApiTodoController;
 use Controllers\TodoController;
 use Doctrine\DBAL\Connection;
 
-// auth check
+// auth check middleware
 $authMiddleware = function (Request $request, $app) {
     $user = $app['session']->get('user');
     if (empty($user)) {
@@ -38,14 +39,6 @@ $app->delete('/api/v1/todo/{id}', "todos.api.controller:delete")
 $app->post('/api/v1/todo/add', "todos.api.controller:store")
     ->before($authMiddleware);
 
-/**
- * Pages
- */
-$app->get('/', function () use ($app) {
-    return $app['twig']->render('index.html', [
-        'readme' => file_get_contents('README.md'),
-    ]);
-});
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -54,47 +47,50 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
 }));
 
 
-$app->match('/login', function (Request $request) use ($app) {
-    $username = $request->get('username');
-    $password = $request->get('password');
+/**
+ * Pages
+ */
 
-    if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
-
-        if ($user){
-            $app['session']->set('user', $user);
-            return $app->redirect('/todo');
-        }
-    }
-
-    return $app['twig']->render('login.html', array());
+ // homepage
+$app->get('/', function () use ($app) {
+    return $app['twig']->render('index.html', [
+        'readme' => file_get_contents('README.md'),
+    ]);
 });
 
 
-$app->get('/logout', function () use ($app) {
-    $app['session']->set('user', null);
-    return $app->redirect('/');
-})
-->before($authMiddleware);
-
-
-$app->get('/todo/{id}', function (?int $id) use ($app) {
-    $user    = $app['session']->get('user');
-    $user_id = $user['id'];
-
-    if ($id){
-        return $app['twig']->render('todo.html');
-    } else {
-        return $app['twig']->render('todos.html');
-    }
-})
-->value('id', null)
-->before($authMiddleware);
-
-$app['todos.controller'] = function() use ($app) {
-    return new TodoController($app['db'], $app['session']);
+/**
+ * Auth
+ */
+$app['auth.controller'] = function() use ($app) {
+    return new AuthController($app);
 };
+
+// logout
+$app->get('/logout', "auth.controller:logout")
+    ->before($authMiddleware);
+
+// login form
+$app->get('/login', "auth.controller:loginForm");
+
+// login request handler
+$app->post('/login', "auth.controller:login");
+
+
+/**
+ * Pages
+ */
+$app['todos.controller'] = function() use ($app) {
+    return new TodoController($app);
+};
+
+// Todo List page
+$app->get('/todo', "todos.controller:index")
+    ->before($authMiddleware);
+
+// Todo page
+$app->get('/todo/{id}', "todos.controller:show")
+    ->before($authMiddleware);
 
 // get a specific todo (json)
 $app->get('/todo/{id}/json', "todos.controller:showJson")

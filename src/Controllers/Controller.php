@@ -6,32 +6,35 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Doctrine\DBAL\Connection;
+use Silex\Application;
+use Twig\Environment;
 
 /**
  * Controller
  *
- * @package Controllers\Api
+ * @package Controllers
  */
 abstract class Controller
 {
     /**
-     * @var Connection
+     * @var Application
      */
-    protected $db;
+    protected $app;
 
     /**
-     * @var Session
+     * @param Application $app
      */
-    protected $session;
-
-    /**
-     * @param Connection $db
-     * @param Session $session
-     */
-    public function __construct(Connection $db, Session $session)
+    public function __construct(Application $app)
     {
-        $this->db      = $db;
-        $this->session = $session;
+        $this->app = $app;
+    }
+
+    /**
+     * @return Environment
+     */
+    protected function getTwig(): Environment
+    {
+        return $this->app['twig'];
     }
 
     /**
@@ -39,7 +42,15 @@ abstract class Controller
      */
     protected function getConnection(): Connection
     {
-        return $this->db;
+        return $this->app['db'];
+    }
+
+    /**
+     * @return Session
+     */
+    protected function getSession(): Session
+    {
+        return $this->app['session'];
     }
 
     /**
@@ -47,28 +58,7 @@ abstract class Controller
      */
     protected function getUserId(): ?int
     {
-        $user = $this->session->get('user');
+        $user = $this->getSession()->get('user');
         return $user['id'] ?? null;
-    }
-
-    /**
-     * @param Request $request
-     *
-     * @return boolean
-     */
-    protected function isJsonRequest(Request $request): bool
-    {
-        return 0 === strpos($request->headers->get('Content-Type'), 'application/json');
-    }
-
-    /**
-     * Returns parsed request content
-     *
-     * @param Request $request
-     * @return array
-     */
-    protected function getRequestContent(Request $request): array
-    {
-        return json_decode($request->getContent(), true);
     }
 }
