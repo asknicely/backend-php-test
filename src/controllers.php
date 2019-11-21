@@ -9,6 +9,11 @@ $app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     return $twig;
 }));
 
+$app['controller.todo'] = function () use ($app) {
+    return new \Todo\TodoController(
+        $app
+    );
+};
 
 $app->get('/', function () use ($app) {
     return $app['twig']->render('index.html', [
@@ -40,86 +45,12 @@ $app->get('/logout', function () use ($app) {
     return $app->redirect('/');
 });
 
-
-$app->get('/todo/{id}/{type}', function ($id,$type) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-    $user_id = $user['id'];
-    // there has some issue people can view other peoples item.
-    if ($id) {
-        $query = $app['db.builder']->select('*')->from('todos')->where('id =?')->andWhere('user_id=?')
-            ->setParameter(0, $id)->setParameter(1, $user_id);
-        $todo = $query->execute()->fetchAll();
-        // if is json format request
-        if($type=="json")
-            return json_encode($todo[0]);
-        else{
-            return $app['twig']->render('todo.html', [
-                'todo' => $todo[0],
-            ]);
-        }
-    } else {
-        $query = $app['db.builder']->select('*')->from('todos')->where('user_id =?')
-            ->setParameter(0, $user_id);
-        $todos = $query->execute()->fetchAll();
-        return $app['twig']->render('todos.html', [
-            'todos' => $todos,
-        ]);
-    }
-})
+$app->get('/todo/{id}/{type}', "controller.todo:get")
     ->value('id', null)->value('type',null);
-
-
-$app->post('/todo/add', function (Request $request) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-    $user_id = $user['id'];
-    $description = $request->get('description');
-    //check description is set and not white space
-    if ($description && trim($description) != "") {
-        $query = $app['db.builder']->insert('todos')->values(['user_id' => '?', 'description' => "?"])->setParameters([0 => $user_id, 1 => $description]);
-       if($query->execute()) {
-           $app['session']->getFlashBag()->add('success', 'Success: Task added');
-       }
-    } else {
-        //send error message
-        $app['session']->getFlashBag()->add('error', 'Description can not be empty');
-    }
-    return $app->redirect('/todo');
-});
+//add task
+$app->post('/todo/add', 'controller.todo:add');
 
 //complete the task
-$app->post('/todo/completed/{id}', function ($id) use ($app) {
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-    $user_id = $user['id'];
-    //if pass id
-    if ($id) {
-        // if pass id is also user id
-        $query = $app['db.builder']->update('todos')
-            ->set('status', "'Completed'")
-            ->where('id = ?')->andWhere('user_id=?')->setParameters([0 => $id, 1 => $user_id]);
-       if($query->execute())
-       {
-           $app['session']->getFlashBag()->add('success', 'Success: Mark Task Completed');
-       }
-    }
-    return $app->redirect('/todo');
-});
-
-$app->match('/todo/delete/{id}', function ($id) use ($app) {
-    // add login check for delete
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-    //only todo owner can delete task.
-    $user_id = $user['id'];
-    $query = $app['db.builder']->delete('todos')->where('id =?')->andWhere('user_id=?')->setParameter(0, $id)->setParameter(1, $user_id);
-    if($query->execute()) {
-        $app['session']->getFlashBag()->add('success', 'Success: Task delete');
-    }
-    return $app->redirect('/todo');
-});
+$app->post('/todo/completed/{id}', "controller.todo:completed");
+//delete task
+$app->match('/todo/delete/{id}', "controller.todo:delete");
