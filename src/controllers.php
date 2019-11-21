@@ -51,10 +51,10 @@ $app->get('/todo/{id}/{type}', function ($id,$type) use ($app) {
         $query = $app['db.builder']->select('*')->from('todos')->where('id =?')->andWhere('user_id=?')
             ->setParameter(0, $id)->setParameter(1, $user_id);
         $todo = $query->execute()->fetchAll();
+        // if is json format request
         if($type=="json")
-        {
             return json_encode($todo[0]);
-        }else {
+        else{
             return $app['twig']->render('todo.html', [
                 'todo' => $todo[0],
             ]);
@@ -75,16 +75,17 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
     $user_id = $user['id'];
     $description = $request->get('description');
     //check description is set and not white space
     if ($description && trim($description) != "") {
         $query = $app['db.builder']->insert('todos')->values(['user_id' => '?', 'description' => "?"])->setParameters([0 => $user_id, 1 => $description]);
-        $query->execute();
+       if($query->execute()) {
+           $app['session']->getFlashBag()->add('success', 'Success: Task added');
+       }
     } else {
         //send error message
-        $app['session']->getFlashBag()->add('message', 'Description can not be empty');
+        $app['session']->getFlashBag()->add('error', 'Description can not be empty');
     }
     return $app->redirect('/todo');
 });
@@ -101,7 +102,10 @@ $app->post('/todo/completed/{id}', function ($id) use ($app) {
         $query = $app['db.builder']->update('todos')
             ->set('status', "'Completed'")
             ->where('id = ?')->andWhere('user_id=?')->setParameters([0 => $id, 1 => $user_id]);
-        $query->execute();
+       if($query->execute())
+       {
+           $app['session']->getFlashBag()->add('success', 'Success: Mark Task Completed');
+       }
     }
     return $app->redirect('/todo');
 });
@@ -114,6 +118,8 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     //only todo owner can delete task.
     $user_id = $user['id'];
     $query = $app['db.builder']->delete('todos')->where('id =?')->andWhere('user_id=?')->setParameter(0, $id)->setParameter(1, $user_id);
-    $query->execute();
+    if($query->execute()) {
+        $app['session']->getFlashBag()->add('success', 'Success: Task delete');
+    }
     return $app->redirect('/todo');
 });
