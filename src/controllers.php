@@ -85,6 +85,21 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 });
 
 //complete the task
+$app->post('/todo/completed/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+    $user_id = $user['id'];
+    //if pass id
+    if ($id) {
+        // if pass id is also user id
+        $query = $app['db.builder']->update('todos')
+            ->set('status', "'Completed'")
+            ->where('id = ?')->andWhere('user_id=?')->setParameters([0 => $id, 1 => $user_id]);
+        $query->execute();
+    }
+    return $app->redirect('/todo');
+});
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
     // add login check for delete
