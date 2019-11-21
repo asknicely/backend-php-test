@@ -41,7 +41,7 @@ $app->get('/logout', function () use ($app) {
 });
 
 
-$app->get('/todo/{id}', function ($id) use ($app) {
+$app->get('/todo/{id}/{type}', function ($id,$type) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
@@ -51,9 +51,14 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         $query = $app['db.builder']->select('*')->from('todos')->where('id =?')->andWhere('user_id=?')
             ->setParameter(0, $id)->setParameter(1, $user_id);
         $todo = $query->execute()->fetchAll();
-        return $app['twig']->render('todo.html', [
-            'todo' => $todo[0],
-        ]);
+        if($type=="json")
+        {
+            return json_encode($todo[0]);
+        }else {
+            return $app['twig']->render('todo.html', [
+                'todo' => $todo[0],
+            ]);
+        }
     } else {
         $query = $app['db.builder']->select('*')->from('todos')->where('user_id =?')
             ->setParameter(0, $user_id);
@@ -63,7 +68,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         ]);
     }
 })
-    ->value('id', null);
+    ->value('id', null)->value('type',null);
 
 
 $app->post('/todo/add', function (Request $request) use ($app) {
