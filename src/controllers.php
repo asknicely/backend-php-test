@@ -3,7 +3,7 @@
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-$app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
+$app['twig'] = $app->share($app->extend('twig', function ($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
 
     return $twig;
@@ -12,7 +12,7 @@ $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
 
 $app->get('/', function () use ($app) {
     return $app['twig']->render('index.html', [
-        'readme' => file_get_contents('README.md'),
+        'readme' => file_get_contents('/var/www/README.md'),
     ]);
 });
 
@@ -22,11 +22,11 @@ $app->match('/login', function (Request $request) use ($app) {
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
-
-        if ($user){
-            $app['session']->set('user', $user);
+        $query = $app['db.builder']->select('*')->from('users')->where('username =?')->andWhere('password=?')
+            ->setParameter(0, $username)->setParameter(1, $password);;
+        $user = $query->execute()->fetchAll();
+        if (isset($user[0])) {
+            $app['session']->set('user', $user[0]);
             return $app->redirect('/todo');
         }
     }
@@ -45,24 +45,25 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
-    if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
-
+    $user_id = $user['id'];
+    // there has some issue people can view other peoples item.
+    if ($id) {
+        $query = $app['db.builder']->select('*')->from('todos')->where('id =?')->andWhere('user_id=?')
+            ->setParameter(0, $id)->setParameter(1, $user_id);
+        $todo = $query->execute()->fetchAll();
         return $app['twig']->render('todo.html', [
-            'todo' => $todo,
+            'todo' => $todo[0],
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
-
+        $query = $app['db.builder']->select('*')->from('todos')->where('user_id =?')
+            ->setParameter(0, $user_id);
+        $todos = $query->execute()->fetchAll();
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
         ]);
     }
 })
-->value('id', null);
+    ->value('id', null);
 
 
 $app->post('/todo/add', function (Request $request) use ($app) {
@@ -73,17 +74,18 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $user_id = $user['id'];
     $description = $request->get('description');
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
-
+    $query = $app['db.builder']->insert('todos')->values(['user_id' => '?', 'description' => "?"])->setParameters([0 => $user_id, 1 => $description]);
+    $query->execute();
     return $app->redirect('/todo');
 });
 
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
-
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
-
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+    $user_id = $user['id'];
+    $query = $app['db.builder']->delete('todos')->where('id =?')->andWhere('user_id=?')->setParameter(0, $id)->setParameter(1, $user_id);
+    $query->execute();
     return $app->redirect('/todo');
 });
