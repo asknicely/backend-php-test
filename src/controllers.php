@@ -73,17 +73,25 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
     $user_id = $user['id'];
     $description = $request->get('description');
-
-    $query = $app['db.builder']->insert('todos')->values(['user_id' => '?', 'description' => "?"])->setParameters([0 => $user_id, 1 => $description]);
-    $query->execute();
+    //check description is set and not white space
+    if ($description && trim($description) != "") {
+        $query = $app['db.builder']->insert('todos')->values(['user_id' => '?', 'description' => "?"])->setParameters([0 => $user_id, 1 => $description]);
+        $query->execute();
+    } else {
+        //send error message
+        $app['session']->getFlashBag()->add('message', 'Description can not be empty');
+    }
     return $app->redirect('/todo');
 });
 
+//complete the task
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
+    // add login check for delete
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
+    //only todo owner can delete task.
     $user_id = $user['id'];
     $query = $app['db.builder']->delete('todos')->where('id =?')->andWhere('user_id=?')->setParameter(0, $id)->setParameter(1, $user_id);
     $query->execute();

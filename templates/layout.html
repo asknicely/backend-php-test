@@ -33,6 +33,11 @@
 
     <div class="container">
       <div class="row">
+        {% for message in app.session.getFlashBag.get('message') %}
+          <div class="alert alert-danger" role="alert">
+            <strong>{{ message }}</strong>
+          </div>
+        {% endfor %}
         {% block content %}{% endblock %}
       </div>
     </div>
