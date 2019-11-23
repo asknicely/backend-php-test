@@ -17,7 +17,7 @@ $app['controller.todo'] = function () use ($app) {
 
 $app->get('/', function () use ($app) {
     return $app['twig']->render('index.html', [
-        'readme' => file_get_contents('/var/www/README.md'),
+        'readme' => file_get_contents(dirname(__FILE__).'/../README.md'),
     ]);
 });
 

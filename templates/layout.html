@@ -8,9 +8,12 @@
 
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ app.request.basepath }}/css/main.css" rel="stylesheet" type="text/css" />
+      <script src="https://unpkg.com/vue/dist/vue.min.js"></script>
+      {% block js %}
+      {% endblock %}
   </head>
   <body>
-
+<div id="app">
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container">
         <div class="navbar-header">
@@ -30,7 +33,7 @@
         </div>
       </div>
     </nav>
-
+ <div>
     <div class="container">
       <div class="row">
         {% for message in app.session.getFlashBag.get('error') %}
@@ -46,8 +49,10 @@
         {% block content %}{% endblock %}
       </div>
     </div>
-
+ </div>
+</div>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
   </body>
 </html>
