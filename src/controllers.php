@@ -14,43 +14,39 @@ $app['controller.todo'] = function () use ($app) {
         $app
     );
 };
-
+$app['controller.auth'] = function () use ($app) {
+    return new \Auth\AuthController(
+        $app
+    );
+};
 $app->get('/', function () use ($app) {
     return $app['twig']->render('index.html', [
-        'readme' => file_get_contents(dirname(__FILE__).'/../README.md'),
+        'readme' => file_get_contents(dirname(__FILE__) . '/../README.md'),
     ]);
 });
 
 
-$app->match('/login', function (Request $request) use ($app) {
-    $username = $request->get('username');
-    $password = $request->get('password');
+// forward to User should merge check login
+$forwardTodo = function () use ($app) {
+    // ...
+    if ($app['session']->get('user') !== null)
+        return $app->redirect('/todo');
+};
+//middleware for check login
+$checkLogin = function () use ($app) {
+    if ($app['session']->get('user') == null)
+        return $app->redirect('/login');
+};
 
-    if ($username) {
-        $query = $app['db.builder']->select('*')->from('users')->where('username =?')->andWhere('password=?')
-            ->setParameter(0, $username)->setParameter(1, $password);;
-        $user = $query->execute()->fetchAll();
-        if (isset($user[0])) {
-            $app['session']->set('user', $user[0]);
-            return $app->redirect('/todo');
-        }
-    }
-
-    return $app['twig']->render('login.html', array());
-});
-
-
-$app->get('/logout', function () use ($app) {
-    $app['session']->set('user', null);
-    return $app->redirect('/');
-});
-
+//All routes
+$app->match('/login', 'controller.auth:login')->before($forwardTodo);
+$app->get('/logout', 'controller.auth:logout');
 $app->get('/todo/{id}/{type}', "controller.todo:get")
-    ->value('id', null)->value('type',null);
+    ->value('id', null)->value('type', null)->before($checkLogin);
 //add task
-$app->post('/todo/add', 'controller.todo:add');
+$app->post('/todo/add', 'controller.todo:add')->before($checkLogin);
 
 //complete the task
-$app->post('/todo/completed/{id}', "controller.todo:completed");
+$app->post('/todo/completed/{id}', "controller.todo:completed")->before($checkLogin);
 //delete task
-$app->match('/todo/delete/{id}', "controller.todo:delete");
+$app->match('/todo/delete/{id}', "controller.todo:delete")->before($checkLogin);

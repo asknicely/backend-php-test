@@ -3,12 +3,12 @@
 namespace Todo;
 
 use Symfony\Component\HttpFoundation\Request;
-
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class TodoController
 {
 
-    // check login
     protected $app;
     protected $user;
 
@@ -16,10 +16,12 @@ class TodoController
     {
         $this->app = $app;
         $this->user = $app['session']->get('user');
-        if ($this->user === null) {
-            return $app->redirect('/login');
-        }
+
     }
+
+    /*
+     * check if user is login
+     */
 
     public function get($id, $type)
     {
@@ -74,6 +76,7 @@ class TodoController
      */
     protected function createLinks($links, $list_class, $total, $limit, $page)
     {
+
         if ($limit == 'all') {
             return '';
         }
@@ -123,6 +126,7 @@ class TodoController
 
     public function add(Request $request)
     {
+
         $description = $request->get('description');
         //check description is set and not white space
         if ($description && trim($description) != "") {
@@ -139,6 +143,9 @@ class TodoController
 
     public function completed($id)
     {
+        if ($this->user == null) {
+            return $this->app->redirect('/login');
+        }
         //if pass id
         if ($id) {
             // if pass id is also user id
