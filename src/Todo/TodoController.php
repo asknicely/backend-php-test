@@ -34,7 +34,7 @@ class TodoController
         if ($id) {
             $template = "todo";
             $query = $this->app['db.builder']->select('*')->from('todos')->where('id =?')->andWhere('user_id=?')
-                ->setParameter(0, $id)->setParameter(1, $this->user['id']);
+                ->setParameter(0, $id)->setParameter(1, $this->user->id);
             $todo = $query->execute()->fetchObject();
             // if is json format request
             if ($todo) {
@@ -49,14 +49,14 @@ class TodoController
             $limit = isset($_GET['limit']) ? $_GET['limit'] : 10;
             $page = isset($_GET['page']) && $_GET['page'] > 0 ? $_GET['page'] : 0;
             $query = $this->app['db.builder']->select('count(id) as total')->from('todos')->where('user_id =?')
-                ->setParameter(0, $this->user['id']);
+                ->setParameter(0, $this->user->id);
             $sum = $query->execute()->fetchObject();
             if ($sum) {
                 $pageNum = ceil($sum->total / $limit);
             }
             $index = ($page - 1) > 0 ? $page - 1 : 0;
             $query = $this->app['db.builder']->select('*')->from('todos')->where('user_id =?')
-                ->setParameter(0, $this->user['id'])->setFirstResult($index * $limit)->setMaxResults($limit);
+                ->setParameter(0, $this->user->id)->setFirstResult($index * $limit)->setMaxResults($limit);
             $todos = $query->execute()->fetchAll();
             $pagnation = $this->createLinks(5, "pagination", $sum->total, $limit, $page);
 
@@ -130,7 +130,7 @@ class TodoController
         $description = $request->get('description');
         //check description is set and not white space
         if ($description && trim($description) != "") {
-            $query = $this->app['db.builder']->insert('todos')->values(['user_id' => '?', 'description' => "?"])->setParameters([0 => $this->user['id'], 1 => $description]);
+            $query = $this->app['db.builder']->insert('todos')->values(['user_id' => '?', 'description' => "?"])->setParameters([0 => $this->user->id, 1 => $description]);
             if ($query->execute()) {
                 $this->app['session']->getFlashBag()->add('success', 'Success: Task added');
             }
@@ -143,15 +143,13 @@ class TodoController
 
     public function completed($id)
     {
-        if ($this->user == null) {
-            return $this->app->redirect('/login');
-        }
+
         //if pass id
         if ($id) {
             // if pass id is also user id
             $query = $this->app['db.builder']->update('todos')
                 ->set('status', "'Completed'")
-                ->where('id = ?')->andWhere('user_id=?')->setParameters([0 => $id, 1 => $this->user['id']]);
+                ->where('id = ?')->andWhere('user_id=?')->setParameters([0 => $id, 1 => $this->user->id]);
             // success return flash
             if ($query->execute()) {
                 $this->app['session']->getFlashBag()->add('success', 'Success: Mark Task Completed');
@@ -162,8 +160,9 @@ class TodoController
 
     public function delete($id)
     {
+
         if ($id) {
-            $query = $this->app['db.builder']->delete('todos')->where('id =?')->andWhere('user_id=?')->setParameter(0, $id)->setParameter(1, $this->user['id']);
+            $query = $this->app['db.builder']->delete('todos')->where('id =?')->andWhere('user_id=?')->setParameter(0, $id)->setParameter(1, $this->user->id);
             if ($query->execute()) {
                 $this->app['session']->getFlashBag()->add('success', 'Success: Task delete');
             }

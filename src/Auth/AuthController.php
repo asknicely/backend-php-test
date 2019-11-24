@@ -5,6 +5,7 @@ namespace Auth;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
 
 class AuthController
@@ -18,6 +19,10 @@ class AuthController
 
     }
 
+    /*
+     * try to use symfony security packages failed due to package not main anymore
+     * using php internal password password_hash install
+     */
     public function login(Request $request)
     {
         $username = $request->get('username');
@@ -25,12 +30,16 @@ class AuthController
 
         // password need a encription
         if ($username) {
-            $query = $this->app['db.builder']->select('*')->from('users')->where('username =?')->andWhere('password=?')
-                ->setParameter(0, $username)->setParameter(1, $password);;
-            $user = $query->execute()->fetchAll();
-            if (isset($user[0])) {
-                $this->app['session']->set('user', $user[0]);
-                return $this->app->redirect('/todo');
+            $query = $this->app['db.builder']->select('*')->from('users')->where('username =?')->setParameter(0, $username);
+            $user = $query->execute()->fetchObject();
+            if ($user) {
+                if (password_verify($password, $user->password)) {
+                    $this->app['session']->set('user', $user);
+                    return $this->app->redirect('/todo');
+                }
+            } else {
+                $this->app['session']->getFlashBag()->add('Failed', 'Failed: User not found');
+                return $this->app['twig']->render('login.html', array());
             }
         }
 
