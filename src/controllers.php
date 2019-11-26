@@ -2,7 +2,7 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Constraints as Validator;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -48,7 +48,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     }
 
     if ($id){
-       
+        
         $sql = "SELECT * FROM todos WHERE id = '$id'";
         $todo = $app['db']->fetchAssoc($sql);
 
@@ -72,7 +72,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         return $app->redirect('/login');
     }
 
-    $errors = $app['validator']->validate($request->get('description'), new Assert\NotBlank());
+    $errors = $app['validator']->validate($request->get('description'), new Validator\NotBlank());
 
     if (count($errors) == 0) {
 
@@ -80,22 +80,33 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $description = $request->get('description');
     $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
     $app['db']->executeUpdate($sql);
-   
+
+    # Set flash message and return redirect
+    $app['session']->getFlashBag()->add('success_msg', 'The task has been added successfully.');
+    return $app->redirect('/todo');
     
     }
+    else{
+
+    # Set flash message and return redirect
+    $app['session']->getFlashBag()->add('error_msg', 'Description field is required.');
     return $app->redirect('/todo');
+
+    }
     
 
 });
 
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
-
+    
     $user    = $app['session']->get('user');
     $user_id = $user['id'];
     //$sql = "DELETE FROM todos WHERE id = '$id'";
-    $sql = "DELETE FROM todos WHERE id = '$id'";
+    $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '$user_id'";
     $app['db']->executeUpdate($sql);
 
+    # Set flash message and return redirect
+    $app['session']->getFlashBag()->add('success_msg', 'The task has been deleted successfully.');
     return $app->redirect('/todo');
 });
