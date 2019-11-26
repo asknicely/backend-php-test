@@ -20,19 +20,24 @@ $app->get('/', function () use ($app) {
 
 $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
-    $password = $request->get('password');
-
+    $password = md5($request->get('password'));
     if ($username) {
         $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
         $user = $app['db']->fetchAssoc($sql);
-
         if ($user){
+
             $app['session']->set('user', $user);
             return $app->redirect('/todo');
-        }
-    }
 
-    return $app['twig']->render('login.html', array());
+        }else{
+
+        $app['session']->getFlashBag()->add('error_msg', 'Sorry username or password is incorrect. Please try again.');
+
+        }
+         
+        }
+        return $app['twig']->render('login.html', array());    
+   
 });
 
 
@@ -46,7 +51,8 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
+    $user    = $app['session']->get('user');
+    $user_id = $user['id'];
     if ($id){
         
         $sql = "SELECT * FROM todos WHERE id = '$id'";
@@ -56,8 +62,8 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
-
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+ 
+        $sql = "SELECT * FROM todos WHERE user_id = '$user_id'";
         $todos = $app['db']->fetchAll($sql);
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
@@ -99,6 +105,9 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
     
     $user    = $app['session']->get('user');
     $user_id = $user['id'];
