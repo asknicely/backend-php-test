@@ -2,6 +2,7 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Validator\Constraints as Assert;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -47,6 +48,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     }
 
     if ($id){
+       
         $sql = "SELECT * FROM todos WHERE id = '$id'";
         $todo = $app['db']->fetchAssoc($sql);
 
@@ -54,9 +56,9 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
+
         $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
         $todos = $app['db']->fetchAll($sql);
-
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
         ]);
@@ -70,18 +72,28 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         return $app->redirect('/login');
     }
 
+    $errors = $app['validator']->validate($request->get('description'), new Assert\NotBlank());
+
+    if (count($errors) == 0) {
+
     $user_id = $user['id'];
     $description = $request->get('description');
-
     $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
     $app['db']->executeUpdate($sql);
-
+   
+    
+    }
     return $app->redirect('/todo');
+    
+
 });
 
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
+    $user    = $app['session']->get('user');
+    $user_id = $user['id'];
+    //$sql = "DELETE FROM todos WHERE id = '$id'";
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
 
