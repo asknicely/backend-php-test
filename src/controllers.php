@@ -46,7 +46,6 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-    $user_id = $user['id'];
 
     if ($id){
         
@@ -58,29 +57,10 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         ]);
     } else {
 
-        $sql = "SELECT * FROM todos WHERE user_id = '$user_id'";
+        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
         $todos = $app['db']->fetchAll($sql);
-        $number_of_results = count($todos);
-        $results_per_page = 5;
-        $number_of_pages = ceil($number_of_results/$results_per_page);
-       // $page = $_GET['page'];
-
-        if(!isset($_GET['page'])){
-            $page = 1;
-
-        }else{
-
-            $page = $_GET['page'];
-        }
-
-        $offset = ($page-1)*$results_per_page;
-
-        $sql = "SELECT * FROM todos WHERE user_id = '$user_id' LIMIT $offset,$results_per_page";
-        $todos = $app['db']->fetchAll($sql);
-        //echo $page;exit;
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
-            'number_of_pages' => $number_of_pages,
         ]);
     }
 })
@@ -128,10 +108,10 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     //$sql = "DELETE FROM todos WHERE id = '$id'";
     $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '$user_id'";
     $app['db']->executeUpdate($sql);
-    return $app->json([
-        'message' => "Deleted a todo successfully."
-    ],200);
 
+    # Set flash message and return redirect
+    $app['session']->getFlashBag()->add('success_msg', 'The task has been deleted successfully.');
+    return $app->redirect('/todo');
 });
 
 $app->match('/todo/edit/{id}', function ($id) use ($app) {
@@ -180,25 +160,6 @@ $app->post('/todo/update', function (Request $request) use ($app) {
     return $app->redirect('/todo');
 
     }
-    
-
-});
-
-$app->match('/todo/task_complete/{id}', function ($id) use ($app) {
-
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-
-    $sql = "UPDATE todos SET is_completed = 1 WHERE id= '$id'";
-    $app['db']->executeUpdate($sql);
-
-    return $app->json([
-            'message' => "The task has been marked as completed successfully."
-    ],200);
-
-    
-    
     
 
 });
