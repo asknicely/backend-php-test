@@ -66,14 +66,5 @@
             </form>
         </tr>
     </table>
-    <div>
-        <ul class="pagination">
-       {% for i in range (1, number_of_pages) %}
-
-        <li><a href="{{ app.request.baseurl }}/todo?page={{i}}">{{i}}</a></li>
-
-        {% endfor %}
-      </ul>
-    </div>
 </div>
 {% endblock %}
