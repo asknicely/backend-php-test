@@ -128,10 +128,10 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     //$sql = "DELETE FROM todos WHERE id = '$id'";
     $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '$user_id'";
     $app['db']->executeUpdate($sql);
-    return $app->json([
-        'message' => "Deleted a todo successfully."
-    ],200);
 
+    # Set flash message and return redirect
+    $app['session']->getFlashBag()->add('success_msg', 'The task has been deleted successfully.');
+    return $app->redirect('/todo');
 });
 
 $app->match('/todo/edit/{id}', function ($id) use ($app) {
@@ -193,11 +193,9 @@ $app->match('/todo/task_complete/{id}', function ($id) use ($app) {
     $sql = "UPDATE todos SET is_completed = 1 WHERE id= '$id'";
     $app['db']->executeUpdate($sql);
 
-    return $app->json([
-            'message' => "The task has been marked as completed successfully."
-    ],200);
-
-    
+    # Set flash message and return redirect
+    $app['session']->getFlashBag()->add('success_msg', 'The task has been marked as completed successfully.');
+    return $app->redirect('/todo');
     
     
 

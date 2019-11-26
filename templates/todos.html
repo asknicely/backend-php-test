@@ -4,19 +4,19 @@
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo List:</h1>
 
-<div class="bg-success">
+<div class="bg-success success-message">
         {% for message in app.session.getFlashBag.get('success_msg') %}
         <strong>{{ message }}</strong>
         {% endfor %}
     </div>
 
-    <div class="bg-danger">
+    <div class="bg-danger error-message">
         {% for message in app.session.getFlashBag.get('error_msg') %}
        <strong>{{ message }}</strong>
         {% endfor %}
     </div>
     <table class="table table-striped">
-        <th>#</th><th>User</th><th>Description</th><th></th>
+        <th>#</th><th>User</th><th>Description</th><th>Status</th><th>Actions</th>
         {% for todo in todos %}
             <tr>
                 <td>{{ todo.id }}</td>
@@ -27,8 +27,29 @@
                     </a>
                 </td>
                 <td>
-                    <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
+                    {% if todo.is_completed == 0  %}
+
+                        <span class="bg-danger">Pending</span>
+
+                    {% elseif todo.is_completed == 1  %}
+
+                    <span class="bg-success">Completed</span>
+
+                    {% endif %}
+ 
+                   
+                    
+                </td>
+                <td>
+                    <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}" class="delete-form">
                         <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
+                    </form>
+
+                    <form method="post" action="{{ app.request.baseurl }}/todo/edit/{{ todo.id }}">
+                        <button type="submit" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-pencil glyphicon-white"></span></button>
+                    </form>
+                    <form method="post" action="{{ app.request.baseurl }}/todo/task_complete/{{ todo.id }}" class="complete-form">
+                        <button type="submit" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-check glyphicon-white"></span></button>
                     </form>
                 </td>
             </tr>
@@ -45,5 +66,14 @@
             </form>
         </tr>
     </table>
+    <div>
+        <ul class="pagination">
+       {% for i in range (1, number_of_pages) %}
+
+        <li><a href="{{ app.request.baseurl }}/todo?page={{i}}">{{i}}</a></li>
+
+        {% endfor %}
+      </ul>
+    </div>
 </div>
 {% endblock %}
