@@ -2,7 +2,7 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Validator\Constraints as Validator;
+use Symfony\Component\Validator\Constraints as Assert;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -46,6 +46,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
+  $user = $app['session']->get('user');
     $user_id = $user['id'];
 
     if ($id){
@@ -60,27 +61,8 @@ $app->get('/todo/{id}', function ($id) use ($app) {
 
         $sql = "SELECT * FROM todos WHERE user_id = '$user_id'";
         $todos = $app['db']->fetchAll($sql);
-        $number_of_results = count($todos);
-        $results_per_page = 5;
-        $number_of_pages = ceil($number_of_results/$results_per_page);
-       // $page = $_GET['page'];
-
-        if(!isset($_GET['page'])){
-            $page = 1;
-
-        }else{
-
-            $page = $_GET['page'];
-        }
-
-        $offset = ($page-1)*$results_per_page;
-
-        $sql = "SELECT * FROM todos WHERE user_id = '$user_id' LIMIT $offset,$results_per_page";
-        $todos = $app['db']->fetchAll($sql);
-        //echo $page;exit;
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
-            'number_of_pages' => $number_of_pages,
         ]);
     }
 })
@@ -92,7 +74,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         return $app->redirect('/login');
     }
 
-    $errors = $app['validator']->validate($request->get('description'), new Validator\NotBlank());
+    $errors = $app['validator']->validate($request->get('description'), new Assert\NotBlank());
 
     if (count($errors) == 0) {
 
@@ -128,10 +110,10 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     //$sql = "DELETE FROM todos WHERE id = '$id'";
     $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '$user_id'";
     $app['db']->executeUpdate($sql);
-    return $app->json([
-        'message' => "Deleted a todo successfully."
-    ],200);
 
+    # Set flash message and return redirect
+    $app['session']->getFlashBag()->add('success_msg', 'The task has been deleted successfully.');
+    return $app->redirect('/todo');
 });
 
 $app->match('/todo/edit/{id}', function ($id) use ($app) {
@@ -158,7 +140,7 @@ $app->post('/todo/update', function (Request $request) use ($app) {
         return $app->redirect('/login');
     }
 
-    $errors = $app['validator']->validate($request->get('description'), new Validator\NotBlank());
+    $errors = $app['validator']->validate($request->get('description'), new Assert\NotBlank());
 
     if (count($errors) == 0) {
 
@@ -183,24 +165,3 @@ $app->post('/todo/update', function (Request $request) use ($app) {
     
 
 });
-
-$app->match('/todo/task_complete/{id}', function ($id) use ($app) {
-
-    if (null === $user = $app['session']->get('user')) {
-        return $app->redirect('/login');
-    }
-
-    $sql = "UPDATE todos SET is_completed = 1 WHERE id= '$id'";
-    $app['db']->executeUpdate($sql);
-
-    return $app->json([
-            'message' => "The task has been marked as completed successfully."
-    ],200);
-
-    
-    
-    
-
-});
-
-
