@@ -2,7 +2,7 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Validator\Constraints as Validator;
+use Symfony\Component\Validator\Constraints as Assert;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -63,8 +63,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         $number_of_results = count($todos);
         $results_per_page = 5;
         $number_of_pages = ceil($number_of_results/$results_per_page);
-       // $page = $_GET['page'];
-
+        
         if(!isset($_GET['page'])){
             $page = 1;
 
@@ -92,7 +91,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         return $app->redirect('/login');
     }
 
-    $errors = $app['validator']->validate($request->get('description'), new Validator\NotBlank());
+    $errors = $app['validator']->validate($request->get('description'), new Assert\NotBlank());
 
     if (count($errors) == 0) {
 
@@ -128,10 +127,10 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     //$sql = "DELETE FROM todos WHERE id = '$id'";
     $sql = "DELETE FROM todos WHERE id = '$id' AND user_id = '$user_id'";
     $app['db']->executeUpdate($sql);
-    return $app->json([
-        'message' => "Deleted a todo successfully."
-    ],200);
 
+    # Set flash message and return redirect
+    $app['session']->getFlashBag()->add('success_msg', 'The task has been deleted successfully.');
+    return $app->redirect('/todo');
 });
 
 $app->match('/todo/edit/{id}', function ($id) use ($app) {
@@ -193,14 +192,10 @@ $app->match('/todo/task_complete/{id}', function ($id) use ($app) {
     $sql = "UPDATE todos SET is_completed = 1 WHERE id= '$id'";
     $app['db']->executeUpdate($sql);
 
-    return $app->json([
-            'message' => "The task has been marked as completed successfully."
-    ],200);
-
-    
+    # Set flash message and return redirect
+    $app['session']->getFlashBag()->add('success_msg', 'The task has been marked as completed successfully.');
+    return $app->redirect('/todo');
     
     
 
 });
-
-
