@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="col-md-4 col-md-offset-4">
+    <h1>Todo List:</h1>
+
+<div class="bg-success">
+        {% for message in app.session.getFlashBag.get('success_msg') %}
+        <strong>{{ message }}</strong>
+        {% endfor %}
+    </div>
+
+    <div class="bg-danger">
+        {% for message in app.session.getFlashBag.get('error_msg') %}
+       <strong>{{ message }}</strong>
+        {% endfor %}
+    </div>
+	<div>
+	<form method="post" action="{{ app.request.baseurl }}/todo/update">
+                <td colspan="3">
+                    <input type="textbox" name="description" value="{{todo.description}}" class="small-6 small-center" placeholder="Description...">
+                    <input type="hidden" name="id" value="{{todo.id}}">
+                </td>
+                <td>
+                    <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                </td>
+            </form>
+        </div>
+	</div>
+{% endblock %}
