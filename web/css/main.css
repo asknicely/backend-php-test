@@ -5,3 +5,12 @@ body {
 .login-form > div {
     margin-top: 10px;
 }
+
+.todo-pager td {
+    padding: 10px;
+    border: 1px solid black;
+}
+
+.current-page {
+    background: #d3d3d3;
+}

@@ -56,10 +56,32 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     } else {
         $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
         $todos = $app['db']->fetchAll($sql);
+        $number_of_todos = sizeof($todos);
+
+        $number_of_tasks_per_page = 3;
+        $side_buttons_limit = 2;
+
+        $number_of_pages = ceil($number_of_todos / $number_of_tasks_per_page);
+
+        if (isset($_GET["current_page"])){
+            $current_page = $_GET["current_page"];
+        } else {
+            $current_page = 1;
+        }
+
+        $pagination_details = array(
+            "number_of_pages" => $number_of_pages,
+            "current_page" => $current_page,
+            "side_buttons_limit" => $side_buttons_limit
+        );
+
+        $todos_for_current_page = array_slice($todos, $number_of_tasks_per_page * ($current_page - 1), $number_of_tasks_per_page);
 
         return $app['twig']->render('todos.html', [
-            'todos' => $todos,
+            'todos' => $todos_for_current_page,
+            'pagination_details' =>  $pagination_details
         ]);
+
     }
 })
 ->value('id', null);
