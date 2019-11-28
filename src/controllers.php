@@ -76,21 +76,22 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     if($description){
         $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
         $app['db']->executeUpdate($sql);
+        $app['session']->getFlashBag()->add('message', 'Task Added');
+    } else {
+        $app['session']->getFlashBag()->add('message', 'Task needs a Description');
     }
 
     return $app->redirect('/todo');
 });
-
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
-
+    $app['session']->getFlashBag()->add('message', 'Task Deleted');
     return $app->redirect('/todo');
 });
 
@@ -99,9 +100,9 @@ $app->match('/todo/complete/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
     $sql = "UPDATE todos SET completed = TRUE WHERE id='$id'";
     $app['db']->executeUpdate($sql);
+    $app['session']->getFlashBag()->add('message', 'Task set as Completed');
 
     return $app->redirect('/todo');
 });
@@ -110,9 +111,9 @@ $app->match('/todo/uncomplete/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
     $sql = "UPDATE todos SET completed = FALSE WHERE id='$id'";
     $app['db']->executeUpdate($sql);
+    $app['session']->getFlashBag()->add('message', 'Task set as Uncompleted');
 
     return $app->redirect('/todo');
 });
