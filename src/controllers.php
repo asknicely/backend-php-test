@@ -2,6 +2,8 @@
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use App\Entity\User;
+use App\Entity\Todo;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -22,9 +24,7 @@ $app->match('/login', function (Request $request) use ($app) {
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
-
+        $user = User::getUserByCredentials($app, $username, $password);
         if ($user){
             $app['session']->set('user', $user);
             return $app->redirect('/todo');
@@ -47,15 +47,12 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     }
 
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
-
+        $todo = Todo::getTodoById($app, $id);
         return $app['twig']->render('todo.html', [
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
+        $todos = Todo::getTodosByUserID($app, $user['id']);
         $number_of_todos = sizeof($todos);
 
         $number_of_tasks_per_page = 3;
@@ -96,8 +93,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $description = $request->get('description');
 
     if($description){
-        $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-        $app['db']->executeUpdate($sql);
+        Todo::createTodo($app, $user['id'], $description);
         $app['session']->getFlashBag()->add('message', 'Task Added');
     } else {
         $app['session']->getFlashBag()->add('message', 'Task needs a Description');
@@ -111,8 +107,7 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    Todo::deleteTodo($app, $id);
     $app['session']->getFlashBag()->add('message', 'Task Deleted');
     return $app->redirect('/todo');
 });
@@ -122,8 +117,7 @@ $app->match('/todo/complete/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-    $sql = "UPDATE todos SET completed = TRUE WHERE id='$id'";
-    $app['db']->executeUpdate($sql);
+    Todo::completeTodo($app, $id);
     $app['session']->getFlashBag()->add('message', 'Task set as Completed');
 
     return $app->redirect('/todo');
@@ -133,8 +127,7 @@ $app->match('/todo/uncomplete/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-    $sql = "UPDATE todos SET completed = FALSE WHERE id='$id'";
-    $app['db']->executeUpdate($sql);
+    Todo::uncompleteTodo($app, $id);
     $app['session']->getFlashBag()->add('message', 'Task set as Uncompleted');
 
     return $app->redirect('/todo');
@@ -144,16 +137,8 @@ $app->match('/todo/{id}/json', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
-
+        $todo = Todo::getTodoById($app, $id);
         return json_encode($todo);
-    } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
-
-        return json_encode($todos);
     }
 });
