@@ -35,18 +35,25 @@ class Todo
     private $completed;
 
     /**
+     * @param object $app
      * @param string $id
      *
      * @return object, $todo
      */
-    public function getTodoById($app, $id)
+    public function getTodoById($app, $todoID)
     {
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
-        return $todo;
+        $allowed = self::todoBelongsToCurrentlyLoggedInUser($app, $todoID);
+        if($allowed){
+            $sql = "SELECT * FROM todos WHERE id = '$todoID'";
+            $todo = $app['db']->fetchAssoc($sql);
+            return $todo;
+        } else {
+            return false;
+        }
     }
 
     /**
+     * @param object $app
      * @param string $userID
      *
      * @return Array, $todos
@@ -77,8 +84,14 @@ class Todo
      */
     public function deleteTodo($app, $todoID)
     {
-        $sql = "DELETE FROM todos WHERE id = '$todoID'";
-        $app['db']->executeUpdate($sql);
+        $allowed = self::todoBelongsToCurrentlyLoggedInUser($app, $todoID);
+        if($allowed){
+            $sql = "DELETE FROM todos WHERE id = '$todoID'";
+            $app['db']->executeUpdate($sql);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -88,8 +101,14 @@ class Todo
      */
     public function completeTodo($app, $todoID)
     {
-        $sql = "UPDATE todos SET completed = TRUE WHERE id='$todoID'";
-        $app['db']->executeUpdate($sql);
+        $allowed = self::todoBelongsToCurrentlyLoggedInUser($app, $todoID);
+        if($allowed){
+            $sql = "UPDATE todos SET completed = TRUE WHERE id='$todoID'";
+            $app['db']->executeUpdate($sql);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -99,7 +118,29 @@ class Todo
      */
     public function uncompleteTodo($app, $todoID)
     {
-        $sql = "UPDATE todos SET completed = FALSE WHERE id='$todoID'";
-        $app['db']->executeUpdate($sql);
+        $allowed = self::todoBelongsToCurrentlyLoggedInUser($app, $todoID);
+        if($allowed){
+            $sql = "UPDATE todos SET completed = FALSE WHERE id='$todoID'";
+            $app['db']->executeUpdate($sql);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * @param string $todoID, $userID
+     *
+     * @return boolean
+     */
+    private function todoBelongsToCurrentlyLoggedInUser($app, $todoID){
+        $sql = "SELECT * FROM todos WHERE id = '$todoID'";
+        $todo = $app['db']->fetchAssoc($sql);
+        $user = $app['session']->get('user');
+        if ($todo['user_id'] == $user['id']){
+            return true;
+        } else {
+            return false;
+        }
     }
 }

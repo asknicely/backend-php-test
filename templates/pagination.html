@@ -1,40 +1,42 @@
 {% extends "todos.html" %}
 
 {% block content %}
-<table>
-    <tr>
-        <td>
-            {% set number_of_pages = pagination_details.number_of_pages %}
-            {% set side_buttons_limit = pagination_details.side_buttons_limit %}
-            {% set current_page = pagination_details.current_page %}
-            <table class="todo-pager">
-                <tr>
-                    {% if (current_page - side_buttons_limit) > 1  %}
-                    <td>
-                        <a href="{{ app.request.basepath }}/todo?current_page=1">First</a>
-                    </td>
-                    {% endif %}
-                    {% for i in range(current_page-side_buttons_limit, current_page-1) if ( i > 0 ) %}
-                    <td>
-                        <a href="{{ app.request.basepath }}/todo?current_page={{i}}">{{i}}</a>
-                    </td>
-                    {% endfor %}
-                    <td class="current-page">
-                        <a href="{{ app.request.basepath }}/todo?current_page={{current_page}}">{{current_page}}</a>
-                    </td>
-                    {% for i in range(current_page+1, current_page+side_buttons_limit) if ( i <= number_of_pages )%}
-                    <td>
-                        <a href="{{ app.request.basepath }}/todo?current_page={{i}}">{{i}}</a>
-                    </td>
-                    {% endfor %}
-                    {% if (current_page + side_buttons_limit) < number_of_pages  %}
-                    <td>
-                        <a href="{{ app.request.basepath }}/todo?current_page={{number_of_pages}}">Last</a>
-                    </td>
-                    {% endif %}
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table>
+<div col-md-12>
+    <table class="pagination-table">
+        <tr>
+            <td>
+                {% set number_of_pages = pagination_details.number_of_pages %}
+                {% set side_buttons_limit = pagination_details.side_buttons_limit %}
+                {% set current_page = pagination_details.current_page %}
+                <table class="todo-pager" align="center">
+                    <tr>
+                        {% if (current_page - side_buttons_limit) > 1  %}
+                        <td>
+                            <a href="{{ app.request.basepath }}/todo?current_page=1">First</a>
+                        </td>
+                        {% endif %}
+                        {% for i in range(current_page-side_buttons_limit, current_page-1) if ( i > 0 ) %}
+                        <td>
+                            <a href="{{ app.request.basepath }}/todo?current_page={{i}}">{{i}}</a>
+                        </td>
+                        {% endfor %}
+                        <td class="current-page">
+                            <a href="{{ app.request.basepath }}/todo?current_page={{current_page}}">{{current_page}}</a>
+                        </td>
+                        {% for i in range(current_page+1, current_page+side_buttons_limit) if ( i <= number_of_pages )%}
+                        <td>
+                            <a href="{{ app.request.basepath }}/todo?current_page={{i}}">{{i}}</a>
+                        </td>
+                        {% endfor %}
+                        {% if (current_page + side_buttons_limit) < number_of_pages  %}
+                        <td>
+                            <a href="{{ app.request.basepath }}/todo?current_page={{number_of_pages}}">Last</a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
 {% endblock %}

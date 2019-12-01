@@ -1,10 +1,10 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="col-md-4 col-md-offset-4">
+<div class="col-md-12">
     <h1>Todo List:</h1>
-    <table class="table table-striped">
-        <th>#</th><th>User</th><th>Description</th><th>Status</th><th></th>
+    <table class="table table-striped todos-table">
+        <th>#</th><th>User</th><th>Description</th><th>Status</th><th>Action</th><th>Delete</th>
         {% for todo in todos %}
             <tr>
                 <td>{{ todo.id }}</td>
@@ -21,11 +21,11 @@
                 {% endif %}
                 <td>
                     {% if todo.completed %}
-                    <form method="post" action="{{ app.request.baseurl }}/todo/uncomplete/{{ todo.id }}">
+                    <form method="post" action="{{ app.request.baseurl }}/todo/uncomplete/todos/{{ todo.id }}">
                         <button type="submit" class="btn btn-sm btn-primary">Uncomplete</button>
                     </form>
                     {% else %}
-                    <form method="post" action="{{ app.request.baseurl }}/todo/complete/{{ todo.id }}">
+                    <form method="post" action="{{ app.request.baseurl }}/todo/complete/todos/{{ todo.id }}">
                         <button type="submit" class="btn btn-sm btn-primary">Complete</button>
                     </form>
                     {% endif %}
@@ -37,9 +37,13 @@
                 </td>
             </tr>
         {% endfor %}
+    </table>
+</div>
+<div class="col-md-4 col-md-offset-8 new-task-form">
+    <table>
         <tr>
             <form method="post" action="{{ app.request.baseurl }}/todo/add">
-                <td colspan="3">
+                <td>
                     <input type="textbox" name="description" class="small-6 small-center" placeholder="Description..." required>
                 </td>
                 <td>
@@ -47,12 +51,12 @@
                 </td>
             </form>
         </tr>
-        <tr>
-            {% for flashMessage in app.session.flashbag.get('message') %}
-            <td> {{ flashMessage }} </td>
-            {% endfor %}
-        </tr>
     </table>
-    {% include 'pagination.html' %}
 </div>
+<div class="col-md-4 col-md-offset-8 flash-message">
+    {% for flashMessage in app.session.flashbag.get('message') %}
+    <p> {{ flashMessage }} </p>
+    {% endfor %}
+</div>
+{% include 'pagination.html' %}
 {% endblock %}

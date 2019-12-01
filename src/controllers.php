@@ -45,12 +45,15 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-
     if ($id){
         $todo = Todo::getTodoById($app, $id);
-        return $app['twig']->render('todo.html', [
-            'todo' => $todo,
-        ]);
+        if ($todo) {
+            return $app['twig']->render('todo.html', [
+                'todo' => $todo,
+            ]);
+        } else {
+            return $app['twig']->render('unauthorized.html');
+        }
     } else {
         $todos = Todo::getTodosByUserID($app, $user['id']);
         $number_of_todos = sizeof($todos);
@@ -89,7 +92,6 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         return $app->redirect('/login');
     }
 
-    $user_id = $user['id'];
     $description = $request->get('description');
 
     if($description){
@@ -107,30 +109,50 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-    Todo::deleteTodo($app, $id);
-    $app['session']->getFlashBag()->add('message', 'Task Deleted');
-    return $app->redirect('/todo');
+    $result = Todo::deleteTodo($app, $id);
+
+    if ($result) {
+        $app['session']->getFlashBag()->add('message', 'Task Deleted');
+        return $app->redirect('/todo');
+    } else {
+        return $app['twig']->render('unauthorized.html');
+    }
 });
 
-$app->match('/todo/complete/{id}', function ($id) use ($app) {
+$app->match('/todo/complete/{origin}/{id}', function ($origin, $id) use ($app) {
 
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-    Todo::completeTodo($app, $id);
-    $app['session']->getFlashBag()->add('message', 'Task set as Completed');
-
-    return $app->redirect('/todo');
+    $result = Todo::completeTodo($app, $id);
+    if ($result) {
+        $app['session']->getFlashBag()->add('message', 'Task set as Completed');
+        if ($origin == 'todos'){
+            return $app->redirect('/todo');
+        } else {
+            return $app->redirect('/todo/' . $id);
+        }
+    } else {
+        return $app['twig']->render('unauthorized.html');
+    }
 });
 
-$app->match('/todo/uncomplete/{id}', function ($id) use ($app) {
+$app->match('/todo/uncomplete/{origin}/{id}', function ($origin, $id) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
-    Todo::uncompleteTodo($app, $id);
-    $app['session']->getFlashBag()->add('message', 'Task set as Uncompleted');
+    $result = Todo::uncompleteTodo($app, $id);
+    if ($result) {
+        $app['session']->getFlashBag()->add('message', 'Task set as Uncompleted');
+        if ($origin == 'todos'){
+            return $app->redirect('/todo');
+        } else {
+            return $app->redirect('/todo/' . $id);
+        }
 
-    return $app->redirect('/todo');
+    } else {
+        return $app['twig']->render('unauthorized.html');
+    }
 });
 
 $app->match('/todo/{id}/json', function ($id) use ($app) {
@@ -139,6 +161,10 @@ $app->match('/todo/{id}/json', function ($id) use ($app) {
     }
     if ($id){
         $todo = Todo::getTodoById($app, $id);
-        return json_encode($todo);
+        if ($todo) {
+            return json_encode($todo);
+        } else {
+            return $app['twig']->render('unauthorized.html');
+        }
     }
 });

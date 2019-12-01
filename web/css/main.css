@@ -1,5 +1,5 @@
 body {
-  padding-top: 50px;
+    padding-top: 50px;
 }
 
 .login-form > div {
@@ -13,4 +13,30 @@ body {
 
 .current-page {
     background: #d3d3d3;
+}
+
+.unauthorized {
+    margin: auto;
+    width: 50%;
+    text-align: center;
+    border: 3px solid red;
+    padding: 10px;
+    font-size: 20px;
+}
+
+.todos-table th {
+    min-width: 130px;
+}
+
+.flash-message {
+    font-weight: bold;
+    min-height: 35px;
+}
+
+.pagination-table {
+    width: 50%; margin: auto;
+}
+
+.todo-table th {
+    min-width: 130px !important;
 }
