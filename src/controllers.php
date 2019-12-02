@@ -1,8 +1,6 @@
 <?php
 
 include_once 'validations/ValidationHandler.php';
-include_once 'orm/PdoMysql.php';
-require_once 'orm/AbstractModel.php';
 require_once 'orm/UserModel.php';
 require_once 'orm/TodoModel.php';
 

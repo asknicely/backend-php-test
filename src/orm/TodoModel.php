@@ -1,7 +1,7 @@
 <?php
 
 namespace AsknicelyORM;
-
+use Askorm\AbstractModel;
 
 class TodoModel extends AbstractModel
 {

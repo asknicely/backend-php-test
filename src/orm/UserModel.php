@@ -1,6 +1,7 @@
 <?php
 
 namespace AsknicelyORM;
+use Askorm\AbstractModel;
 
 
 class UserModel extends AbstractModel
