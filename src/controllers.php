@@ -131,6 +131,33 @@ $app->post('/todo/{id}', function ($id, Request $request) use ($app) {
     return new JsonResponse(["MESSAGE" => 'Task not found', "CODE" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
 });
 
+$app->get('/todo/{id}/json', function ($id, Request $request) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return new JsonResponse([
+            "MESSAGE" => 'Session not found', 
+            "CODE" => Response::HTTP_UNAUTHORIZED,
+            "LOGIN" => 'http://'.$request->headers->get('host').'/login'
+        ], Response::HTTP_UNAUTHORIZED);
+    }
+
+    if ($id){
+        
+        $sql = "SELECT * FROM todos WHERE id = '$id'";
+        $todo = $app['db']->fetchAssoc($sql);
+        if($todo == false ){
+            return new JsonResponse(["MESSAGE" => 'Task not found', "CODE" => Response::HTTP_NOT_FOUND], Response::HTTP_NOT_FOUND);
+        }
+
+        return new JsonResponse([
+            "MESSAGE" => 'Task found', 
+            "CODE" => '200',
+            "DATA" => $todo
+        ], Response::HTTP_OK);
+    } 
+    return new JsonResponse(["MESSAGE" => 'Task not found', "CODE" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
+})
+->value('id', null);
+
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     $sql = "DELETE FROM todos WHERE id = '$id'";
