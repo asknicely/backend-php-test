@@ -46,7 +46,7 @@ $app->get('/logout', function () use ($app) {
 });
 
 
-$app->get('/todo/{id}', function ($id) use ($app) {
+$app->get('/todo/{id}', function ($id, Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
@@ -59,11 +59,30 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
+        $sql = "SELECT count(*) as n FROM todos WHERE user_id = '${user['id']}'";
+        $todos = $app['db']->fetchAll($sql);
+
+        $itemsPerPage = 3;
+        $lastPage = 1;
+        $currentPage = 1;
+        if($todos[0]['n'] > $itemsPerPage){
+            $lastPage = ceil($todos[0]['n'] / $itemsPerPage);
+            $currentPage = (is_numeric($request->query->get('page')))
+                            ?$request->query->get('page')
+                            :'1';
+        };
+        if($request->query->get('page') > $lastPage ){
+            return $app->redirect('/todo?page=1');
+        }
+        $from = ($currentPage -1) * $itemsPerPage;
+        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' ORDER BY `id` desc LIMIT $from, $itemsPerPage";
+
         $todos = $app['db']->fetchAll($sql);
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
+            'next' => ($currentPage < $lastPage) ? $currentPage + 1 : '0',
+            'prev' => ($currentPage > 1) ? $currentPage - 1:'0'
         ]);
     }
 })

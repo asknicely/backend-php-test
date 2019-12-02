@@ -54,6 +54,30 @@
             </form>
         </tr>
     </table>
+
+    <nav aria-label="Page navigation">
+        <ul class="pagination" style="display: flex; justify-content: space-between">
+            {% if prev > 0 %}
+            <li>
+                <a href="{{ app.request.baseurl }}/todo?page={{ prev }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% else %}
+            <li></li>
+            {% endif %}
+            {% if next > 0 %}
+            <li>
+                <a href="{{ app.request.baseurl }}/todo?page={{ next }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% else %}
+            <li></li>
+            {% endif %}
+        </ul>
+    </nav>
+
 </div>
 
 <!-- Notification -->
@@ -108,4 +132,6 @@
             </div>
         </div>
     </div>
+
+
 {% endblock %}
