@@ -1,7 +1,11 @@
 <?php
 
+include_once 'validations/ValidationHandler.php';
+
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Validator\Constraints as Assert;
+use AsknicelyTest\ValidationHandler\ValidationHandler;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -73,8 +77,19 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $user_id = $user['id'];
     $description = $request->get('description');
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    //Validate on front end too
+    $errors = $app['validator']->validate($description, new Assert\NotBlank());
+
+    if (count($errors) > 0) {
+        $validationHandler = new ValidationHandler($app);
+        $validationHandler->fail("Description can not be empty!", 400, ValidationHandler::FLASH);
+    } else {
+        $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
+        $app['db']->executeUpdate($sql);
+        $app['session']->getFlashBag()->add('Flash', 'Task created successfully!');
+    }
+    
+
 
     return $app->redirect('/todo');
 });
