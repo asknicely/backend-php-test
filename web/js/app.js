@@ -25,6 +25,7 @@
 
     /* flash fadeOut */
     $('.alert-success').hide();
+    //@todo: refactor to offer beter UX
     setTimeout(()=>{
         $('.alert-success').slideDown();
     }, 500)
