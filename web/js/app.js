@@ -31,5 +31,73 @@
     setTimeout(()=>{
         $('.alert-success').slideUp()
     }, 5000)
+
+    /* Task Completed */
+    let base = document.querySelector('base').getAttribute('href')
+    let icons = document.querySelectorAll('.completed-field span');
+    for (i = 0; i < icons.length; ++i) {
+        icons[i].addEventListener('click', (a) => {
+
+            if (a.target.classList.contains('glyphicon-time')) {
+                updating(a.target, 'glyphicon-time')
+            } else {
+                updating(a.target, 'glyphicon-ok')
+            }
+
+        });
+    }
+
+    let updating = (element, value) => {
+        if (value == 'glyphicon-time') {
+            completed(element)
+        } else if (value == 'glyphicon-ok') {
+            uncompleted(element)
+        }
+    }
+
+    let completed = (element) => {
+        element.classList.remove("glyphicon-time")
+        element.classList.add("glyphicon-hourglass")
+        fetch(base + '/todo/' + element.getAttribute('todo-id'), {
+                method: 'POST',
+                body: JSON.stringify({
+                    completed: '1'
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then((data) => {
+                setTimeout(() => {
+                    element.classList.add("glyphicon-ok")
+                    element.classList.remove("glyphicon-hourglass")
+                }, 1000)
+
+            })
+            .catch(console.log)
+    }
+
+    let uncompleted = (element) => {
+        element.classList.remove("glyphicon-ok")
+        element.classList.add("glyphicon-hourglass")
+        fetch(base + '/todo/' + element.getAttribute('todo-id'), {
+                method: 'POST',
+                body: JSON.stringify({
+                    completed: '0'
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then((data) => {
+                setTimeout(() => {
+                    element.classList.add("glyphicon-time")
+                    element.classList.remove("glyphicon-hourglass")
+                }, 1000)
+            })
+            .catch(console.log)
+    }
     
 })(window, document)

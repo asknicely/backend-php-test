@@ -6,6 +6,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Constraints as Assert;
 use AsknicelyTest\ValidationHandler\ValidationHandler;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -94,6 +95,41 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     return $app->redirect('/todo');
 });
 
+
+$app->post('/todo/{id}', function ($id, Request $request) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return new JsonResponse(["MESSAGE" => 'Session not found', "CODE" => Response::HTTP_UNAUTHORIZED], Response::HTTP_UNAUTHORIZED);
+    }
+
+    $sql = "SELECT * FROM todos WHERE id = '$id'";
+    $todo = $app['db']->fetchAssoc($sql);
+    if($todo == false ){
+        return new JsonResponse(["MESSAGE" => 'Task not found', "CODE" => Response::HTTP_NOT_FOUND], Response::HTTP_NOT_FOUND);
+    }
+
+        
+
+    if (strpos($request->headers->get('Content-Type'), 'application/json') === 0) {
+        $data = json_decode($request->getContent(), true);
+        if(is_numeric($data["completed"])  
+            && (
+                $data["completed"] === "0" 
+                || 
+                $data["completed"] === "1"
+                )
+        ){
+
+            $sql = "UPDATE todos SET completed = '" . $data['completed'] . "' WHERE id = '" . $id  . "'";
+            $todo = $app['db']->executeUpdate($sql);
+
+            return new JsonResponse([
+                    "MESSAGE" => 'Status updated', 
+                    "CODE" => '200'], 
+                    Response::HTTP_OK);
+        }
+    }
+    return new JsonResponse(["MESSAGE" => 'Task not found', "CODE" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
+});
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 

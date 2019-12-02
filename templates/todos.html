@@ -7,7 +7,11 @@
         {% endfor %}
     <h1>Todo List:</h1>
     <table class="table table-striped">
-        <th>#</th><th>User</th><th>Description</th><th></th>
+        <th>#</th>
+        <th>User</th>
+        <th>Description</th>
+        <th class="center">Completed</th>
+        <th></th>
         {% for todo in todos %}
             <tr>
                 <td>{{ todo.id }}</td>
@@ -16,6 +20,14 @@
                     <a href="{{ app.request.baseurl }}/todo/{{ todo.id }}">
                        {{ todo.description }}
                     </a>
+                </td>
+                <td class="completed-field center">
+                    {# {{ todo.completed }} #}
+                    {% if todo.completed == false %}
+                    <span class="glyphicon glyphicon-time glyphicon-white" todo-id="{{ todo.id }}"></span>
+                    {% else %}
+                    <span class="glyphicon glyphicon-ok glyphicon-white" todo-id="{{ todo.id }}"></span>
+                    {% endif %}
                 </td>
                 <td>
                     <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
@@ -26,7 +38,7 @@
         {% endfor %}
         <tr>
             <form method="post" class='description-form' action="{{ app.request.baseurl }}/todo/add">
-                <td colspan="4">
+                <td colspan="5">
                     <div class="input-group" style="width: 100%">
                         <input class="form-control" placeholder="Description..." name="description"
                             aria-label="Text input with multiple buttons">
