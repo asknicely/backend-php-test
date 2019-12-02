@@ -1,12 +1,18 @@
 <?php
 
 include_once 'validations/ValidationHandler.php';
+include_once 'orm/PdoMysql.php';
+require_once 'orm/AbstractModel.php';
+require_once 'orm/UserModel.php';
+require_once 'orm/TodoModel.php';
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\Constraints as Assert;
 use AsknicelyTest\ValidationHandler\ValidationHandler;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use AsknicelyORM\UserModel;
+use AsknicelyORM\TodoModel;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -27,8 +33,15 @@ $app->match('/login', function (Request $request) use ($app) {
     $password = $request->get('password');
 
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+
+        $userModel = UserModel::getInstance();
+        $user = $userModel->login($username, $password);
+
+        $user = [
+            'id' => $user->getId(),
+            'username' => $user->getUsername(),
+            'password' => $user->getPassword()
+        ];
 
         if ($user){
             $app['session']->set('user', $user);
@@ -52,21 +65,30 @@ $app->get('/todo/{id}', function ($id, Request $request) use ($app) {
     }
 
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+        $todo = TodoModel::getInstance($id);
+        if($todo->getId() == null){
+            return $app->redirect('/todo');
+        }
+
+        $todoData = [
+            'id' => $todo->getId(),
+            'user_id' => $todo->getUser_id(),
+            'description' => $todo->getDescription(),
+            'completed' => $todo->getDescription()
+        ];
 
         return $app['twig']->render('todo.html', [
-            'todo' => $todo,
+            'todo' => $todoData,
         ]);
     } else {
-        $sql = "SELECT count(*) as n FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
+        $todo = TodoModel::getInstance();
+        $todos = $todo->count('user_id', $user['id']);//@todo refactor
 
         $itemsPerPage = 3;
         $lastPage = 1;
         $currentPage = 1;
-        if($todos[0]['n'] > $itemsPerPage){
-            $lastPage = ceil($todos[0]['n'] / $itemsPerPage);
+        if($todos['n'] > $itemsPerPage){
+            $lastPage = ceil($todos['n']/ $itemsPerPage);
             $currentPage = (is_numeric($request->query->get('page')))
                             ?$request->query->get('page')
                             :'1';
@@ -75,9 +97,8 @@ $app->get('/todo/{id}', function ($id, Request $request) use ($app) {
             return $app->redirect('/todo?page=1');
         }
         $from = ($currentPage -1) * $itemsPerPage;
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' ORDER BY `id` desc LIMIT $from, $itemsPerPage";
-
-        $todos = $app['db']->fetchAll($sql);
+        
+        $todos = $todo->paginate('user_id', $user['id'], 'id',$from, $itemsPerPage );
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
@@ -104,8 +125,9 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         $validationHandler = new ValidationHandler($app);
         $validationHandler->fail("Description can not be empty!", 400, ValidationHandler::FLASH);
     } else {
-        $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-        $app['db']->executeUpdate($sql);
+        $todo = TodoModel::getInstance();
+        $todo->insert('user_id', 'description')
+                ->values($user_id, $description);
         $app['session']->getFlashBag()->add('Flash', 'Task created successfully!');// :P
     }
     
@@ -120,9 +142,16 @@ $app->post('/todo/{id}', function ($id, Request $request) use ($app) {
         return new JsonResponse(["MESSAGE" => 'Session not found', "CODE" => Response::HTTP_UNAUTHORIZED], Response::HTTP_UNAUTHORIZED);
     }
 
-    $sql = "SELECT * FROM todos WHERE id = '$id'";
-    $todo = $app['db']->fetchAssoc($sql);
-    if($todo == false ){
+    $todo = TodoModel::getInstance($id);
+
+    $todoData = [
+        'id' => $todo->getId(),
+        'user_id' => $todo->getUser_id(),
+        'description' => $todo->getDescription(),
+        'completed' => $todo->getDescription()
+    ];
+
+    if($todoData['id'] == null ){
         return new JsonResponse(["MESSAGE" => 'Task not found', "CODE" => Response::HTTP_NOT_FOUND], Response::HTTP_NOT_FOUND);
     }
 
@@ -138,8 +167,9 @@ $app->post('/todo/{id}', function ($id, Request $request) use ($app) {
                 )
         ){
 
-            $sql = "UPDATE todos SET completed = '" . $data['completed'] . "' WHERE id = '" . $id  . "'";
-            $todo = $app['db']->executeUpdate($sql);
+            $todo = TodoModel::getInstance($id);
+            $todo->setCompleted($data["completed"]);
+            $todo->save();
 
             return new JsonResponse([
                     "MESSAGE" => 'Status updated', 
@@ -161,16 +191,23 @@ $app->get('/todo/{id}/json', function ($id, Request $request) use ($app) {
 
     if ($id){
         
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
-        if($todo == false ){
+        $todo = TodoModel::getInstance($id);
+
+        $todoData = [
+            'id' => $todo->getId(),
+            'user_id' => $todo->getUser_id(),
+            'description' => $todo->getDescription(),
+            'completed' => $todo->getDescription()
+        ];
+
+        if($todoData['id'] == null ){
             return new JsonResponse(["MESSAGE" => 'Task not found', "CODE" => Response::HTTP_NOT_FOUND], Response::HTTP_NOT_FOUND);
         }
 
         return new JsonResponse([
             "MESSAGE" => 'Task found', 
             "CODE" => '200',
-            "DATA" => $todo
+            "DATA" => $todoData
         ], Response::HTTP_OK);
     } 
     return new JsonResponse(["MESSAGE" => 'Task not found', "CODE" => Response::HTTP_BAD_REQUEST], Response::HTTP_BAD_REQUEST);
@@ -179,8 +216,8 @@ $app->get('/todo/{id}/json', function ($id, Request $request) use ($app) {
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    $todo = TodoModel::getInstance($id);
+    $todo->delete();
     $app['session']->getFlashBag()->add('Flash', 'Task deleted successfully!');
     return $app->redirect('/todo');
 });
