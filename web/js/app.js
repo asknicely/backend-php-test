@@ -100,4 +100,33 @@
             .catch(console.log)
     }
     
+    
+    /* Delete tasks */
+    let formToDelete = null;
+
+    let deleteValidation = (event) => {
+        event.stopPropagation();
+        $('#deleteModal').modal()
+        formToDelete = $(event.target).parent()
+        if (formToDelete.is("form")) {
+            //ok - click on button
+        } else {
+            //ok - click on button  > span
+            formToDelete = $(event.target).parent().parent()
+        }
+        let description = $.trim($(formToDelete).parent().parent().find('.description').text());
+        console.log(description)
+        $('#deleteModal .description').html(description)
+        event.preventDefault();
+    }
+
+    window.deleteTask = () => {
+        formToDelete.submit();
+    }
+
+    let deleteForms = document.querySelectorAll('.delete-form button');
+    for (i = 0; i < deleteForms.length; ++i) {
+        deleteForms[i].addEventListener('click', deleteValidation);
+    }
+    
 })(window, document)

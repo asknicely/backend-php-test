@@ -12,7 +12,7 @@
         <tr>
             <td>{{ todo.id }}</td>
             <td>{{ todo.user_id }}</td>
-            <td>{{ todo.description }}</td>
+            <td class="description">{{ todo.description }}</td>
             <td class="completed-field center">
                     {# {{ todo.completed }} #}
                     {% if todo.completed == false %}
@@ -22,12 +22,40 @@
                     {% endif %}
                 </td>
             <td>
-                <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
-                    <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
+                <form method="post" class='delete-form' action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
+                    <button type="button" class="btn btn-xs btn-danger">
+                        <span class="glyphicon glyphicon-remove glyphicon-white"></span>
+                    </button>
                 </form>
             </td>
         </tr>
     </table>
 </div>
+
+<!-- deleteModal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="deleteModalLabel">Are you sure?</h4>
+                </div>
+                <div class="modal-body">
+                    <b>Danger: </b>
+                    <span>This action is irreversible!</span>
+                    <br><br>
+                    <div class="alert alert-danger center" role="alert">
+                        <p>You will delete this taks</p>
+                        <b class="description"></b>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="deleteTask()">Delete Task</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 {% endblock %}
