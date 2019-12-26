@@ -10,7 +10,7 @@
         "symfony/browser-kit": "~2.3",
         "symfony/class-loader": "~2.3",
         "symfony/config": "~2.3",
-        "symfony/console": "~2.3",
+        "symfony/console": "~3.3",
         "symfony/css-selector": "~2.3",
         "symfony/debug": "~2.3",
         "symfony/finder": "~2.3",
