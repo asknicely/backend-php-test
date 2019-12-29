@@ -1,7 +1,7 @@
 <?php
 
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Entity\Todo;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
     $twig->addGlobal('user', $app['session']->get('user'));
@@ -21,9 +21,14 @@ $app->match('/login', function (Request $request) use ($app) {
     $username = $request->get('username');
     $password = $request->get('password');
 
+    $entityManager = $app['orm.em'];
+    $repository = $entityManager->getRepository(\Entity\User::class);
+
     if ($username) {
-        $sql = "SELECT * FROM users WHERE username = '$username' and password = '$password'";
-        $user = $app['db']->fetchAssoc($sql);
+        $user = $repository->findOneBy([
+            'username' => $username,
+            'password' => $password
+        ]);
 
         if ($user){
             $app['session']->set('user', $user);
@@ -46,16 +51,17 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         return $app->redirect('/login');
     }
 
+    $entityManager = $app['orm.em'];
+    $repository = $entityManager->getRepository(Todo::class);
+
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+        $todo = $repository->findOneBy(['id' => $id]);
 
         return $app['twig']->render('todo.html', [
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
+        $todos = $repository->findBy(['userId' => $user->getId()]);
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
@@ -70,11 +76,15 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         return $app->redirect('/login');
     }
 
-    $user_id = $user['id'];
+    $user_id = $user->getId();
     $description = $request->get('description');
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    $entityManager = $app['orm.em'];
+    $todo = new Todo();
+    $todo->setUserId($user_id);
+    $todo->setDescription($description);
+    $entityManager->persist($todo);
+    $entityManager->flush();
 
     return $app->redirect('/todo');
 });
@@ -82,8 +92,12 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    $entityManager = $app['orm.em'];
+    $repository = $entityManager->getRepository(Todo::class);
+    $todo = $repository->findOneBy(['id' => $id]);
+
+    $entityManager->remove($todo);
+    $entityManager->flush();
 
     return $app->redirect('/todo');
 });
