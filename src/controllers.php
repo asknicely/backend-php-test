@@ -94,6 +94,7 @@ $app->post('/todo/add', function (Request $request) use ($app) {
             $app['session']->getFlashBag()->add('description-empty', $error->getMessage());
         }
     } else {
+        $app['session']->getFlashBag()->add('description', 'Your Todo has been added.');
         $entityManager->persist($todo);
         $entityManager->flush();
     }
@@ -107,6 +108,10 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     $entityManager = $app['orm.em'];
     $repository = $entityManager->getRepository(Todo::class);
     $todo = $repository->findOneBy(['id' => $id]);
+
+    $app['session']->getFlashBag()->add('description', 'Your Todo has been deleted.');
+    $entityManager->persist($todo);
+    $entityManager->flush();
 
     $entityManager->remove($todo);
     $entityManager->flush();

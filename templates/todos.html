@@ -8,6 +8,11 @@
         <div class="alert"><strong>{{ alert }}</strong></div>
     </div>
     {% endfor %}
+    {% for alert in app.session.flashbag.get('description') %}
+    <div class="success-message">
+        <div class="alert"><strong>{{ alert }}</strong></div>
+    </div>
+    {% endfor %}
     <table class="table table-striped">
         <th>#</th><th>User</th><th>Description</th><th></th>
         {% for todo in todos %}
