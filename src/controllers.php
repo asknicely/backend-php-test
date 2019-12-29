@@ -1,6 +1,7 @@
 <?php
 
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Validator\Constraints as Assert;
 use Entity\Todo;
 
 $app['twig'] = $app->share($app->extend('twig', function($twig, $app) {
@@ -83,8 +84,19 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $todo = new Todo();
     $todo->setUserId($user_id);
     $todo->setDescription($description);
-    $entityManager->persist($todo);
-    $entityManager->flush();
+
+    $metadata = $app['validator.mapping.class_metadata_factory']->getMetadataFor('Entity\Todo');
+    $metadata->addPropertyConstraint('description', new Assert\NotBlank());
+    $errors = $app['validator']->validate($todo);
+
+    if (count($errors) > 0) {
+        foreach ($errors as $error) {
+            $app['session']->getFlashBag()->add('description-empty', $error->getMessage());
+        }
+    } else {
+        $entityManager->persist($todo);
+        $entityManager->flush();
+    }
 
     return $app->redirect('/todo');
 });
