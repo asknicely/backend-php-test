@@ -118,3 +118,31 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     return $app->redirect('/todo');
 });
+
+$app->get('/todo/{id}/json', function ($id) use ($app) {
+    if (null === $user = $app['session']->get('user')) {
+        return $app->redirect('/login');
+    }
+
+    $entityManager = $app['orm.em'];
+    $repository = $entityManager->getRepository(Todo::class);
+
+    $todo = $repository->findOneBy(['id' => $id]);
+
+    if (!$todo) {
+        $error = array('message' => 'The todo was not found.');
+
+        return $app->json($error, 404);
+    }
+
+    $json = [
+        'id' => $todo->getId(),
+        'user_id' => $todo->getUserId(),
+        'description' => $todo->getDescription()
+    ];
+
+    $response = new \Symfony\Component\HttpFoundation\JsonResponse();
+    $response->setEncodingOptions(JSON_NUMERIC_CHECK);
+    $response->setData($json);
+    return $response;
+});
