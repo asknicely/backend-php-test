@@ -33,7 +33,7 @@ $app->match('/login', function (Request $request) use ($app) {
 
         if ($user){
             $app['session']->set('user', $user);
-            return $app->redirect('/todo');
+            return $app->redirect('/todos');
         }
     }
 
@@ -61,18 +61,47 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         return $app['twig']->render('todo.html', [
             'todo' => $todo,
         ]);
-    } else {
-        $todos = $repository->findBy(['userId' => $user->getId()]);
-
-        return $app['twig']->render('todos.html', [
-            'todos' => $todos,
-        ]);
     }
 })
 ->value('id', null);
 
+$app->get('/todos/{page}',
+        function ($page) use ($app) {
+            if (null === $user = $app['session']->get('user')) {
+                return $app->redirect('/login');
+            }
 
-$app->post('/todo/add', function (Request $request) use ($app) {
+            $entityManager = $app['orm.em'];
+            $repository = $entityManager->getRepository(Todo::class);
+            $todos = $repository->findBy(['userId' => $user->getId()]);
+            $todoItems = count($todos);
+
+            // Set items per page
+            $itemsPerPage = 3;
+            $offset = ($page - 1) * $itemsPerPage;
+
+            $pagination = $app['pagination']($todoItems, $page, $itemsPerPage, 2 );
+            $pages      = $pagination->build();
+
+            $todos = $repository->findBy(['userId' => $user->getId()],['id' => 'DESC'], $itemsPerPage, $offset);
+
+            return $app['twig']->render('todos.html', [
+                'todos' => $todos,
+                'pages' => $pages,
+                'current' => $pagination->currentPage()
+            ]);
+        }
+    )
+    ->value('page', 1)
+    ->convert(
+        'page',
+        function ($page) {
+            return (int) $page;
+        }
+    );
+
+
+$app->post('/todos/add', function (Request $request) use ($app) {
     if (null === $user = $app['session']->get('user')) {
         return $app->redirect('/login');
     }
@@ -99,11 +128,11 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         $entityManager->flush();
     }
 
-    return $app->redirect('/todo');
+    return $app->redirect('/todos');
 });
 
 
-$app->match('/todo/delete/{id}', function ($id) use ($app) {
+$app->match('/todos/delete/{id}', function ($id) use ($app) {
 
     $entityManager = $app['orm.em'];
     $repository = $entityManager->getRepository(Todo::class);
@@ -116,7 +145,7 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     $entityManager->remove($todo);
     $entityManager->flush();
 
-    return $app->redirect('/todo');
+    return $app->redirect('/todos');
 });
 
 $app->get('/todo/{id}/json', function ($id) use ($app) {
