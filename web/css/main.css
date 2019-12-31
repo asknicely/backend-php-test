@@ -5,3 +5,18 @@ body {
 .login-form > div {
     margin-top: 10px;
 }
+
+.error-message {
+    color: red;
+}
+
+.success-message {
+    color: green;
+}
+
+ul {
+    list-style: none;
+}
+li {
+    display: inline-block;
+}

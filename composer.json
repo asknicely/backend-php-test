@@ -4,13 +4,13 @@
     "license": "MIT",
     "type": "project",
     "require": {
-        "php": ">=5.3.3",
+        "php": "~7.3.8",
         "silex/silex": "~1.0",
         "silex/web-profiler": "~1.0",
         "symfony/browser-kit": "~2.3",
         "symfony/class-loader": "~2.3",
         "symfony/config": "~2.3",
-        "symfony/console": "~2.3",
+        "symfony/console": "~3.3",
         "symfony/css-selector": "~2.3",
         "symfony/debug": "~2.3",
         "symfony/finder": "~2.3",
@@ -22,7 +22,9 @@
         "symfony/twig-bridge": "~2.3",
         "symfony/validator": "~2.3",
         "doctrine/dbal": "~2.2",
-        "deralex/yaml-config-service-provider": "1.0.x-dev"
+        "deralex/yaml-config-service-provider": "1.0.x-dev",
+        "dflydev/doctrine-orm-service-provider": "1.0.7",
+        "amstaffix/silex-pagination": "^1.1"
     },
     "autoload": {
         "psr-0": { "": "src/" }
