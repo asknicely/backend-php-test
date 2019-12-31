@@ -13,3 +13,10 @@ body {
 .success-message {
     color: green;
 }
+
+ul {
+    list-style: none;
+}
+li {
+    display: inline-block;
+}
