@@ -25,14 +25,14 @@
                     </a>
                 </td>
                 <td>
-                    <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
+                    <form method="post" action="{{ app.request.baseurl }}/todos/delete/{{ todo.id }}">
                         <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                     </form>
                 </td>
             </tr>
         {% endfor %}
         <tr>
-            <form method="post" action="{{ app.request.baseurl }}/todo/add">
+            <form method="post" action="{{ app.request.baseurl }}/todos/add">
                 <td colspan="3">
                     <input type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
                 </td>
@@ -42,5 +42,21 @@
             </form>
         </tr>
     </table>
+    <ul>
+        {% for number, position in pages %}
+        {% if position == 'first' %}
+        <li><a href="/todos/{{ number }}">&laquo;</a></li>
+        {% elseif position == 'less' or position == 'more' %}
+        <li>...</li>
+        {% elseif position == 'previous' or position == 'next' %}
+        <li><a href="/todos/{{ number }}">{{ number }}</a></li>
+        {% elseif position == 'current' %}
+        <li>{{ number }}</li>
+        {% elseif position == 'last' %}
+        <li><a href="/todos/{{ number }}">&raquo;</a></li>
+        {% endif %}
+        {% endfor %}
+    </ul>
+    <hr />
 </div>
 {% endblock %}
