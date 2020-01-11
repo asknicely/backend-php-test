@@ -103,3 +103,15 @@ $app->match('/todo/complete/{id}', function ($id) use ($app) {
     $app['session']->getFlashBag()->add('todoMessages', array("type"=>"success", "message"=>'Marked as completed successfully'));
     return $app->redirect('/todo');
 });
+
+$app->match('/todo/{id}/json', function ($id) use ($app) {
+
+    // update value to 1 to mark todo as completed
+    $sql = "SELECT todos.id, user_id, users.username, description, is_complete FROM `todos` JOIN users ON user_id = users.id where todos.id = ?";
+    $todoObj = $app['db']->fetchAssoc($sql, array($id));
+
+    $response = new \Symfony\Component\HttpFoundation\JsonResponse();
+    $response->setContent(json_encode($todoObj));
+
+    return $response;
+});
