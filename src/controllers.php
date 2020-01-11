@@ -79,8 +79,9 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         return $app->redirect('/todo');
     }
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
-    $app['db']->executeUpdate($sql);
+    $sql = "INSERT INTO todos (user_id, description) VALUES (?, ?)";
+    $app['session']->getFlashBag()->add('todoMessages', array("type"=>"success", "message"=>'Added successfully'));
+    $app['db']->executeUpdate($sql, array($user_id, $description));
 
     return $app->redirect('/todo');
 });
@@ -88,9 +89,10 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
 $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
-    $sql = "DELETE FROM todos WHERE id = '$id'";
-    $app['db']->executeUpdate($sql);
+    $sql = "DELETE FROM todos WHERE id = ?";
+    $app['db']->executeUpdate($sql, array($id));
 
+    $app['session']->getFlashBag()->add('todoMessages', array("type"=>"success", "message"=>'Removed successfully'));
     return $app->redirect('/todo');
 });
 
@@ -106,7 +108,7 @@ $app->match('/todo/complete/{id}', function ($id) use ($app) {
 
 $app->match('/todo/{id}/json', function ($id) use ($app) {
 
-    // update value to 1 to mark todo as completed
+    // join query to fetch username from users table
     $sql = "SELECT todos.id, user_id, users.username, description, is_complete FROM `todos` JOIN users ON user_id = users.id where todos.id = ?";
     $todoObj = $app['db']->fetchAssoc($sql, array($id));
 
