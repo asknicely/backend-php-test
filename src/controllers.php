@@ -54,11 +54,25 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}'";
-        $todos = $app['db']->fetchAll($sql);
+        $pageNum = $app['request']->get('page') ? : 1;
+        $limit = 5;
+
+        // we need count to set pagination on frontend
+        $sql = "SELECT count(id) as count FROM todos WHERE user_id = ?";
+        $todosCount = $app['db']->fetchAssoc($sql, array((int)$user['id']));
+        $totalPages = ceil($todosCount['count']/$limit);
+
+        $startLimit = $limit * ($pageNum - 1);
+        $endLimit = $startLimit + $limit;
+
+        $sql = "SELECT * FROM todos WHERE user_id = ? LIMIT $startLimit, $endLimit";
+        $todos = $app['db']->fetchAll($sql, array((int)$user['id']));
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
+            'pageNum' => $pageNum,
+            'count' => $todosCount['count'],
+            'totalPages' => $totalPages
         ]);
     }
 })
