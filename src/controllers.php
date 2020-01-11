@@ -75,13 +75,13 @@ $app->post('/todo/add', function (Request $request) use ($app) {
 
     // if description is blank just give an error message as we do not want user to add entry without desc
     if($description === ""){
-        $app['session']->getFlashBag()->add('todoMessages', array("type"=>"error", "message"=>'Please enter value for description'));
+        $app['session']->getFlashBag()->add('todoMessages', array("type"=>"danger", "message"=>'Please enter value for description'));
         return $app->redirect('/todo');
     }
 
     $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
     $app['db']->executeUpdate($sql);
-    
+
     return $app->redirect('/todo');
 });
 
@@ -91,5 +91,15 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
 
+    return $app->redirect('/todo');
+});
+
+$app->match('/todo/complete/{id}', function ($id) use ($app) {
+    // update value to 1 to mark todo as completed
+    $sql = "UPDATE `todos` SET `is_complete` = ? WHERE `todos`.`id` = ?";
+    $app['db']->executeUpdate($sql, array('1' , $id));
+
+    //set success message when marked as completed
+    $app['session']->getFlashBag()->add('todoMessages', array("type"=>"success", "message"=>'Marked as completed successfully'));
     return $app->redirect('/todo');
 });

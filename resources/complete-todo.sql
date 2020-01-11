@@ -1,0 +1,1 @@
+ALTER TABLE `todos` ADD `is_complete` ENUM('0','1') NOT NULL DEFAULT '0' AFTER `description`;

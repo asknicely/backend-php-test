@@ -18,6 +18,9 @@
                     <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
                         <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
                     </form>
+                    <form method="post" action="{{ app.request.baseurl }}/todo/complete/{{ todo.id }}">
+                        <button type="submit" class="btn btn-xs btn-{{ todo.is_complete == 1 ? 'success' : 'light'}}"><span class="glyphicon glyphicon-ok-circle"></span></button>
+                    </form>
                 </td>
             </tr>
         {% endfor %}
@@ -33,8 +36,9 @@
 
         </tr>
 
+
         {% for alert in app.session.flashbag.get('todoMessages') %}
-        <tr class="{{alert.type}}-message">
+        <tr class="{{alert.type}}">
             <td  colspan="4" class="alert"><strong>{{ alert.message }}</strong></td>
         </tr>
         {% endfor %}
