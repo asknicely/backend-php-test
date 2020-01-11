@@ -6,9 +6,9 @@
     <table class="table table-striped">
         <th>#</th><th>User</th><th>Description</th><th colspan="3">Action</th>
         <tr>
-            <td>{{ todo.id }}</td>
-            <td>{{ todo.user_id }}</td>
-            <td>{{ todo.description }}</td>
+            <td>{{ todo.getId() }}</td>
+            <td>{{ todo.getUserId() }}</td>
+            <td>{{ todo.getDescription() }}</td>
             <td>
                 <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
                     <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
@@ -16,7 +16,7 @@
             </td>
             <td>
                 <form method="post" action="{{ app.request.baseurl }}/todo/complete/{{ todo.id }}">
-                    <button type="submit" class="btn btn-xs btn-{{ todo.is_complete == 1 ? 'success' : 'light'}}"><span class="glyphicon glyphicon-ok-circle"></span></button>
+                    <button type="submit" class="btn btn-xs btn-{{ todo.getIsComplete() == 1 ? 'success' : 'light'}}"><span class="glyphicon glyphicon-ok-circle"></span></button>
                 </form>
             </td>
             <td>

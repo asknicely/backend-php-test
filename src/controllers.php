@@ -47,11 +47,13 @@ $app->get('/todo/{id}', function ($id) use ($app) {
     }
 
     if ($id){
-        $sql = "SELECT * FROM todos WHERE id = '$id'";
-        $todo = $app['db']->fetchAssoc($sql);
+
+        // fetching data using ORM
+        $em = $app['orm.em'];
+        $todoObj = $em->find('\App\Entity\TodosEntity', $id);
 
         return $app['twig']->render('todo.html', [
-            'todo' => $todo,
+            'todo' => $todoObj,
         ]);
     } else {
         $pageNum = $app['request']->get('page') ? : 1;
@@ -65,7 +67,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
         $startLimit = $limit * ($pageNum - 1);
         $endLimit = $startLimit + $limit;
 
-        $sql = "SELECT * FROM todos WHERE user_id = ? LIMIT $startLimit, $endLimit";
+        $sql = "SELECT * FROM todos WHERE user_id = ? ORDER BY `todos`.`id` DESC LIMIT $startLimit, $endLimit";
         $todos = $app['db']->fetchAll($sql, array((int)$user['id']));
 
         return $app['twig']->render('todos.html', [
@@ -93,9 +95,18 @@ $app->post('/todo/add', function (Request $request) use ($app) {
         return $app->redirect('/todo');
     }
 
-    $sql = "INSERT INTO todos (user_id, description) VALUES (?, ?)";
+    // inserting data using ORM
+    $em = $app['orm.em'];
+    $todoObj = new \App\Entity\TodosEntity();
+
+    $todoObj->setUserId($user_id);
+    $todoObj->setDescription($description);
+    $todoObj->setIsComplete(0);
+
+    $em->persist($todoObj);
+    $em->flush();
+
     $app['session']->getFlashBag()->add('todoMessages', array("type"=>"success", "message"=>'Added successfully'));
-    $app['db']->executeUpdate($sql, array($user_id, $description));
 
     return $app->redirect('/todo');
 });
