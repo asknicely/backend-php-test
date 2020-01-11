@@ -73,9 +73,15 @@ $app->post('/todo/add', function (Request $request) use ($app) {
     $user_id = $user['id'];
     $description = $request->get('description');
 
+    // if description is blank just give an error message as we do not want user to add entry without desc
+    if($description === ""){
+        $app['session']->getFlashBag()->add('todoMessages', array("type"=>"error", "message"=>'Please enter value for description'));
+        return $app->redirect('/todo');
+    }
+
     $sql = "INSERT INTO todos (user_id, description) VALUES ('$user_id', '$description')";
     $app['db']->executeUpdate($sql);
-
+    
     return $app->redirect('/todo');
 });
 

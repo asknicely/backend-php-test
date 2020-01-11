@@ -30,7 +30,15 @@
                     <button type="submit" class="btn btn-sm btn-primary">Add</button>
                 </td>
             </form>
+
         </tr>
+
+        {% for alert in app.session.flashbag.get('todoMessages') %}
+        <tr class="{{alert.type}}-message">
+            <td  colspan="4" class="alert"><strong>{{ alert.message }}</strong></td>
+        </tr>
+        {% endfor %}
+
     </table>
 </div>
 {% endblock %}
