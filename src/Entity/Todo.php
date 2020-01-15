@@ -28,6 +28,11 @@ class Todo
     private $description;
 
     /**
+     * @ORM\Column(type="integer", length=1)
+     */
+    private $completed;
+
+    /**
      * @return mixed
      */
     public function getId()
@@ -73,5 +78,21 @@ class Todo
     public function setDescription($description): void
     {
         $this->description = $description;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCompleted()
+    {
+        return $this->completed;
+    }
+
+    /**
+     * @param mixed $completed
+     */
+    public function setCompleted($completed): void
+    {
+        $this->completed = $completed;
     }
 }
