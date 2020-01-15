@@ -10,6 +10,7 @@ use Silex\Provider\HttpFragmentServiceProvider;
 use Silex\Provider\DoctrineServiceProvider;
 use DerAlex\Silex\YamlConfigServiceProvider;
 use Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
+use Kilte\Silex\Pagination\PaginationServiceProvider;
 
 $app = new Application();
 $app->register(new SessionServiceProvider());
@@ -44,5 +45,7 @@ $app->register(new DoctrineOrmServiceProvider(), [
         ],
     ]
 ]);
+
+$app->register(new PaginationServiceProvider);
 
 return $app;
