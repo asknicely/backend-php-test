@@ -62,7 +62,7 @@ $app->get('/todo/{id}', function ($id) use ($app) {
             'todo' => $todo,
         ]);
     } else {
-        $todos = $repository->findBy(['userId' => $user->getId()]);
+        $todos = $repository->findBy(['userId' => $user->getId(), 'completed' => null]);
 
         return $app['twig']->render('todos.html', [
             'todos' => $todos,
@@ -114,6 +114,19 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
     $entityManager->flush();
 
     $entityManager->remove($todo);
+    $entityManager->flush();
+
+    return $app->redirect('/todo');
+});
+
+$app->match('/todo/mark/{id}', function ($id) use ($app) {
+
+    $entityManager = $app['orm.em'];
+    $repository = $entityManager->getRepository(Todo::class);
+    $todo = $repository->findOneBy(['id' => $id]);
+
+    $app['session']->getFlashBag()->add('description', 'Your Todo has been marked as completed.');
+    $todo->setCompleted(1);
     $entityManager->flush();
 
     return $app->redirect('/todo');
