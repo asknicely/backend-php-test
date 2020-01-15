@@ -73,7 +73,7 @@ $app->get('/todos/{page}',
 
             $entityManager = $app['orm.em'];
             $repository = $entityManager->getRepository(Todo::class);
-            $todos = $repository->findBy(['userId' => $user->getId()]);
+            $todos = $repository->findBy(['userId' => $user->getId(), 'completed' => null]);
             $todoItems = count($todos);
 
             // Set items per page
@@ -83,7 +83,7 @@ $app->get('/todos/{page}',
             $pagination = $app['pagination']($todoItems, $page, $itemsPerPage, 2 );
             $pages      = $pagination->build();
 
-            $todos = $repository->findBy(['userId' => $user->getId()],['id' => 'DESC'], $itemsPerPage, $offset);
+            $todos = $repository->findBy(['userId' => $user->getId(), 'completed' => null],['id' => 'DESC'], $itemsPerPage, $offset);
 
             return $app['twig']->render('todos.html', [
                 'todos' => $todos,
@@ -174,4 +174,17 @@ $app->get('/todo/{id}/json', function ($id) use ($app) {
     $response->setEncodingOptions(JSON_NUMERIC_CHECK);
     $response->setData($json);
     return $response;
+});
+
+$app->match('/todo/mark/{id}', function ($id) use ($app) {
+
+    $entityManager = $app['orm.em'];
+    $repository = $entityManager->getRepository(Todo::class);
+    $todo = $repository->findOneBy(['id' => $id]);
+
+    $app['session']->getFlashBag()->add('description', 'Your Todo has been marked as completed.');
+    $todo->setCompleted(1);
+    $entityManager->flush();
+
+    return $app->redirect('/todos');
 });
