@@ -5,14 +5,13 @@
     </div>
 {% endfor %}
 
-{% for alert in app.session.flashbag.get('info') %}
-    <div class="error-message">
-      <div class="alert alert-info"><strong>{{ alert }}</strong></div>
+
+    <div class="error-message status-message">
+      <div class="alert alert-info"><strong>This task has been Completed Successfully.</strong></div>
     </div>
-{% endfor %}
-{% for alert in app.session.flashbag.get('warning') %}
-    <div class="error-message">
-      <div class="alert alert-danger"><strong>{{ alert }}</strong></div>
+
+
+    <div class="error-message delete-task">
+      <div class="alert alert-danger"><strong>This task has been Deleted Successfully.</strong></div>
     </div>
-{% endfor %}
 {% endblock %}

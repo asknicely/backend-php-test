@@ -58,23 +58,11 @@ $app->get('/todo/{id}', function ($id,Request $request) use ($app) {
         ]);
     } else {
       // List All Todos
-        $limit_per_page = 10;
-        $page = $request->get('page', 1) ;
-        $start = $limit_per_page * ($page - 1);
-
-        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' LIMIT  $start ,$limit_per_page ";
+        $sql = "SELECT * FROM todos WHERE user_id = '${user['id']}' ";
         $todos = $app['db']->fetchAll($sql);
 
-        //Count All Records
-        $sqlCount = "SELECT COUNT(*) as totalTodos FROM todos WHERE user_id = '${user['id']}' ";
-        $totalTodos = $app['db']->fetchAll($sqlCount);
-        $total_pages = ceil($totalTodos[0]['totalTodos']/$limit_per_page);
-
-
         return $app['twig']->render('todos.html', [
-            'todos' => $todos,
-            'totalPages' => $total_pages,
-            'currentPage' => $page
+            'todos' => $todos
         ]);
     }
 })
@@ -106,9 +94,9 @@ $app->match('/todo/delete/{id}', function ($id) use ($app) {
 
     $sql = "DELETE FROM todos WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
-    $app['session']->getFlashBag()->add('warning', 'Todo has been Deleted Successfully.');
-
-    return $app->redirect('/todo');
+    // $app['session']->getFlashBag()->add('warning', 'Todo has been Deleted Successfully.');
+    // return $app->redirect('/todo');
+    return true;
 });
 
 
@@ -120,9 +108,9 @@ $app->match('/todo/status/{id}/{status}', function ($id, $status) use ($app) {
 
     $sql = "UPDATE todos SET status = '$updatedStatus' WHERE id = '$id'";
     $app['db']->executeUpdate($sql);
-    $app['session']->getFlashBag()->add('info', 'Todo has been Completed Successfully.');
-
-    return $app->redirect('/todo');
+    // $app['session']->getFlashBag()->add('info', 'Todo has been Completed Successfully.');
+    // return $app->redirect('/todo');
+    return true;
 });
 
 
