@@ -1,0 +1,17 @@
+
+{% block content %}{% for alert in app.session.flashbag.get('success') %}
+    <div class="error-message">
+      <div class="alert alert-success"><strong>{{ alert }}</strong></div>
+    </div>
+{% endfor %}
+
+
+    <div class="error-message status-message">
+      <div class="alert alert-info"><strong>This task has been Completed Successfully.</strong></div>
+    </div>
+
+
+    <div class="error-message delete-task">
+      <div class="alert alert-danger"><strong>This task has been Deleted Successfully.</strong></div>
+    </div>
+{% endblock %}

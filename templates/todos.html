@@ -3,10 +3,14 @@
 {% block content %}
 <div class="col-md-4 col-md-offset-4">
     <h1>Todo List:</h1>
+
+
+
+     {% include 'messages.html' %}
     <table class="table table-striped">
-        <th>#</th><th>User</th><th>Description</th><th></th>
+        <th>#</th><th>User</th><th>Description</th><th>Status</th><th></th>
         {% for todo in todos %}
-            <tr>
+            <tr id='{{ todo.id }}'>
                 <td>{{ todo.id }}</td>
                 <td>{{ todo.user_id }}</td>
                 <td>
@@ -15,22 +19,33 @@
                     </a>
                 </td>
                 <td>
-                    <form method="post" action="{{ app.request.baseurl }}/todo/delete/{{ todo.id }}">
-                        <button type="submit" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove glyphicon-white"></span></button>
-                    </form>
+                  {% if todo.status == 'Pending' %}
+                    <a task_id="{{ todo.id }}" task_status="{{ todo.status }}" class="status-task-id" href="#">
+                       {{ todo.status }}
+                    </a>
+                  {% else %}
+                     {{ todo.status }}
+                  {% endif %}
+
+                </td>
+                <td>
+                    <button value="{{ todo.id }}" type="button"  class="btn btn-xs btn-danger del-task-id">
+                      <span class="glyphicon glyphicon-remove glyphicon-white"></span>
+                    </button>
                 </td>
             </tr>
         {% endfor %}
         <tr>
             <form method="post" action="{{ app.request.baseurl }}/todo/add">
-                <td colspan="3">
-                    <input type="textbox" name="description" class="small-6 small-center" placeholder="Description...">
+                <td colspan="4">
+                    <input required type="textbox" name="description" class=" form-control" placeholder="Description...">
                 </td>
                 <td>
-                    <button type="submit" class="btn btn-sm btn-primary">Add</button>
+                    <button type="submit" class="btn btn-primary">Add</button>
                 </td>
             </form>
         </tr>
     </table>
+
 </div>
 {% endblock %}
