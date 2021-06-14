@@ -102,3 +102,12 @@ $app->match('/todo/status/{id}/{status}', function ($id, $status) use ($app) {
 
     return $app->redirect('/todo');
 });
+
+
+$app->match('/todo/{id}/json', function ($id) use ($app) {
+      $sql = "SELECT * FROM todos WHERE id = '$id'";
+      $todo = $app['db']->fetchAssoc($sql);
+
+      return json_encode($todo);
+      // ]);
+});
